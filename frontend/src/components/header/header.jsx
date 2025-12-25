@@ -10,7 +10,7 @@ function Header() {
     { path: '/', label: 'Translator', name: 'home' },
     { path: '/dictionary', label: 'Dictionary', name: 'dictionary' },
     { path: '/text-to-speech', label: 'Text to Speech', name: 'textToSpeech' },
-    { path: '/speech-to-text', label: 'Speech to Text', name: 'speechToText' },
+    { path: '/speech-to-text-translate', label: 'Speech to Text', name: 'speechToText' },
     { path: '/speech-to-recording', label: 'Recording', name: 'recording' },
   ]
 

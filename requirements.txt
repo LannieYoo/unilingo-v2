@@ -1,0 +1,16 @@
+# Flask backend dependencies
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Whisper speech-to-text dependencies
+# NOTE: FFmpeg is required for Whisper (system dependency, not pip)
+#   Windows: winget install ffmpeg
+#   macOS: brew install ffmpeg
+#   Linux: sudo apt-get install ffmpeg
+openai-whisper>=20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Document processing dependencies
+python-docx>=1.1.0
+
