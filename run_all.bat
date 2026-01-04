@@ -40,8 +40,9 @@ start "Backend Server" cmd /k "cd /d "%PROJECT_DIR%backend" && call ..\venv\Scri
 echo.
 echo Both servers are running in separate windows.
 echo.
-echo Frontend: http://localhost:5173
+echo Frontend: http://localhost:3000
 echo Backend: http://localhost:8000
+echo STT Stream: http://localhost:3000/stt-stream
 echo.
 echo Press any key to exit...
 pause
