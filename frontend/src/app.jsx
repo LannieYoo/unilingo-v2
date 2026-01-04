@@ -9,6 +9,7 @@ import SpeechToTextTranslate from './pages/speech-to-text/speech-to-text-transla
 import SpeechToRecording from './pages/speech-to-recording/speech-to-recording'
 import Translator from './pages/translator/translator'
 import Logs from './pages/logs/logs'
+import SttStreamWebSpeechPage from './stt_webspeech_stream/ui/SttStreamWebSpeechPage'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/speech-to-recording" element={<SpeechToRecording />} />
           <Route path="/translator" element={<Translator />} />
           <Route path="/logs" element={<Logs />} />
+          <Route path="/stt-stream" element={<SttStreamWebSpeechPage />} />
         </Routes>
       </Layout>
     </Router>

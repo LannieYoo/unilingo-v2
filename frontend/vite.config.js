@@ -18,6 +18,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/vosk-models': {
+        target: 'https://alphacephei.com/vosk/models',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/vosk-models/, ''),
+      },
     },
   },
 })
