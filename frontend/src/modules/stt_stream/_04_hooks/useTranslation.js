@@ -67,6 +67,10 @@ export function useTranslation() {
   }, [])
 
 
+  // targetLang을 참조하기 위한 ref (클로저 문제 해결)
+  const targetLangRef = useRef(targetLang)
+  targetLangRef.current = targetLang
+
   /**
    * 큐 처리 - 실시간 번역
    */
@@ -118,8 +122,11 @@ export function useTranslation() {
   const addSentenceToTranslate = useCallback((sentence, sourceLang) => {
     if (!sentence?.trim()) return
     
-    const currentTargetLang = targetLang
+    // ref를 사용하여 최신 targetLang 값 가져오기
+    const currentTargetLang = targetLangRef.current
     const index = sentencesRef.current.length
+    
+    console.log(`[Translation] Adding sentence: "${sentence}" (source: ${sourceLang}, target: ${currentTargetLang})`)
     
     // 문장 저장
     sentencesRef.current.push({
@@ -131,12 +138,14 @@ export function useTranslation() {
     
     // 같은 언어면 바로 표시
     if (sourceLang === currentTargetLang) {
+      console.log(`[Translation] Same language, using original`)
       sentencesRef.current[index].translatedText = sentence.trim()
       updateTranslatedText()
       return
     }
     
     // 번역 큐에 추가
+    console.log(`[Translation] Adding to queue for translation`)
     pendingRef.current.push({ 
       sentence: sentence.trim(), 
       sourceLang, 
@@ -144,11 +153,7 @@ export function useTranslation() {
       index 
     })
     processQueue()
-  }, [targetLang, processQueue, updateTranslatedText])
-
-  // targetLang을 참조하기 위한 ref
-  const targetLangRef = useRef(targetLang)
-  targetLangRef.current = targetLang
+  }, [processQueue, updateTranslatedText])
 
   /**
    * 번역 언어 변경 (기존 번역 유지, 이후만 새 언어로)
