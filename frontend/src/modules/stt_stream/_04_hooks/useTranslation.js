@@ -28,6 +28,8 @@ export function useTranslation() {
   // 번역 큐
   const pendingRef = useRef([])
   const processingRef = useRef(false)
+  // 원본 문장들 저장 (재번역용)
+  const originalSentencesRef = useRef([])
 
   /**
    * 단일 문장 번역
@@ -95,6 +97,10 @@ export function useTranslation() {
    */
   const addSentenceToTranslate = useCallback((sentence, sourceLang) => {
     if (!sentence?.trim()) return
+    
+    // 원본 문장 저장 (재번역용)
+    originalSentencesRef.current.push({ sentence: sentence.trim(), sourceLang })
+    
     if (sourceLang === targetLang) {
       // 같은 언어면 그대로 추가
       setTranslatedText(prev => prev ? `${prev}\n${sentence}` : sentence)
@@ -106,15 +112,48 @@ export function useTranslation() {
   }, [targetLang, processQueue])
 
   /**
+   * 모든 원본 문장을 새로운 언어로 재번역
+   */
+  const retranslateAll = useCallback(async (newTargetLang) => {
+    if (originalSentencesRef.current.length === 0) return
+    
+    setIsTranslating(true)
+    setTranslatedText('')
+    
+    const translatedSentences = []
+    
+    for (const { sentence, sourceLang } of originalSentencesRef.current) {
+      if (sourceLang === newTargetLang) {
+        // 같은 언어면 그대로 사용
+        translatedSentences.push(sentence)
+      } else {
+        // 다른 언어면 번역
+        const translated = await translateSentence(sentence, sourceLang, newTargetLang)
+        if (translated) {
+          translatedSentences.push(translated)
+        }
+      }
+    }
+    
+    setTranslatedText(translatedSentences.join('\n'))
+    setIsTranslating(false)
+  }, [translateSentence])
+
+  /**
    * 번역 언어 변경
    */
-  const changeTargetLang = useCallback((newLang) => {
+  const changeTargetLang = useCallback(async (newLang) => {
+    if (newLang === targetLang) return
+    
     setTargetLang(newLang)
-    // 언어 변경 시 기존 번역 초기화
-    setTranslatedText('')
+    
+    // 기존 번역 상태 초기화
     translatedSentencesRef.current.clear()
     pendingRef.current = []
-  }, [])
+    
+    // 기존 문장들을 새로운 언어로 재번역
+    await retranslateAll(newLang)
+  }, [targetLang, retranslateAll])
 
   /**
    * 초기화
@@ -124,6 +163,7 @@ export function useTranslation() {
     setError(null)
     translatedSentencesRef.current.clear()
     pendingRef.current = []
+    originalSentencesRef.current = []
   }, [])
 
   return {

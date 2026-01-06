@@ -6,7 +6,7 @@
 import { useEffect, useRef } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
-import { useVoskRecognition, useAutoScroll, useTranslation, TRANSLATION_LANGUAGES } from '../_04_hooks'
+import { useVoskRecognition, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES } from '../_04_hooks'
 import {
   DebugPanel,
   LanguageSelect,
@@ -49,12 +49,28 @@ export function SttStreamView() {
     clearTranslation,
   } = useTranslation()
 
+  const {
+    formattedTime,
+    start: startTimer,
+    stop: stopTimer,
+    reset: resetTimer
+  } = useTimer()
+
   const fullText = getFullText()
   
   const { containerRef: leftRef, handleScroll: handleLeftScroll } = useAutoScroll([finalText, interimText])
   const { containerRef: rightRef, handleScroll: handleRightScroll } = useAutoScroll([translatedText])
 
   const prevFinalTextRef = useRef('')
+
+  // STT 상태에 따라 타이머 제어
+  useEffect(() => {
+    if (isRunning) {
+      startTimer()
+    } else {
+      stopTimer()
+    }
+  }, [isRunning, startTimer, stopTimer])
 
   useEffect(() => {
     if (!finalText || finalText === prevFinalTextRef.current) return
@@ -82,6 +98,7 @@ export function SttStreamView() {
   const handleClear = () => {
     clear()
     clearTranslation()
+    resetTimer()
     prevFinalTextRef.current = ''
   }
 
@@ -154,7 +171,9 @@ export function SttStreamView() {
                 disabled={isRunning || isLoading}
                 label=""
               />
-              <span className="stt-char-count">{(finalText || '').length} chars</span>
+              <span className="stt-char-count">
+                {(finalText || '').length} chars • {formattedTime}
+              </span>
             </div>
             <div 
               className="stt-panel-content"

@@ -6,3 +6,4 @@
 export { useVoskRecognition, default as voskRecognition } from './useVoskRecognition'
 export { useAutoScroll } from './useAutoScroll'
 export { useTranslation, TRANSLATION_LANGUAGES } from './useTranslation'
+export { useTimer } from './useTimer'
