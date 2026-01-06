@@ -1,0 +1,132 @@
+/* ========================================
+   Translator 모듈 스타일
+   ======================================== */
+
+/* 언어 선택 영역 */
+.translator-lang-selectors {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.translator-lang-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.translator-lang-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.translator-lang-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  background: #f8fafc;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.translator-lang-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #ffffff;
+}
+
+.translator-arrow {
+  font-size: 1.5rem;
+  color: #64748b;
+  padding-bottom: 0.5rem;
+}
+
+/* 텍스트 영역 */
+.translator-section {
+  margin-bottom: 1.5rem;
+}
+
+.translator-textarea {
+  width: 100%;
+  padding: 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+  background: #ffffff;
+  color: #1e293b;
+  transition: all 0.2s ease;
+  min-height: 150px;
+}
+
+.translator-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.translator-textarea::placeholder {
+  color: #94a3b8;
+}
+
+.translator-textarea--output {
+  background-color: #f8fafc;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* 번역 버튼 */
+.translator-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.translator-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.translator-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.translator-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .translator-lang-selectors {
+    flex-direction: column;
+  }
+
+  .translator-arrow {
+    transform: rotate(90deg);
+    text-align: center;
+    padding: 0;
+  }
+  
+  .translator-lang-group {
+    min-width: 100%;
+  }
+}

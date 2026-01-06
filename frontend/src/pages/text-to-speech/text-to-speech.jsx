@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PageLayout, PageBox } from '../../components/layout/PageLayout'
 import './text-to-speech.css'
 
 function TextToSpeech() {
@@ -43,13 +44,8 @@ function TextToSpeech() {
   }
 
   return (
-    <div className="text-to-speech">
-      <div className="text-to-speech-container">
-        <div className="flex flex-col items-center text-center gap-4 -mt-6">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tighter" style={{ color: '#3E424D' }}>Text to Speech</h1>
-        </div>
-
-        <div className="tts-box">
+    <PageLayout title="Text to Speech" subtitle="Convert text to speech in multiple languages">
+      <PageBox>
           <div className="language-select-wrapper">
             <label htmlFor="tts-language">Language:</label>
             <select
@@ -91,9 +87,8 @@ function TextToSpeech() {
               ⏹ Stop
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </PageBox>
+    </PageLayout>
   )
 }
 

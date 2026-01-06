@@ -1,0 +1,337 @@
+/* ========================================
+   PageLayout - 공통 페이지 레이아웃 스타일
+   ======================================== */
+
+.page-layout {
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.page-layout--full-height {
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+
+.page-layout__container {
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-layout--full-height .page-layout__container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 페이지 타이틀 */
+.page-layout__title {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  color: #3E424D;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .page-layout__title {
+    font-size: 2.25rem;
+  }
+}
+
+/* 페이지 서브타이틀 */
+.page-layout__subtitle {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+/* 콘텐츠 영역 */
+.page-layout__content {
+  width: 100%;
+}
+
+.page-layout__content--flex {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 페이지 박스 */
+.page-layout__box {
+  background: #ffffff;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #1e293b;
+}
+
+.page-layout__box:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.page-layout__box--no-padding {
+  padding: 0;
+  overflow: hidden;
+}
+
+.page-layout__box--flex {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ========================================
+   공통 폼 요소 스타일
+   ======================================== */
+
+/* 셀렉트 박스 */
+.page-select {
+  padding: 0.625rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #f8fafc;
+  cursor: pointer;
+  min-width: 120px;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.page-select:hover {
+  border-color: #cbd5e1;
+}
+
+.page-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.page-select:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 텍스트에어리어 */
+.page-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+  background: #ffffff;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.page-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.page-textarea::placeholder {
+  color: #94a3b8;
+}
+
+.page-textarea--readonly {
+  background-color: #f8fafc;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* 버튼 스타일 */
+.page-btn {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.page-btn--primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.page-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.page-btn--secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.page-btn--secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.page-btn--success {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.page-btn--success:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
+}
+
+.page-btn--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.page-btn--danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.page-btn--warning {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+}
+
+.page-btn--warning:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.4);
+}
+
+.page-btn--full {
+  width: 100%;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 인풋 */
+.page-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #ffffff;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.page-input::placeholder {
+  color: #94a3b8;
+}
+
+/* 라벨 */
+.page-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+/* 폼 그룹 */
+.page-form-group {
+  margin-bottom: 1rem;
+}
+
+/* 노트/힌트 텍스트 */
+.page-note {
+  margin-top: 0.75rem;
+  padding: 0.625rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* 경고 박스 */
+.page-warning {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #fcd34d;
+  font-size: 0.875rem;
+}
+
+/* ========================================
+   반응형
+   ======================================== */
+@media (max-width: 768px) {
+  .page-layout {
+    padding: 0 0.75rem;
+  }
+  
+  .page-layout__title {
+    font-size: 2rem;
+  }
+  
+  .page-layout__subtitle {
+    font-size: 0.9375rem;
+    margin-bottom: 1rem;
+  }
+  
+  .page-layout__box {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-layout {
+    padding: 0 0.5rem;
+  }
+  
+  .page-layout__title {
+    font-size: 1.75rem;
+  }
+  
+  .page-layout__box {
+    padding: 1rem;
+  }
+  
+  .page-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+}

@@ -1,0 +1,400 @@
+/* ========================================
+   STT Stream 모듈 스타일
+   PageLayout 기반
+   ======================================== */
+
+/* 컨트롤 버튼 바 (상단) */
+.stt-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.stt-buttons-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 양쪽 패널 레이아웃 */
+.stt-dual-panels {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.stt-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stt-panel-left {
+  border-right: 1px solid #e5e7eb;
+}
+
+.stt-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  min-height: 52px;
+  flex-shrink: 0;
+  background: #fafbfc;
+}
+
+.stt-panel-content {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.8;
+  scroll-behavior: smooth;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 0;
+}
+
+/* 텍스트 스타일 */
+.stt-final-text {
+  color: #1e293b;
+}
+
+.stt-interim-text {
+  color: #64748b;
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.stt-translated-text {
+  color: #1e293b;
+}
+
+.stt-placeholder {
+  color: #94a3b8;
+}
+
+.stt-char-count {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stt-translating-badge {
+  color: #f97316;
+  font-size: 12px;
+  font-weight: 500;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 스왑 버튼 */
+.stt-swap-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 16px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 언어 선택 */
+.stt-stream-select-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stt-stream-select-group label {
+  font-weight: 500;
+  color: #475569;
+  font-size: 13px;
+}
+
+.stt-stream-select-group select,
+.stt-target-lang-select {
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f8fafc;
+  cursor: pointer;
+  min-width: 120px;
+  color: #1e293b;
+}
+
+.stt-stream-select-group select:hover,
+.stt-target-lang-select:hover {
+  border-color: #cbd5e1;
+}
+
+.stt-stream-select-group select:focus,
+.stt-target-lang-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.stt-stream-select-group select:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 버튼 스타일 */
+.stt-stream-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.stt-stream-btn:not(.secondary):not(.debug) {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+}
+
+.stt-stream-btn.primary {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.stt-stream-btn:not(.secondary):not(.debug):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.4);
+}
+
+.stt-stream-btn.recording {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.stt-stream-btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.stt-stream-btn.secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.stt-stream-btn.debug {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+
+.stt-stream-btn.debug.active {
+  background: #d97706;
+  color: white;
+  border-color: #d97706;
+}
+
+.stt-stream-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 경고 박스 */
+.stt-warning-box {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-top: 16px;
+  text-align: center;
+  border: 1px solid #fcd34d;
+}
+
+/* 참고사항 */
+.stt-stream-notes {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 상태 표시 */
+.stt-stream-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.stt-stream-progress {
+  width: 150px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stt-stream-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316, #ea580c);
+  transition: width 0.3s ease;
+}
+
+.stt-stream-status-listening {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.stt-stream-pulse {
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.stt-stream-status-error {
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stt-stream-status-ready {
+  color: #22c55e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ========================================
+   태블릿 반응형 (768px 이하)
+   ======================================== */
+@media (max-width: 768px) {
+  .stt-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .stt-buttons-group {
+    justify-content: center;
+  }
+  
+  /* 패널 상하 배치 */
+  .stt-dual-panels {
+    flex-direction: column;
+    flex: none;
+  }
+  
+  .stt-panel-left {
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .stt-panel-content {
+    height: 200px;
+    min-height: 200px;
+    max-height: 200px;
+    flex: none;
+  }
+  
+  .stt-swap-button {
+    display: none;
+  }
+  
+  .stt-stream-notes {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+}
+
+/* ========================================
+   모바일 반응형 (480px 이하)
+   ======================================== */
+@media (max-width: 480px) {
+  .stt-controls-bar {
+    padding: 10px 12px;
+  }
+  
+  .stt-buttons-group {
+    gap: 6px;
+  }
+  
+  .stt-stream-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  
+  .stt-panel-header {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .stt-panel-content {
+    height: 180px;
+    min-height: 180px;
+    max-height: 180px;
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .stt-stream-select-group select,
+  .stt-target-lang-select {
+    min-width: 100px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  .stt-char-count {
+    font-size: 11px;
+  }
+}

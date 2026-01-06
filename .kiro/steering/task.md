@@ -11,6 +11,7 @@ Vosk 기반 브라우저 실시간 음성인식 (STT)
 - vosk-browser 라이브러리를 사용한 로컬 STT
 - Google 서버 의존성 제거 (Web Speech API 대체)
 - 실시간 단어 표시 (partialresult 이벤트)
+- 온라인 토큰 단위로 비용이 발생되는 모듈은 지양한다. 
 - 디버그 패널 제공
 - 새 라우트: http://localhost:3000/stt-stream
 
@@ -21,42 +22,6 @@ Vosk 기반 브라우저 실시간 음성인식 (STT)
 
 All code lives under:
 src/stt_webspeech_stream
-
-## 2. Folder Layout
-
-```
-src/stt_webspeech_stream
-  ui/
-    SttStreamWebSpeechPage.jsx   # 메인 페이지 컴포넌트
-    SttStreamWebSpeechPage.css   # 스타일
-    DebugPanel.jsx               # 디버그 로그 패널
-  app/
-    VoskController.js            # Vosk 음성인식 컨트롤러 (메인)
-    WebSpeechController.js       # Web Speech API 컨트롤러 (레거시)
-    WhisperController.js         # Whisper 컨트롤러 (대안)
-    debugLogger.js               # 디버그 로깅 유틸리티
-    normalize.js                 # 텍스트 정규화
-    overlapMerge.js              # 중복 제거 병합
-    idleRestart.js               # 유휴 재시작 관리
-  store/
-    TranscriptStore.js           # 트랜스크립트 상태 관리
-    DebugStore.js                # 디버그 로그 상태 관리
-```
-
-## 3. High-level Flow
-
-```mermaid
-flowchart LR
-  UI[React /stt-stream] --> CTRL[VoskController]
-  CTRL --> MODEL[Vosk Model Load]
-  MODEL --> REC[KaldiRecognizer]
-  REC -->|partialresult| STORE[TranscriptStore interim]
-  REC -->|result| STORE[TranscriptStore final append]
-  CTRL --> AUDIO[AudioContext + ScriptProcessor]
-  AUDIO -->|onaudioprocess| REC
-  CTRL --> DBG[DebugLogger DebugStore]
-  DBG --> UI
-```
 
 ## 4. Key Features
 

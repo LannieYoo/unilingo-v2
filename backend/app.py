@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Flask Application Entry Point
-Creates and configures the Flask application
+Flask 애플리케이션 진입점
 """
 
 import os
@@ -14,21 +14,29 @@ from flask import Flask
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.config import get_config
-from backend.middleware.cors_handler import init_cors
-from backend.middleware.request_logger import init_request_logger
-from backend.middleware.error_handler import init_error_handler
-from backend.middleware.rate_limiter import init_rate_limiter
+from backend.src.common.modules import (
+    # Middleware
+    init_cors,
+    init_request_logger,
+    init_error_handler,
+    init_rate_limiter,
+    # Blueprints
+    translation_bp,
+    dictionary_bp,
+    stt_bp,
+    health_bp,
+)
 
 
 def create_app(config_name: str = None) -> Flask:
     """
-    Create and configure Flask application
+    Flask 애플리케이션 생성 및 설정
     
     Args:
-        config_name: Configuration environment name (development, production, testing)
+        config_name: 설정 환경 이름 (development, production, testing)
         
     Returns:
-        Configured Flask application instance
+        설정된 Flask 애플리케이션 인스턴스
     """
     app = Flask(__name__)
     
@@ -54,13 +62,11 @@ def create_app(config_name: str = None) -> Flask:
     if app.config.get('RATE_LIMIT_ENABLED', True):
         init_rate_limiter(app)
     
-    # Register blueprints
-    from backend.routes import translation, dictionary, stt, health
-    
-    app.register_blueprint(translation.bp)
-    app.register_blueprint(dictionary.bp)
-    app.register_blueprint(stt.bp)
-    app.register_blueprint(health.bp)
+    # Register blueprints from new module structure
+    app.register_blueprint(translation_bp)
+    app.register_blueprint(dictionary_bp)
+    app.register_blueprint(stt_bp)
+    app.register_blueprint(health_bp)
     
     # Root endpoint
     @app.route('/')
@@ -75,7 +81,7 @@ def create_app(config_name: str = None) -> Flask:
 
 
 def main():
-    """Main function to run the Flask application"""
+    """Flask 애플리케이션 실행"""
     config_name = os.getenv('FLASK_ENV', 'development')
     app = create_app(config_name)
     
