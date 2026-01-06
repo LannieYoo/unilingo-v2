@@ -398,3 +398,91 @@
     font-size: 11px;
   }
 }
+
+
+/* ========================================
+   Retranslate 버튼 및 Progress Bar
+   ======================================== */
+
+.stt-target-lang-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stt-retranslate-btn {
+  padding: 6px 12px;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #eff6ff;
+  color: #3b82f6;
+  white-space: nowrap;
+}
+
+.stt-retranslate-btn:hover:not(:disabled) {
+  background: #3b82f6;
+  color: white;
+}
+
+.stt-retranslate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+/* Progress bar for retranslation */
+.stt-retranslate-progress {
+  position: relative;
+  height: 24px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.stt-retranslate-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  transition: width 0.3s ease;
+}
+
+.stt-retranslate-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e293b;
+  text-shadow: 0 0 2px white;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .stt-target-lang-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .stt-retranslate-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stt-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .stt-target-lang-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

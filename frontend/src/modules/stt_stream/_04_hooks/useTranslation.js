@@ -19,20 +19,20 @@ export const TRANSLATION_LANGUAGES = [
  */
 export function useTranslation() {
   const [translatedText, setTranslatedText] = useState('')
-  const [targetLang, setTargetLang] = useState('ko')
+  const [targetLang, setTargetLangState] = useState('ko')
   const [isTranslating, setIsTranslating] = useState(false)
+  const [isRetranslating, setIsRetranslating] = useState(false)
+  const [retranslateProgress, setRetranslateProgress] = useState(0)
   const [error, setError] = useState(null)
   
-  // 번역된 문장 추적 (중복 방지)
-  const translatedSentencesRef = useRef(new Set())
+  // 원본 문장들 저장 (재번역용) - {sentence, sourceLang, translatedText, targetLang}
+  const sentencesRef = useRef([])
   // 번역 큐
   const pendingRef = useRef([])
   const processingRef = useRef(false)
-  // 원본 문장들 저장 (재번역용)
-  const originalSentencesRef = useRef([])
 
   /**
-   * 단일 문장 번역
+   * 단일 문장 번역 API 호출
    */
   const translateSentence = useCallback(async (text, sourceLang, targetLang) => {
     if (!text?.trim()) return null
@@ -43,8 +43,6 @@ export function useTranslation() {
     }
     
     try {
-      console.log(`[Translation] Translating: "${text}" from ${sourceLang} to ${targetLang}`)
-      
       const response = await fetch(`${API_BASE}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,8 +58,6 @@ export function useTranslation() {
       }
       
       const data = await response.json()
-      console.log(`[Translation] Result:`, data)
-      
       return data.translated_text || null
     } catch (err) {
       console.error('[Translation] Error:', err)
@@ -70,8 +66,9 @@ export function useTranslation() {
     }
   }, [])
 
+
   /**
-   * 큐 처리
+   * 큐 처리 - 실시간 번역
    */
   const processQueue = useCallback(async () => {
     if (processingRef.current || pendingRef.current.length === 0) return
@@ -80,21 +77,25 @@ export function useTranslation() {
     setIsTranslating(true)
     
     while (pendingRef.current.length > 0) {
-      const { sentence, sourceLang, targetLang: tLang } = pendingRef.current.shift()
+      const { sentence, sourceLang, targetLang: tLang, index } = pendingRef.current.shift()
       
-      // 이미 번역된 문장 스킵
-      const key = `${sentence}|${sourceLang}|${tLang}`
-      if (translatedSentencesRef.current.has(key)) continue
+      let translatedResult = sentence // 기본값은 원본
       
-      const translated = await translateSentence(sentence, sourceLang, tLang)
-      
-      if (translated) {
-        translatedSentencesRef.current.add(key)
-        setTranslatedText(prev => {
-          const newText = prev ? `${prev}\n${translated}` : translated
-          return newText
-        })
+      if (sourceLang !== tLang) {
+        const translated = await translateSentence(sentence, sourceLang, tLang)
+        if (translated) {
+          translatedResult = translated
+        }
       }
+      
+      // 문장 저장소 업데이트
+      if (sentencesRef.current[index]) {
+        sentencesRef.current[index].translatedText = translatedResult
+        sentencesRef.current[index].targetLang = tLang
+      }
+      
+      // 번역 텍스트 업데이트
+      updateTranslatedText()
     }
     
     processingRef.current = false
@@ -102,83 +103,98 @@ export function useTranslation() {
   }, [translateSentence])
 
   /**
-   * 새 문장 번역 요청
+   * 번역 텍스트 업데이트
+   */
+  const updateTranslatedText = useCallback(() => {
+    const texts = sentencesRef.current
+      .map(s => s.translatedText)
+      .filter(t => t)
+    setTranslatedText(texts.join('\n'))
+  }, [])
+
+  /**
+   * 새 문장 번역 요청 (실시간)
    */
   const addSentenceToTranslate = useCallback((sentence, sourceLang) => {
     if (!sentence?.trim()) return
     
-    // 원본 문장 저장 (재번역용)
-    originalSentencesRef.current.push({ sentence: sentence.trim(), sourceLang })
+    const currentTargetLang = targetLang
+    const index = sentencesRef.current.length
     
-    if (sourceLang === targetLang) {
-      // 같은 언어면 그대로 추가
-      setTranslatedText(prev => prev ? `${prev}\n${sentence}` : sentence)
+    // 문장 저장
+    sentencesRef.current.push({
+      sentence: sentence.trim(),
+      sourceLang,
+      translatedText: null,
+      targetLang: currentTargetLang
+    })
+    
+    // 같은 언어면 바로 표시
+    if (sourceLang === currentTargetLang) {
+      sentencesRef.current[index].translatedText = sentence.trim()
+      updateTranslatedText()
       return
     }
     
-    pendingRef.current.push({ sentence, sourceLang, targetLang })
+    // 번역 큐에 추가
+    pendingRef.current.push({ 
+      sentence: sentence.trim(), 
+      sourceLang, 
+      targetLang: currentTargetLang,
+      index 
+    })
     processQueue()
-  }, [targetLang, processQueue])
+  }, [targetLang, processQueue, updateTranslatedText])
+
+  // targetLang을 참조하기 위한 ref
+  const targetLangRef = useRef(targetLang)
+  targetLangRef.current = targetLang
 
   /**
-   * 모든 원본 문장을 새로운 언어로 재번역
+   * 번역 언어 변경 (기존 번역 유지, 이후만 새 언어로)
    */
-  const retranslateAll = useCallback(async (newTargetLang) => {
-    if (originalSentencesRef.current.length === 0) return
+  const setTargetLang = useCallback((newLang) => {
+    if (newLang === targetLangRef.current) return
+    setTargetLangState(newLang)
+  }, [])
+
+  /**
+   * 전체 재번역 (Retranslate All)
+   */
+  const retranslateAll = useCallback(async () => {
+    if (sentencesRef.current.length === 0) return
     
-    console.log(`[Translation] Retranslating ${originalSentencesRef.current.length} sentences to ${newTargetLang}`)
-    console.log(`[Translation] Original sentences:`, originalSentencesRef.current)
+    const currentTargetLang = targetLangRef.current
+    const total = sentencesRef.current.length
     
-    setIsTranslating(true)
-    setTranslatedText('')
+    setIsRetranslating(true)
+    setRetranslateProgress(0)
     
-    const translatedSentences = []
-    
-    for (const { sentence, sourceLang } of originalSentencesRef.current) {
-      console.log(`[Translation] Processing: "${sentence}" (source: ${sourceLang}, target: ${newTargetLang})`)
+    for (let i = 0; i < total; i++) {
+      const item = sentencesRef.current[i]
+      const { sentence, sourceLang } = item
       
-      // 원본 언어와 타겟 언어가 같으면 원본 그대로 사용
-      if (sourceLang === newTargetLang) {
-        console.log(`[Translation] Same language, using original`)
-        translatedSentences.push(sentence)
+      if (sourceLang === currentTargetLang) {
+        // 같은 언어면 원본 사용
+        sentencesRef.current[i].translatedText = sentence
+        sentencesRef.current[i].targetLang = currentTargetLang
       } else {
-        // 다른 언어면 번역 API 호출
-        const translated = await translateSentence(sentence, sourceLang, newTargetLang)
-        console.log(`[Translation] Translated result: "${translated}"`)
-        
-        if (translated) {
-          translatedSentences.push(translated)
-        } else {
-          // 번역 실패 시 "[번역 실패]" 표시 대신 원본 + 표시
-          translatedSentences.push(`[${sourceLang}→${newTargetLang}] ${sentence}`)
-        }
+        // 다른 언어면 번역
+        const translated = await translateSentence(sentence, sourceLang, currentTargetLang)
+        sentencesRef.current[i].translatedText = translated || sentence
+        sentencesRef.current[i].targetLang = currentTargetLang
       }
+      
+      // 진행률 업데이트
+      setRetranslateProgress(Math.round(((i + 1) / total) * 100))
+      
+      // 실시간으로 텍스트 업데이트
+      updateTranslatedText()
     }
     
-    console.log(`[Translation] Final results:`, translatedSentences)
-    
-    // 결과가 있으면 표시
-    if (translatedSentences.length > 0) {
-      setTranslatedText(translatedSentences.join('\n'))
-    }
-    setIsTranslating(false)
-  }, [translateSentence])
-
-  /**
-   * 번역 언어 변경
-   */
-  const changeTargetLang = useCallback(async (newLang) => {
-    if (newLang === targetLang) return
-    
-    setTargetLang(newLang)
-    
-    // 기존 번역 상태 초기화
-    translatedSentencesRef.current.clear()
-    pendingRef.current = []
-    
-    // 기존 문장들을 새로운 언어로 재번역
-    await retranslateAll(newLang)
-  }, [targetLang, retranslateAll])
+    setIsRetranslating(false)
+    setRetranslateProgress(0)
+  }, [translateSentence, updateTranslatedText])
 
   /**
    * 초기화
@@ -186,18 +202,21 @@ export function useTranslation() {
   const clearTranslation = useCallback(() => {
     setTranslatedText('')
     setError(null)
-    translatedSentencesRef.current.clear()
+    sentencesRef.current = []
     pendingRef.current = []
-    originalSentencesRef.current = []
+    setRetranslateProgress(0)
   }, [])
 
   return {
     translatedText,
     targetLang,
     isTranslating,
+    isRetranslating,
+    retranslateProgress,
     error,
-    setTargetLang: changeTargetLang,
+    setTargetLang,
     addSentenceToTranslate,
+    retranslateAll,
     clearTranslation,
   }
 }

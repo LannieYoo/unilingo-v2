@@ -44,8 +44,11 @@ export function SttStreamView() {
     translatedText,
     targetLang,
     isTranslating,
+    isRetranslating,
+    retranslateProgress,
     setTargetLang,
     addSentenceToTranslate,
+    retranslateAll,
     clearTranslation,
   } = useTranslation()
 
@@ -197,17 +200,28 @@ export function SttStreamView() {
           {/* 우측: 번역 */}
           <div className="stt-panel stt-panel-right">
             <div className="stt-panel-header">
-              <select
-                className="stt-target-lang-select"
-                value={targetLang}
-                onChange={(e) => setTargetLang(e.target.value)}
-              >
-                {TRANSLATION_LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
+              <div className="stt-target-lang-controls">
+                <select
+                  className="stt-target-lang-select"
+                  value={targetLang}
+                  onChange={(e) => setTargetLang(e.target.value)}
+                  disabled={isRetranslating}
+                >
+                  {TRANSLATION_LANGUAGES.map(lang => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="stt-retranslate-btn"
+                  onClick={retranslateAll}
+                  disabled={isRunning || isRetranslating || !translatedText}
+                  title="Retranslate all text to selected language"
+                >
+                  {isRetranslating ? 'Retranslating...' : 'Retranslate All'}
+                </button>
+              </div>
               <span className="stt-char-count">
                 {isTranslating ? (
                   <span className="stt-translating-badge">Translating...</span>
@@ -216,6 +230,18 @@ export function SttStreamView() {
                 )}
               </span>
             </div>
+            
+            {/* Progress bar for retranslation */}
+            {isRetranslating && (
+              <div className="stt-retranslate-progress">
+                <div 
+                  className="stt-retranslate-progress-bar"
+                  style={{ width: `${retranslateProgress}%` }}
+                />
+                <span className="stt-retranslate-progress-text">{retranslateProgress}%</span>
+              </div>
+            )}
+            
             <div 
               className="stt-panel-content"
               ref={rightRef}
