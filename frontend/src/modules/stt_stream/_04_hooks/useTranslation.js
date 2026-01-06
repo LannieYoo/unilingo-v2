@@ -123,19 +123,21 @@ export function useTranslation() {
     const translatedSentences = []
     
     for (const { sentence, sourceLang } of originalSentencesRef.current) {
+      // 원본 언어와 타겟 언어가 같으면 원본 그대로 사용
       if (sourceLang === newTargetLang) {
-        // 같은 언어면 그대로 사용
         translatedSentences.push(sentence)
       } else {
-        // 다른 언어면 번역
+        // 다른 언어면 번역 API 호출
         const translated = await translateSentence(sentence, sourceLang, newTargetLang)
-        if (translated) {
-          translatedSentences.push(translated)
-        }
+        // 번역 실패 시에도 원본 문장 추가 (빈 결과 방지)
+        translatedSentences.push(translated || sentence)
       }
     }
     
-    setTranslatedText(translatedSentences.join('\n'))
+    // 결과가 있으면 표시
+    if (translatedSentences.length > 0) {
+      setTranslatedText(translatedSentences.join('\n'))
+    }
     setIsTranslating(false)
   }, [translateSentence])
 

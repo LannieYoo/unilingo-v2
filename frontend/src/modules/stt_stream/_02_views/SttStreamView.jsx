@@ -80,7 +80,8 @@ export function SttStreamView() {
     
     if (newPart) {
       const sentences = newPart.split(/(?<=[.!?。！？])\s*/).filter(s => s.trim())
-      const sourceLang = detectLanguage(newPart) || selectedLang
+      // STT 모델의 선택된 언어를 원본 언어로 사용 (더 정확함)
+      const sourceLang = selectedLang
       
       sentences.forEach(sentence => {
         if (sentence.trim()) {
