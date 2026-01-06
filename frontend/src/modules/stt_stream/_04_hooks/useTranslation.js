@@ -37,7 +37,14 @@ export function useTranslation() {
   const translateSentence = useCallback(async (text, sourceLang, targetLang) => {
     if (!text?.trim()) return null
     
+    // 같은 언어면 번역 불필요
+    if (sourceLang === targetLang) {
+      return text
+    }
+    
     try {
+      console.log(`[Translation] Translating: "${text}" from ${sourceLang} to ${targetLang}`)
+      
       const response = await fetch(`${API_BASE}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,9 +60,11 @@ export function useTranslation() {
       }
       
       const data = await response.json()
-      return data.translated_text || text
+      console.log(`[Translation] Result:`, data)
+      
+      return data.translated_text || null
     } catch (err) {
-      console.error('Translation error:', err)
+      console.error('[Translation] Error:', err)
       setError(err.message)
       return null
     }
@@ -117,22 +126,36 @@ export function useTranslation() {
   const retranslateAll = useCallback(async (newTargetLang) => {
     if (originalSentencesRef.current.length === 0) return
     
+    console.log(`[Translation] Retranslating ${originalSentencesRef.current.length} sentences to ${newTargetLang}`)
+    console.log(`[Translation] Original sentences:`, originalSentencesRef.current)
+    
     setIsTranslating(true)
     setTranslatedText('')
     
     const translatedSentences = []
     
     for (const { sentence, sourceLang } of originalSentencesRef.current) {
+      console.log(`[Translation] Processing: "${sentence}" (source: ${sourceLang}, target: ${newTargetLang})`)
+      
       // 원본 언어와 타겟 언어가 같으면 원본 그대로 사용
       if (sourceLang === newTargetLang) {
+        console.log(`[Translation] Same language, using original`)
         translatedSentences.push(sentence)
       } else {
         // 다른 언어면 번역 API 호출
         const translated = await translateSentence(sentence, sourceLang, newTargetLang)
-        // 번역 실패 시에도 원본 문장 추가 (빈 결과 방지)
-        translatedSentences.push(translated || sentence)
+        console.log(`[Translation] Translated result: "${translated}"`)
+        
+        if (translated) {
+          translatedSentences.push(translated)
+        } else {
+          // 번역 실패 시 "[번역 실패]" 표시 대신 원본 + 표시
+          translatedSentences.push(`[${sourceLang}→${newTargetLang}] ${sentence}`)
+        }
       }
     }
+    
+    console.log(`[Translation] Final results:`, translatedSentences)
     
     // 결과가 있으면 표시
     if (translatedSentences.length > 0) {
