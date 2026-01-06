@@ -44,10 +44,10 @@ class Config:
     
     # Rate Limiting Configuration
     RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'true').lower() == 'true'
-    RATE_LIMIT_TRANSLATION = os.getenv('RATE_LIMIT_TRANSLATION', '100/hour')
-    RATE_LIMIT_DICTIONARY = os.getenv('RATE_LIMIT_DICTIONARY', '200/hour')
-    RATE_LIMIT_AUTOCOMPLETE = os.getenv('RATE_LIMIT_AUTOCOMPLETE', '500/hour')
-    RATE_LIMIT_STT = os.getenv('RATE_LIMIT_STT', '50/hour')
+    RATE_LIMIT_TRANSLATION = os.getenv('RATE_LIMIT_TRANSLATION', '1000/minute')  # 실시간 번역용 높은 제한
+    RATE_LIMIT_DICTIONARY = os.getenv('RATE_LIMIT_DICTIONARY', '500/minute')
+    RATE_LIMIT_AUTOCOMPLETE = os.getenv('RATE_LIMIT_AUTOCOMPLETE', '1000/minute')
+    RATE_LIMIT_STT = os.getenv('RATE_LIMIT_STT', '200/minute')
     
     # STT Configuration
     STT_ENABLED = os.getenv('STT_ENABLED', 'true').lower() == 'true'

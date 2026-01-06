@@ -14,6 +14,15 @@ export const TRANSLATION_LANGUAGES = [
   { code: 'zh', name: '中文' },
 ]
 
+// 재시도 설정
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1000
+
+/**
+ * 지연 함수
+ */
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
 /**
  * 번역 훅
  */
@@ -32,9 +41,9 @@ export function useTranslation() {
   const processingRef = useRef(false)
 
   /**
-   * 단일 문장 번역 API 호출
+   * 단일 문장 번역 API 호출 (재시도 로직 포함)
    */
-  const translateSentence = useCallback(async (text, sourceLang, targetLang) => {
+  const translateSentence = useCallback(async (text, sourceLang, targetLang, retryCount = 0) => {
     if (!text?.trim()) return null
     
     // 같은 언어면 번역 불필요
@@ -52,6 +61,15 @@ export function useTranslation() {
           target_lang: targetLang
         })
       })
+      
+      // Rate limit 에러 시 재시도
+      if (response.status === 429 && retryCount < MAX_RETRIES) {
+        const retryAfter = parseInt(response.headers.get('Retry-After') || '1', 10)
+        const waitTime = Math.max(retryAfter * 1000, RETRY_DELAY_MS * (retryCount + 1))
+        console.log(`[Translation] Rate limited, retrying in ${waitTime}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`)
+        await delay(waitTime)
+        return translateSentence(text, sourceLang, targetLang, retryCount + 1)
+      }
       
       if (!response.ok) {
         throw new Error(`Translation failed: ${response.status}`)
