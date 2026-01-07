@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import './home.css'
 
+const API_BASE = '/api'
+
 function Home() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
@@ -11,6 +13,35 @@ function Home() {
   const [isCheckingGrammar, setIsCheckingGrammar] = useState(false)
   const translateTimeoutRef = useRef(null)
   const grammarTimeoutRef = useRef(null)
+
+  /**
+   * 백엔드 번역 API 호출
+   */
+  const translateWithBackend = async (text, sourceCode, targetCode) => {
+    if (!text?.trim() || sourceCode === targetCode) {
+      return sourceCode === targetCode ? text : null
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text.trim(),
+          source_lang: sourceCode,
+          target_lang: targetCode
+        })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        return data.translated_text || null
+      }
+    } catch (err) {
+      console.error('[Translation] Backend API error:', err)
+    }
+    return null
+  }
 
   // 클립보드 복사 함수
   const copyToClipboard = async (text) => {
@@ -145,55 +176,8 @@ function Home() {
         return
       }
       
-      let translatedText = ''
-      const timeout = 3000 // 3초 타임아웃
-      
-      // 1. 직접 Google Translate API 시도 (가장 빠름)
-      try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), timeout)
-        const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(inputText)}`
-        const response = await fetch(googleUrl, { signal: controller.signal })
-        clearTimeout(timeoutId)
-        
-        if (response.ok) {
-          const googleData = await response.json()
-          if (googleData?.[0] && Array.isArray(googleData[0])) {
-            translatedText = googleData[0]
-              .filter(item => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
-              .map(item => item[0])
-              .join('')
-              .trim()
-          }
-        }
-      } catch (e) {
-        console.log('Direct Google Translate failed')
-      }
-      
-      // 2. MyMemory API 시도 (빠른 fallback)
-      if (!translatedText) {
-        try {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), timeout)
-          const response = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=${sourceCode}|${targetCode}`,
-            { signal: controller.signal }
-          )
-          clearTimeout(timeoutId)
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (data.responseStatus === 200 && data.responseData?.translatedText) {
-              translatedText = data.responseData.translatedText
-                .replace(/^t\d+\//, '')
-                .replace(/<[^>]*>/g, '')
-                .trim()
-            }
-          }
-        } catch (e) {
-          console.log('MyMemory failed')
-        }
-      }
+      // 백엔드 API 사용
+      const translatedText = await translateWithBackend(inputText, sourceCode, targetCode)
       
       if (translatedText) {
         setOutputText(translatedText)
@@ -288,61 +272,17 @@ function Home() {
         // 2. 그 결과를 새 출력 언어로 번역하여 출력 필드에 표시
         setIsTranslating(true)
         try {
-          const langMap = {
-            'ko': 'ko',
-            'en': 'en',
-            'zh': 'zh'
-          }
-          
-          const prevSourceCode = langMap[prevSourceLangRef.current] || prevSourceLangRef.current
-          const newSourceCode = langMap[sourceLang] || sourceLang
-          const targetCode = langMap[targetLang] || targetLang
+          const prevSourceCode = prevSourceLangRef.current
+          const newSourceCode = sourceLang
+          const targetCode = targetLang
           
           // Step 1: 현재 입력 텍스트를 이전 입력 언어에서 새 입력 언어로 번역
           let translatedInput = inputText
           
           if (prevSourceCode !== newSourceCode) {
-            // Try Google Translate via CORS proxy
-            try {
-              const googleUrl1 = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${prevSourceCode}&tl=${newSourceCode}&dt=t&q=${encodeURIComponent(inputText)}`
-              const proxyUrl1 = `https://api.allorigins.win/get?url=${encodeURIComponent(googleUrl1)}`
-              
-              const googleResponse1 = await fetch(proxyUrl1)
-              
-              if (googleResponse1.ok) {
-                const proxyData1 = await googleResponse1.json()
-                if (proxyData1 && proxyData1.contents) {
-                  try {
-                    const googleData1 = JSON.parse(proxyData1.contents)
-                    if (googleData1 && Array.isArray(googleData1) && googleData1[0] && Array.isArray(googleData1[0])) {
-                      translatedInput = googleData1[0]
-                        .filter((item) => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
-                        .map((item) => item[0])
-                        .join('')
-                        .trim()
-                    }
-                  } catch (parseError) {
-                    console.log('Failed to parse Google Translate response:', parseError)
-                  }
-                }
-              }
-            } catch (googleError) {
-              // Fallback to MyMemory
-              const response1 = await fetch(
-                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=${prevSourceCode}|${newSourceCode}`
-              )
-              
-              if (response1.ok) {
-                const data1 = await response1.json()
-                if (data1.responseStatus === 200 && data1.responseData && data1.responseData.translatedText) {
-                  // Clean up translation result
-                  let cleanedInput = data1.responseData.translatedText
-                  cleanedInput = cleanedInput.replace(/^t\d+\//, '')
-                  cleanedInput = cleanedInput.replace(/<[^>]*>/g, '')
-                  cleanedInput = cleanedInput.trim()
-                  translatedInput = cleanedInput || inputText
-                }
-              }
+            const result = await translateWithBackend(inputText, prevSourceCode, newSourceCode)
+            if (result) {
+              translatedInput = result
             }
           }
           
@@ -352,57 +292,14 @@ function Home() {
           // Step 3: 번역된 입력을 새 출력 언어로 번역
           if (newSourceCode === targetCode) {
             setOutputText(translatedInput)
-            setIsTranslating(false)
           } else {
-            // Try Google Translate via CORS proxy
-            let finalTranslated = ''
-            try {
-              const googleUrl2 = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${newSourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(translatedInput)}`
-              const proxyUrl2 = `https://api.allorigins.win/get?url=${encodeURIComponent(googleUrl2)}`
-              
-              const googleResponse2 = await fetch(proxyUrl2)
-              
-              if (googleResponse2.ok) {
-                const proxyData2 = await googleResponse2.json()
-                if (proxyData2 && proxyData2.contents) {
-                  try {
-                    const googleData2 = JSON.parse(proxyData2.contents)
-                    if (googleData2 && Array.isArray(googleData2) && googleData2[0] && Array.isArray(googleData2[0])) {
-                      finalTranslated = googleData2[0]
-                        .filter((item) => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
-                        .map((item) => item[0])
-                        .join('')
-                        .trim()
-                    }
-                  } catch (parseError) {
-                    console.log('Failed to parse Google Translate response:', parseError)
-                  }
-                }
-              }
-            } catch (googleError) {
-              // Fallback to MyMemory
-              const response2 = await fetch(
-                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(translatedInput)}&langpair=${newSourceCode}|${targetCode}`
-              )
-              
-              if (response2.ok) {
-                const data2 = await response2.json()
-                if (data2.responseStatus === 200 && data2.responseData && data2.responseData.translatedText) {
-                  // Clean up translation result - remove unwanted tags/prefixes
-                  finalTranslated = data2.responseData.translatedText
-                  finalTranslated = finalTranslated.replace(/^t\d+\//, '')
-                  finalTranslated = finalTranslated.replace(/<[^>]*>/g, '')
-                  finalTranslated = finalTranslated.trim()
-                }
-              }
-            }
-            
-            setOutputText(finalTranslated)
-            setIsTranslating(false)
+            const finalTranslated = await translateWithBackend(translatedInput, newSourceCode, targetCode)
+            setOutputText(finalTranslated || '')
           }
         } catch (error) {
           console.error('Translation error:', error)
           setOutputText('')
+        } finally {
           setIsTranslating(false)
         }
       } else if (targetLangChanged && inputText.trim()) {
