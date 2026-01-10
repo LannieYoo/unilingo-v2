@@ -1,6 +1,6 @@
 /**
  * Transcript Store
- * 음성 인식 결과 상태 관리 (Zustand)
+ * Speech recognition result state management (Zustand)
  */
 
 import { create } from 'zustand'

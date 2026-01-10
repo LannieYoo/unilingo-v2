@@ -1,6 +1,6 @@
 /**
  * useVoskRecognition Hook
- * Vosk 기반 실시간 STT 로직
+ * Vosk-based real-time STT logic
  */
 
 import { useRef, useEffect, useCallback } from 'react'
@@ -31,7 +31,7 @@ export function useVoskRecognition() {
   const isRunningRef = useRef(false)
   const isModelLoadedRef = useRef(false)
 
-  // 지원 여부 확인
+  // Check support
   useEffect(() => {
     const supported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
     setIsSupported(supported)
@@ -40,7 +40,7 @@ export function useVoskRecognition() {
     }
   }, [setIsSupported])
 
-  // 모델 로드
+  // Load model
   const loadModel = useCallback(async () => {
     if (isModelLoadedRef.current && modelRef.current) {
       debugStore.info('Model already loaded')
@@ -75,7 +75,7 @@ export function useVoskRecognition() {
     }
   }, [selectedLang, setStatus, setLoadProgress])
 
-  // 언어 변경
+  // Change language
   const setLanguage = useCallback(async (lang) => {
     const newLang = lang.split('-')[0]
     if (selectedLang === newLang) return
@@ -88,7 +88,7 @@ export function useVoskRecognition() {
     debugStore.info('Language changed, model needs reload', { lang: newLang })
   }, [selectedLang, setStatus, setLoadProgress])
 
-  // 녹음 시작
+  // Start recording
   const start = useCallback(async () => {
     if (isRunningRef.current) {
       debugStore.warn('Already running')
@@ -101,7 +101,7 @@ export function useVoskRecognition() {
     }
 
     try {
-      // 마이크 접근
+      // Access microphone
       mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
         video: false,
         audio: {
@@ -112,13 +112,13 @@ export function useVoskRecognition() {
         }
       })
 
-      // AudioContext 생성
+      // Create AudioContext
       audioContextRef.current = new AudioContext({ sampleRate: SAMPLE_RATE })
       
-      // Recognizer 생성
+      // Create Recognizer
       recognizerRef.current = new modelRef.current.KaldiRecognizer(SAMPLE_RATE)
       
-      // 이벤트 핸들러 설정
+      // Set event handlers
       recognizerRef.current.on('result', (message) => {
         const text = message.result?.text
         if (text && text.trim()) {
@@ -137,7 +137,7 @@ export function useVoskRecognition() {
         }
       })
 
-      // 오디오 처리
+      // Audio processing
       const source = audioContextRef.current.createMediaStreamSource(mediaStreamRef.current)
       processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1)
       
@@ -164,12 +164,12 @@ export function useVoskRecognition() {
     }
   }, [loadModel, setStatus, setInterim, appendFinal])
 
-  // 녹음 중지
+  // Stop recording
   const stop = useCallback(async () => {
     debugStore.info('Stopping...')
     isRunningRef.current = false
 
-    // 마지막 결과 가져오기
+    // Get final result
     if (recognizerRef.current) {
       try {
         const finalResult = recognizerRef.current.retrieveFinalResult()
@@ -187,7 +187,7 @@ export function useVoskRecognition() {
       recognizerRef.current = null
     }
 
-    // 리소스 정리
+    // Cleanup resources
     if (processorRef.current) {
       processorRef.current.disconnect()
       processorRef.current = null
@@ -206,7 +206,7 @@ export function useVoskRecognition() {
     setStatus(STATUS.STOPPED)
   }, [setStatus, setInterim, appendFinal])
 
-  // 토글
+  // Toggle
   const toggle = useCallback(async () => {
     if (status === STATUS.LISTENING) {
       await stop()
@@ -215,7 +215,7 @@ export function useVoskRecognition() {
     }
   }, [status, start, stop])
 
-  // 리소스 해제
+  // Release resources
   const destroy = useCallback(() => {
     stop()
     if (modelRef.current) {
@@ -225,7 +225,7 @@ export function useVoskRecognition() {
     isModelLoadedRef.current = false
   }, [stop])
 
-  // 클린업
+  // Cleanup
   useEffect(() => {
     return () => {
       destroy()

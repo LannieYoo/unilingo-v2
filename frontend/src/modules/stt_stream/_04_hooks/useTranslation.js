@@ -7,11 +7,11 @@ import { useState, useCallback, useRef } from 'react'
 
 const API_BASE = '/api'
 
-// 지원 언어
+// Supported languages
 export const TRANSLATION_LANGUAGES = [
-  { code: 'ko', name: '한국어' },
+  { code: 'ko', name: 'Korean' },
   { code: 'en', name: 'English' },
-  { code: 'zh', name: '中文' },
+  { code: 'zh', name: 'Chinese' },
 ]
 
 // 재시도 설정

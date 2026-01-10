@@ -1,17 +1,17 @@
 /**
  * STT Stream Constants
- * 상수 정의
+ * Constants definition
  */
 
-// 지원 언어 옵션
+// Supported language options
 export const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
-  { value: 'ko', label: '한국어' },
-  { value: 'zh', label: '中文' },
-  { value: 'ja', label: '日本語' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: 'Korean' },
+  { value: 'zh', label: 'Chinese' },
+  { value: 'ja', label: 'Japanese' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  { value: 'de', label: 'German' },
 ]
 
 // Vosk 모델 URL (Vite 프록시를 통해 CORS 우회)
@@ -25,7 +25,7 @@ export const MODEL_URLS = {
   'de': '/vosk-models/vosk-model-small-de-0.15.zip',
 }
 
-// 상태 메시지
+// Status messages
 export const STATUS = {
   INIT: 'init',
   LOADING: 'loading',
@@ -35,7 +35,7 @@ export const STATUS = {
   ERROR: 'error'
 }
 
-// 디버그 로그 타입
+// Debug log types
 export const LOG_TYPES = {
   INFO: 'info',
   WARN: 'warn',
@@ -44,7 +44,7 @@ export const LOG_TYPES = {
   RESULT: 'result'
 }
 
-// 디버그 로그 색상
+// Debug log colors
 export const LOG_TYPE_COLORS = {
   info: '#3b82f6',
   warn: '#f59e0b',
@@ -53,7 +53,7 @@ export const LOG_TYPE_COLORS = {
   result: '#10b981'
 }
 
-// 기본 설정
+// Default settings
 export const DEFAULT_LANGUAGE = 'en'
 export const MAX_LOGS = 100
 export const SAMPLE_RATE = 16000

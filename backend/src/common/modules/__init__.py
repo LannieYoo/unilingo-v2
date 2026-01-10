@@ -11,6 +11,8 @@ from .middleware import (
     init_request_logger,
     init_error_handler,
     init_rate_limiter,
+    init_logging,
+    get_logger,
 )
 
 # Exception
@@ -43,6 +45,8 @@ __all__ = [
     'init_request_logger',
     'init_error_handler',
     'init_rate_limiter',
+    'init_logging',
+    'get_logger',
     # Exception
     'ICustomException',
     'TranslationError',

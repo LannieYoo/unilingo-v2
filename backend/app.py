@@ -20,6 +20,7 @@ from backend.src.common.modules import (
     init_request_logger,
     init_error_handler,
     init_rate_limiter,
+    init_logging,
     # Blueprints
     translation_bp,
     dictionary_bp,
@@ -47,6 +48,9 @@ def create_app(config_name: str = None) -> Flask:
     # Validate production configuration
     if config_name == 'production':
         config_class.validate()
+    
+    # Initialize logging first (before other middleware)
+    init_logging(app)
     
     # Initialize middleware (order matters!)
     # 1. CORS - must be first to handle preflight requests

@@ -10,6 +10,8 @@ from ._03_impls import (
     init_request_logger,
     init_error_handler,
     init_rate_limiter,
+    init_logging,
+    get_logger,
 )
 
 __all__ = [
@@ -17,4 +19,6 @@ __all__ = [
     'init_request_logger',
     'init_error_handler',
     'init_rate_limiter',
+    'init_logging',
+    'get_logger',
 ]

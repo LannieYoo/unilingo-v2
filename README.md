@@ -1,25 +1,113 @@
-# Speaking to Text - Multilingual Site
+# UniLingo - Multilingual Translation & Speech Recognition Platform
 
-OpenAPI Whisper를 이용한 다국어 사이트입니다. 음성 인식, 텍스트 변환, 번역 등의 기능을 제공합니다.
+A comprehensive multilingual platform featuring real-time speech recognition, translation, and dictionary services. Built with React frontend and Flask backend following modular architecture principles.
 
-## 기능
+## Features
 
-- **번역기**: LLM 기반 번역 기능
-- **사전찾기**: 한영, 한중, 중영 사전 검색
-- **Text to Speech**: 텍스트를 음성으로 변환
-- **Speech to Text**: 음성을 텍스트로 실시간 변환 (Whisper 사용)
-- **음성 녹음**: 음성 녹음 및 저장
-- **번역**: 다양한 영어 방언과 중국어 간체 번역
+- **Instant Translation**: Real-time text translation between Korean, English, and Chinese
+- **Speech to Text (STT)**: Browser-based real-time speech recognition using Vosk (offline capable)
+- **Dictionary**: Multi-language dictionary search (Korean-English, Korean-Chinese, English-Chinese)
+- **Text to Speech (TTS)**: Convert text to speech using Web Speech API
+- **Voice Recording**: Record and save audio files
 
-## 기술 스택
+## Tech Stack
 
-- **Frontend**: React.js, Vite, ES6
-- **Whisper**: OpenAI Whisper (로컬 실행)
-- **스타일링**: CSS (반응형 디자인)
+### Frontend
+- React 18 + Vite
+- Zustand (State Management)
+- Tailwind CSS
+- Vosk-browser (Offline STT)
 
-## 설치 및 실행
+### Backend
+- Flask (Python)
+- Modular 8-layer architecture
+- Rate limiting & caching middleware
 
-### 1. Frontend 설정
+## Project Structure
+
+```
+UniLingo/
+├── frontend/                    # React Frontend
+│   ├── src/
+│   │   ├── components/          # Shared components
+│   │   │   ├── header/
+│   │   │   ├── footer/
+│   │   │   └── layout/
+│   │   ├── modules/             # Feature modules (layered)
+│   │   │   ├── dictionary/
+│   │   │   ├── recording/
+│   │   │   ├── stt_stream/
+│   │   │   └── translator/
+│   │   ├── pages/               # Page components
+│   │   └── styles/              # Global styles
+│   └── package.json
+│
+├── backend/                     # Flask Backend
+│   ├── src/
+│   │   └── common/
+│   │       └── modules/         # Backend modules (8-layer)
+│   │           ├── cache/
+│   │           ├── dictionary/
+│   │           ├── exception/
+│   │           ├── health/
+│   │           ├── middleware/
+│   │           ├── stt/
+│   │           └── translation/
+│   ├── app.py
+│   ├── config.py
+│   └── requirements.txt
+│
+├── .kiro/
+│   └── steering/                # Development guidelines
+│       ├── backend-module-layering-standard.md
+│       ├── frontend-module-layering-standard.md
+│       ├── software-design-principles.md
+│       └── task.md
+│
+├── scripts/                     # Utility scripts
+├── logs/                        # Application logs
+└── doc/                         # Documentation
+```
+
+## Module Architecture
+
+### Frontend Module Structure (11 layers)
+```
+module_name/
+├── _01_router/      # Route configuration
+├── _02_views/       # Page view components
+├── _03_components/  # Reusable components
+├── _04_hooks/       # Business logic hooks
+├── _05_stores/      # State management (Zustand)
+├── _06_services/    # API calls
+├── _07_utils/       # Utility functions
+├── _08_constants/   # Constants
+├── _09_locales/     # i18n files
+├── _10_styles/      # Module styles
+└── index.js         # Module exports
+```
+
+### Backend Module Structure (8 layers)
+```
+module_name/
+├── _01_contracts/   # Interfaces & data contracts
+├── _02_abstracts/   # Abstract base classes
+├── _03_impls/       # Concrete implementations
+├── _04_services/    # Service entry points
+├── _05_dtos/        # Data transfer objects
+├── _06_models/      # Database models
+├── _07_router/      # API endpoints
+└── _08_utils/       # Utilities
+```
+
+## Installation & Setup
+
+### Prerequisites
+- Node.js 18+
+- Python 3.11+
+- npm or yarn
+
+### 1. Frontend Setup
 
 ```bash
 cd frontend
@@ -27,81 +115,77 @@ npm install
 npm run dev
 ```
 
-Frontend는 `http://localhost:3000`에서 실행됩니다.
+Frontend runs at `http://localhost:3000`
 
-### 2. Whisper 서버 설정 (Speech to Text 기능 사용 시 필요)
+### 2. Backend Setup
 
 ```bash
-# Python 패키지 설치
-pip install -r scripts/requirements_whisper.txt
-
-# FFmpeg 설치 필요 (Whisper 사용을 위해)
-# Windows: https://ffmpeg.org/download.html
-# macOS: brew install ffmpeg
-# Linux: sudo apt-get install ffmpeg
-
-# Whisper 서버 실행
-python scripts/whisper_server.py
+cd backend
+pip install -r requirements.txt
+python app.py
 ```
 
-Whisper 서버는 `http://localhost:8001`에서 실행됩니다.
+Backend runs at `http://localhost:8000`
 
-자세한 설정 방법은 `scripts/README_WHISPER.md`를 참고하세요.
+### 3. Run Both (Windows)
 
-## 프로젝트 구조
-
-```
-SpeakingToText/
-├── frontend/          # React 프론트엔드
-│   ├── src/
-│   │   ├── components/    # 공통 컴포넌트
-│   │   ├── pages/         # 페이지 컴포넌트
-│   │   └── styles/        # 스타일 파일
-│   └── package.json
-├── scripts/           # 유틸리티 스크립트
-│   ├── whisper_server.py      # Whisper 로컬 서버
-│   └── requirements_whisper.txt
-└── doc/              # 문서
-    └── introduction.md
+```bash
+run_all.bat
 ```
 
-## 주요 기능 설명
+## API Endpoints
 
-### Speech to Text
-- 실시간 음성 인식
-- 다양한 영어 방언 지원 (캐나다, 미국, 영국, 인도)
-- 자동 언어 인식 또는 수동 선택
-- 텍스트 파일 자동 저장
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/translate` | POST | Text translation |
+| `/api/dictionary/search` | GET | Dictionary search |
+| `/api/dictionary/autocomplete` | GET | Autocomplete suggestions |
+| `/api/stt/transcribe` | POST | Speech to text |
+| `/api/health` | GET | Health check |
 
-### Text to Speech
-- 브라우저 내장 Web Speech API 사용
-- 한국어, 영어, 중국어 간체 지원
+## Configuration
 
-### 번역기
-- LLM 기반 번역 (무료 API 사용)
-- 한국어, 영어, 중국어 간체 지원
+### Backend Environment Variables
 
-## 개발 가이드
+Create `backend/.env` file:
 
-### 환경 변수
-- Frontend `.env` 파일은 Git에 업로드하지 않습니다.
-- 필요시 `.env.example` 파일을 참고하여 `.env` 파일을 생성하세요.
+```env
+FLASK_ENV=development
+FLASK_HOST=127.0.0.1
+FLASK_PORT=8000
+LOG_LEVEL=DEBUG
+CACHE_ENABLED=true
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_TRANSLATION=1000/minute
+```
 
-### 코드 구조
-- **데이터**: `/data` 폴더
-- **디자인**: 별도 CSS 파일
-- **컨텐츠**: React 컴포넌트
+### Frontend Vite Proxy
 
-### 반응형 디자인
-- 1400px 이하: 모바일/태블릿용 햄버거 메뉴
-- 기본 폰트 크기: 14~15px
+Configured in `frontend/vite.config.js`:
+- `/api` → Backend server
+- `/vosk-models` → Vosk model CDN (CORS bypass)
 
-## 라이선스
+## Supported Languages
 
-이 프로젝트는 개인 프로젝트입니다.
+| Feature | Languages |
+|---------|-----------|
+| Translation | Korean, English, Chinese |
+| STT (Vosk) | English, Korean, Chinese, Japanese, Spanish, French, German |
+| Dictionary | Korean-English, Korean-Chinese, English-Chinese |
 
-## 개발자
+## Development Guidelines
 
-- **이름**: Lannie (HyeRan Yoo)
+See `.kiro/steering/` for detailed development standards:
+- `software-design-principles.md` - SOLID, DRY, KISS principles
+- `backend-module-layering-standard.md` - Backend architecture
+- `frontend-module-layering-standard.md` - Frontend architecture
+- `task.md` - Vosk STT implementation spec
+
+## License
+
+Private project
+
+## Author
+
+- **Name**: Lannie (HyeRan Yoo)
 - **GitHub**: [LannieYoo](https://github.com/LannieYoo)
-

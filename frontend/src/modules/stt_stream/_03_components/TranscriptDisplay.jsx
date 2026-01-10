@@ -1,6 +1,6 @@
 /**
  * TranscriptDisplay Component
- * 음성 인식 결과 표시 컴포넌트
+ * Speech recognition result display component
  */
 
 import { forwardRef } from 'react'
@@ -23,7 +23,7 @@ export const TranscriptDisplay = forwardRef(function TranscriptDisplay(
       </div>
       {fullText && (
         <div className="stt-stream-info">
-          {fullText.length} 글자
+          {fullText.length} chars
         </div>
       )}
     </div>
