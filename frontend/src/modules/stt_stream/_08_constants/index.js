@@ -5,24 +5,28 @@
 
 // Supported language options
 export const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
+  { value: 'en-us', label: 'English (US)' },
+  { value: 'en-in', label: 'English (Indian)' },
   { value: 'ko', label: 'Korean' },
   { value: 'zh', label: 'Chinese' },
   { value: 'ja', label: 'Japanese' },
   { value: 'es', label: 'Spanish' },
   { value: 'fr', label: 'French' },
   { value: 'de', label: 'German' },
+  { value: 'hi', label: 'Hindi' },
 ]
 
 // Vosk 모델 URL (Vite 프록시를 통해 CORS 우회)
 export const MODEL_URLS = {
-  'en': '/vosk-models/vosk-model-small-en-us-0.15.zip',
+  'en-us': '/vosk-models/vosk-model-small-en-us-0.15.zip',
+  'en-in': '/vosk-models/vosk-model-small-en-in-0.4.zip',
   'ko': '/vosk-models/vosk-model-small-ko-0.22.zip',
   'zh': '/vosk-models/vosk-model-small-cn-0.22.zip',
   'ja': '/vosk-models/vosk-model-small-ja-0.22.zip',
   'es': '/vosk-models/vosk-model-small-es-0.42.zip',
   'fr': '/vosk-models/vosk-model-small-fr-0.22.zip',
   'de': '/vosk-models/vosk-model-small-de-0.15.zip',
+  'hi': '/vosk-models/vosk-model-small-hi-0.22.zip',
 }
 
 // Status messages
@@ -54,7 +58,7 @@ export const LOG_TYPE_COLORS = {
 }
 
 // Default settings
-export const DEFAULT_LANGUAGE = 'en'
+export const DEFAULT_LANGUAGE = 'en-us'
 export const MAX_LOGS = 100
 export const SAMPLE_RATE = 16000
 

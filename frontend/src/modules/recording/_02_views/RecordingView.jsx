@@ -18,10 +18,7 @@ export function RecordingView() {
   } = useRecording()
 
   return (
-    <PageLayout 
-      title="Audio Recording" 
-      subtitle="Record audio directly from your browser"
-    >
+    <PageLayout title="Audio Recording">
       <PageBox>
         {/* 에러 메시지 */}
         {error && (

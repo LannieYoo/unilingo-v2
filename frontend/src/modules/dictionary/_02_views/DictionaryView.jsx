@@ -3,14 +3,17 @@
  * 사전 검색 페이지 뷰
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useDictionary } from '../_04_hooks'
-import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
-import { detectLanguage, playPronunciation } from '../_07_utils'
+import { useAuthStore } from '../../auth'
+import { DIRECTIONS } from '../_08_constants'
+import { playPronunciation } from '../_07_utils'
 import '../_10_styles/dictionary.css'
 
 export function DictionaryView() {
+  const { isAuthenticated } = useAuthStore()
   const {
     searchTerm,
     setSearchTerm,
@@ -38,7 +41,20 @@ export function DictionaryView() {
     fetchSuggestions,
   } = useDictionary()
 
+  const location = useLocation()
   const inputRef = useRef(null)
+
+  // Handle location state for pre-filling search term and target language
+  useEffect(() => {
+    if (location.state?.searchTerm) {
+      setSearchTerm(location.state.searchTerm)
+      if (location.state.targetLang) {
+        setTargetLang(location.state.targetLang)
+      }
+      // Clear the state to prevent re-triggering
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state, setSearchTerm, setTargetLang])
 
   const handleKeyDown = (e) => {
     if (!showSuggestions || suggestions.length === 0) {
@@ -94,7 +110,7 @@ export function DictionaryView() {
   }, [setShowSuggestions])
 
   return (
-    <PageLayout title="Dictionary" subtitle="Search words in English, Korean, and Chinese">
+    <PageLayout title="Dictionary">
       <PageBox>
         {/* 검색 컨트롤 */}
         <div className="search-controls">
@@ -345,8 +361,8 @@ export function DictionaryView() {
         </div>
       </PageBox>
 
-      {/* 검색 히스토리 */}
-      {searchHistory.length > 0 && (
+      {/* 검색 히스토리 - 로그인한 사용자만 표시 */}
+      {isAuthenticated && searchHistory.length > 0 && (
         <div className="search-history-bar">
           <div className="history-words">
             {searchHistory.map((item, index) => (

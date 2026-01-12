@@ -556,7 +556,7 @@
 }
 
 /* 반응형 */
-@media (max-width: 768px) {
+@media (max-width: 550px) {
   .search-input-group {
     flex-direction: column;
   }
@@ -583,5 +583,171 @@
 
   .meaning-number {
     align-self: flex-start;
+  }
+}
+
+@media (min-width: 551px) and (max-width: 768px) {
+  .search-input-group {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .search-input-wrapper {
+    flex: 1;
+  }
+
+  .direction-select {
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .search-btn {
+    flex-shrink: 0;
+    padding: 0.875rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .search-input-group {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .search-input-wrapper {
+    flex: 1;
+  }
+
+  .direction-select {
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .search-btn {
+    flex-shrink: 0;
+  }
+}
+
+/* Dictionary History Styles */
+.dictionary-history-full {
+  margin-top: 1rem;
+}
+
+.dictionary-history-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.dictionary-history-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.dictionary-history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dictionary-history-card-lang {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3b82f6;
+  background: #eff6ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.dictionary-history-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dictionary-history-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dictionary-history-card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.dictionary-history-card-search {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.dictionary-history-card-result {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* Login message for search history */
+.search-history-login-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.search-history-login-message p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .dictionary-history-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .dictionary-history-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  }
+
+  .dictionary-history-card-lang {
+    color: #60a5fa;
+    background: #1e3a8a;
+  }
+
+  .dictionary-history-card-search {
+    color: #f1f5f9;
+  }
+
+  .dictionary-history-card-result {
+    color: #cbd5e1;
+  }
+
+  .dictionary-history-card-label {
+    color: #94a3b8;
+  }
+
+  .search-history-login-message {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .search-history-login-message p {
+    color: #94a3b8;
   }
 }

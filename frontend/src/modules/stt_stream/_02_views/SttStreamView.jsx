@@ -21,8 +21,6 @@ import '../_10_styles/stt-stream.css'
 import {
   useAuthStore,
   useCharacterLimit,
-  GoogleLoginButton,
-  UserProfile,
   LoginModal,
   CharacterCounter,
   MAX_CHARS_GUEST,
@@ -179,19 +177,16 @@ export function SttStreamView() {
   return (
     <PageLayout title="Speech to Text" fullHeight>
       <PageBox noPadding flex>
-        {/* Auth header */}
-        <div className="stt-auth-bar">
-          {isAuthenticated ? (
-            <UserProfile />
-          ) : (
+        {/* Guest notice only */}
+        {!isAuthenticated && (
+          <div className="stt-auth-bar">
             <div className="stt-auth-guest">
               <span className="stt-guest-notice">
-                Guest mode: {MAX_CHARS_GUEST.toLocaleString()} character limit
+                Guest mode: {MAX_CHARS_GUEST.toLocaleString()} character limit • Unlimited usage available after login
               </span>
-              <GoogleLoginButton />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 컨트롤 버튼 (상단) */}
         <div className="stt-controls-bar">
@@ -349,7 +344,7 @@ export function SttStreamView() {
       )}
 
       <div className="stt-stream-notes">
-        📝 First run requires model download (~50MB) • Offline speech recognition • Auto translation
+        📝 First run requires model download (~40-80MB per language) • Offline speech recognition • Auto translation
         {!isAuthenticated && ` • Guest limit: ${MAX_CHARS_GUEST.toLocaleString()} characters`}
       </div>
 

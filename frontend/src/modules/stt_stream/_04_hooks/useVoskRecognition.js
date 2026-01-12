@@ -77,15 +77,14 @@ export function useVoskRecognition() {
 
   // Change language
   const setLanguage = useCallback(async (lang) => {
-    const newLang = lang.split('-')[0]
-    if (selectedLang === newLang) return
+    if (selectedLang === lang) return
     
-    useTranscriptStore.getState().setSelectedLang(newLang)
+    useTranscriptStore.getState().setSelectedLang(lang)
     isModelLoadedRef.current = false
     modelRef.current = null
     setStatus(STATUS.INIT)
     setLoadProgress(0)
-    debugStore.info('Language changed, model needs reload', { lang: newLang })
+    debugStore.info('Language changed, model needs reload', { lang })
   }, [selectedLang, setStatus, setLoadProgress])
 
   // Start recording

@@ -242,6 +242,69 @@ export const authService = {
     });
     return response.data;
   },
+
+  // Dictionary Log APIs
+  /**
+   * Create dictionary search log.
+   */
+  async createDictionaryLog(accessToken, data) {
+    const response = await api.post(ADMIN_ENDPOINTS.DICTIONARY_LOGS, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get recent dictionary search logs for current user.
+   */
+  async getRecentDictionaryLogs(accessToken, limit = 10) {
+    const response = await api.get(`${ADMIN_ENDPOINTS.DICTIONARY_LOGS}/recent`, {
+      params: { limit },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get all dictionary search logs for current user.
+   */
+  async getDictionaryLogs(accessToken, limit = 50) {
+    const response = await api.get(ADMIN_ENDPOINTS.DICTIONARY_LOGS, {
+      params: { limit },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete dictionary search log.
+   */
+  async deleteDictionaryLog(accessToken, logId) {
+    const response = await api.delete(`${ADMIN_ENDPOINTS.DICTIONARY_LOGS}/${logId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Clear all dictionary search logs for current user.
+   */
+  async clearDictionaryLogs(accessToken) {
+    const response = await api.delete(`${ADMIN_ENDPOINTS.DICTIONARY_LOGS}/clear`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default authService;

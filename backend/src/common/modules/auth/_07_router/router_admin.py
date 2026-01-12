@@ -3,7 +3,7 @@ Admin router endpoints (Flask Blueprint).
 """
 from flask import Blueprint, request, jsonify, g
 from ...database import get_db
-from .._06_models import UserRepository, LoginLogRepository, SttLogRepository, DSttLogCreate, TranslationLogRepository
+from .._06_models import UserRepository, LoginLogRepository, SttLogRepository, DSttLogCreate, TranslationLogRepository, get_dictionary_log_repository
 from .deps_auth import admin_required, get_current_user, is_admin, ADMIN_USER, token_required
 
 
@@ -809,6 +809,339 @@ def get_favorite_translation_logs():
             
             return jsonify({
                 'logs': result,
+                'trace_id': trace_id,
+            }), 200
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+# ============== Dictionary Log Endpoints ==============
+
+@router.route('/dictionary-logs', methods=['GET'])
+@token_required
+def get_dictionary_logs():
+    """Get dictionary search logs for current user."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        
+        db = next(get_db())
+        try:
+            dictionary_log_repo = get_dictionary_log_repository(db)
+            user_repo = UserRepository(db)
+            
+            user = user_repo.get_by_email(current_user.get('email'))
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            logs = dictionary_log_repo.get_user_logs(user.id, limit=limit)
+            
+            result = []
+            for log in logs:
+                result.append({
+                    'id': log.id,
+                    'search_word': log.search_word,
+                    'source_lang': log.source_lang,
+                    'target_lang': log.target_lang,
+                    'created_at': log.created_at.isoformat() if log.created_at else None,
+                })
+            
+            return jsonify({
+                'logs': result,
+                'trace_id': trace_id,
+            }), 200
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+@router.route('/dictionary-logs/recent', methods=['GET'])
+@token_required
+def get_recent_dictionary_logs():
+    """Get recent dictionary search logs for current user (for dictionary page)."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        
+        db = next(get_db())
+        try:
+            dictionary_log_repo = get_dictionary_log_repository(db)
+            user_repo = UserRepository(db)
+            
+            user = user_repo.get_by_email(current_user.get('email'))
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            logs = dictionary_log_repo.get_recent_logs(user.id, limit=limit)
+            
+            result = []
+            for log in logs:
+                result.append({
+                    'id': log.id,
+                    'search_word': log.search_word,
+                    'source_lang': log.source_lang,
+                    'target_lang': log.target_lang,
+                    'created_at': log.created_at.isoformat() if log.created_at else None,
+                })
+            
+            return jsonify({
+                'logs': result,
+                'trace_id': trace_id,
+            }), 200
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+@router.route('/dictionary-logs', methods=['POST'])
+@token_required
+def create_dictionary_log():
+    """Create dictionary search log entry."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'error': {
+                    'code': 'INVALID_REQUEST',
+                    'message': 'Request body is required',
+                    'trace_id': trace_id,
+                }
+            }), 400
+        
+        search_word = data.get('search_word', '')
+        source_lang = data.get('source_lang', 'en')
+        target_lang = data.get('target_lang', 'ko')
+        search_results = data.get('search_results')
+        
+        if not search_word:
+            return jsonify({
+                'error': {
+                    'code': 'INVALID_REQUEST',
+                    'message': 'search_word is required',
+                    'trace_id': trace_id,
+                }
+            }), 400
+        
+        # Get IP address
+        ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ip_address and ',' in ip_address:
+            ip_address = ip_address.split(',')[0].strip()
+        
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            user = user_repo.get_by_email(current_user.get('email'))
+            
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            dictionary_log_repo = get_dictionary_log_repository(db)
+            log = dictionary_log_repo.create_log(
+                user_id=user.id,
+                search_word=search_word,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                search_results=search_results,
+                ip_address=ip_address,
+            )
+            
+            return jsonify({
+                'log': {
+                    'id': log.id,
+                    'search_word': log.search_word,
+                    'source_lang': log.source_lang,
+                    'target_lang': log.target_lang,
+                    'created_at': log.created_at.isoformat() if log.created_at else None,
+                },
+                'trace_id': trace_id,
+            }), 201
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+@router.route('/dictionary-logs/<int:log_id>', methods=['DELETE'])
+@token_required
+def delete_dictionary_log(log_id):
+    """Delete dictionary search log entry (own logs only)."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            user = user_repo.get_by_email(current_user.get('email'))
+            
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            dictionary_log_repo = get_dictionary_log_repository(db)
+            deleted = dictionary_log_repo.delete_log(log_id, user.id)
+            
+            if not deleted:
+                return jsonify({
+                    'error': {
+                        'code': 'NOT_FOUND',
+                        'message': 'Dictionary log not found or not owned by user',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            return jsonify({
+                'message': 'Dictionary log deleted successfully',
+                'trace_id': trace_id,
+            }), 200
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+@router.route('/dictionary-logs/clear', methods=['DELETE'])
+@token_required
+def clear_dictionary_logs():
+    """Clear all dictionary search logs for current user."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            user = user_repo.get_by_email(current_user.get('email'))
+            
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            dictionary_log_repo = get_dictionary_log_repository(db)
+            deleted_count = dictionary_log_repo.clear_user_logs(user.id)
+            
+            return jsonify({
+                'message': f'Cleared {deleted_count} dictionary logs',
+                'deleted_count': deleted_count,
                 'trace_id': trace_id,
             }), 200
         finally:

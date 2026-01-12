@@ -3,6 +3,7 @@ User SQLAlchemy ORM model.
 """
 from datetime import datetime
 from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, Integer, Index
+from sqlalchemy.orm import relationship
 from ...database import Base
 
 
@@ -27,6 +28,9 @@ class UserModel(Base):
         Index("idx_users_google_id", "google_id"),
         Index("idx_users_email", "email"),
     )
+    
+    # 관계
+    dictionary_logs = relationship("DictionaryLogModel", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<UserModel(id={self.id}, email={self.email})>"

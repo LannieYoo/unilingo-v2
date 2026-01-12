@@ -24,6 +24,16 @@ const RETRY_DELAY_MS = 1000
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
+ * 언어 코드 정규화 (en-us, en-in -> en)
+ */
+const normalizeLanguageCode = (lang) => {
+  if (!lang) return lang
+  // en-us, en-in 등을 en으로 변환
+  if (lang.startsWith('en-')) return 'en'
+  return lang
+}
+
+/**
  * 번역 훅
  */
 export function useTranslation() {
@@ -144,18 +154,21 @@ export function useTranslation() {
     const currentTargetLang = targetLangRef.current
     const index = sentencesRef.current.length
     
-    console.log(`[Translation] Adding sentence: "${sentence}" (source: ${sourceLang}, target: ${currentTargetLang})`)
+    // 언어 코드 정규화 (en-us, en-in -> en)
+    const normalizedSourceLang = normalizeLanguageCode(sourceLang)
+    
+    console.log(`[Translation] Adding sentence: "${sentence}" (source: ${normalizedSourceLang}, target: ${currentTargetLang})`)
     
     // 문장 저장
     sentencesRef.current.push({
       sentence: sentence.trim(),
-      sourceLang,
+      sourceLang: normalizedSourceLang,
       translatedText: null,
       targetLang: currentTargetLang
     })
     
     // 같은 언어면 바로 표시
-    if (sourceLang === currentTargetLang) {
+    if (normalizedSourceLang === currentTargetLang) {
       console.log(`[Translation] Same language, using original`)
       sentencesRef.current[index].translatedText = sentence.trim()
       updateTranslatedText()
@@ -166,7 +179,7 @@ export function useTranslation() {
     console.log(`[Translation] Adding to queue for translation`)
     pendingRef.current.push({ 
       sentence: sentence.trim(), 
-      sourceLang, 
+      sourceLang: normalizedSourceLang, 
       targetLang: currentTargetLang,
       index 
     })

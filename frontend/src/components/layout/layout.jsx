@@ -16,7 +16,7 @@ function Layout({ children }) {
         <div className="px-4 sm:px-6 lg:px-8 flex-1 flex flex-col w-full">
           <div className="mx-auto max-w-desktop flex-1 flex flex-col w-full">
             <Header />
-            <main className="flex flex-col gap-10 py-10 flex-1">
+            <main className="flex flex-col gap-10 py-4 sm:py-10 flex-1">
               {children}
             </main>
             <Footer />

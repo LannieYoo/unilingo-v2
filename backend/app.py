@@ -80,7 +80,7 @@ def create_app(config_name: str = None) -> Flask:
     # Create database tables
     # Import models to register them with Base
     try:
-        from backend.src.common.modules.auth._06_models import UserModel, LoginLogModel, SttLogModel
+        from backend.src.common.modules.auth._06_models import UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel
         Base.metadata.create_all(bind=engine)
         app.logger.info("Database tables created successfully")
     except Exception as e:

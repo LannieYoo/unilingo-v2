@@ -10,7 +10,7 @@ import Logs from './pages/logs/logs'
 import { SttStreamView } from './modules/stt_stream'
 import { TranslatorView, TranslationHistoryView } from './modules/translator'
 import { RecordingView } from './modules/recording'
-import { DictionaryView } from './modules/dictionary'
+import { DictionaryView, DictionaryHistoryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
 
 // Auth module
@@ -105,6 +105,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Navigate to="/translator" replace />} />
             <Route path="/dictionary" element={<DictionaryView />} />
+            <Route path="/dictionary/history" element={<DictionaryHistoryView />} />
             <Route path="/text-to-speech" element={<TextToSpeech />} />
             
             {/* Auth callback route */}

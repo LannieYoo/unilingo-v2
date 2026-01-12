@@ -30,5 +30,6 @@ export const ADMIN_ENDPOINTS = {
   LOGIN_LOGS: '/api/admin/login-logs',
   STT_LOGS: '/api/admin/stt-logs',
   TRANSLATION_LOGS: '/api/admin/translation-logs',
+  DICTIONARY_LOGS: '/api/admin/dictionary-logs',
   CHECK: '/api/admin/check',
 };

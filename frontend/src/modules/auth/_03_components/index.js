@@ -6,3 +6,4 @@ export { LoginModal } from './LoginModal';
 export { UserProfile } from './UserProfile';
 export { CharacterCounter } from './CharacterCounter';
 export { SessionExpiredModal } from './SessionExpiredModal';
+export { LoginRequiredModal } from './LoginRequiredModal';

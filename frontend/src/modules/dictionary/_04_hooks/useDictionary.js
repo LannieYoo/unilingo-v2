@@ -7,6 +7,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { translateText, fetchDictionary, fetchSuggestionsFromDatamuse } from '../_06_services'
 import { detectLanguage } from '../_07_utils'
 import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
+import { useAuthStore } from '../../auth/_05_stores'
+import { authService } from '../../auth/_06_services'
 
 export function useDictionary() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -23,6 +25,37 @@ export function useDictionary() {
   const abortControllerRef = useRef(null)
   const currentSearchTermRef = useRef('')
   const suggestionAbortRef = useRef(null)
+
+  // Auth store
+  const { user, tokens } = useAuthStore()
+
+  // 페이지 로드 시 데이터베이스에서 검색 히스토리 불러오기
+  useEffect(() => {
+    const loadSearchHistory = async () => {
+      if (user && tokens?.access_token) {
+        try {
+          const data = await authService.getRecentDictionaryLogs(tokens.access_token, 20)
+          if (data.logs && data.logs.length > 0) {
+            const historyItems = data.logs.map(log => ({
+              id: log.id,
+              word: log.search_word,
+              results: log.search_results ? JSON.parse(log.search_results) : [],
+              fromLang: log.source_lang,
+              toLang: log.target_lang,
+              timestamp: new Date(log.created_at).getTime()
+            })).reverse() // 최신순으로 정렬 (API에서 최신순으로 오므로 reverse)
+            
+            setSearchHistory(historyItems)
+            setHistoryIndex(historyItems.length - 1)
+          }
+        } catch (error) {
+          console.error('Failed to load dictionary history:', error)
+        }
+      }
+    }
+
+    loadSearchHistory()
+  }, [user, tokens?.access_token])
 
   // 언어 감지
   useEffect(() => {
@@ -210,8 +243,8 @@ export function useDictionary() {
     }
   }, [targetLang, isSearching])
 
-  // 히스토리에 추가
-  const addToHistory = useCallback((searchWord, searchResults, fromLang, toLang) => {
+  // 히스토리에 추가 (데이터베이스에도 저장)
+  const addToHistory = useCallback(async (searchWord, searchResults, fromLang, toLang) => {
     const historyItem = {
       word: searchWord,
       results: searchResults,
@@ -219,6 +252,27 @@ export function useDictionary() {
       toLang,
       timestamp: Date.now()
     }
+    
+    // 로그인한 사용자인 경우 데이터베이스에 저장하고 ID 받아오기
+    if (user && tokens?.access_token) {
+      try {
+        const response = await authService.createDictionaryLog(tokens.access_token, {
+          search_word: searchWord,
+          source_lang: fromLang,
+          target_lang: toLang,
+          search_results: searchResults
+        })
+        
+        // 데이터베이스에서 받은 ID를 히스토리 아이템에 추가
+        if (response.log && response.log.id) {
+          historyItem.id = response.log.id
+        }
+      } catch (error) {
+        console.error('Failed to save dictionary log:', error)
+      }
+    }
+    
+    // 로컬 히스토리 업데이트
     setSearchHistory(prev => {
       const newHistory = prev.slice(0, historyIndex + 1)
       newHistory.push(historyItem)
@@ -230,7 +284,7 @@ export function useDictionary() {
       }
       return newHistory
     })
-  }, [historyIndex])
+  }, [historyIndex, user, tokens])
 
   // 검색 수행
   const performSearch = useCallback(async (fromLang, toLang, searchWord, signal = null, historyWord = null) => {
@@ -689,12 +743,35 @@ export function useDictionary() {
   }, [historyIndex, searchHistory])
 
   // 히스토리 관리
-  const clearHistory = useCallback(() => {
+  const clearHistory = useCallback(async () => {
     setSearchHistory([])
     setHistoryIndex(-1)
-  }, [])
+    
+    // 로그인한 사용자인 경우 데이터베이스에서도 삭제
+    if (user && tokens?.access_token) {
+      try {
+        await authService.clearDictionaryLogs(tokens.access_token)
+      } catch (error) {
+        console.error('Failed to clear dictionary logs:', error)
+      }
+    }
+  }, [user, tokens])
 
-  const deleteHistoryItem = useCallback((index) => {
+  const deleteHistoryItem = useCallback(async (index) => {
+    const itemToDelete = searchHistory[index]
+    
+    // 로그인한 사용자이고 아이템에 ID가 있는 경우 데이터베이스에서 삭제
+    if (user && tokens?.access_token && itemToDelete?.id) {
+      try {
+        await authService.deleteDictionaryLog(tokens.access_token, itemToDelete.id)
+      } catch (error) {
+        console.error('Failed to delete dictionary log:', error)
+        // 데이터베이스 삭제 실패 시 로컬에서도 삭제하지 않음
+        return
+      }
+    }
+    
+    // 로컬 히스토리에서 삭제
     setSearchHistory(prev => {
       const newHistory = prev.filter((_, i) => i !== index)
       if (historyIndex >= index) {
@@ -702,7 +779,7 @@ export function useDictionary() {
       }
       return newHistory
     })
-  }, [historyIndex])
+  }, [historyIndex, searchHistory, user, tokens])
 
   return {
     searchTerm,

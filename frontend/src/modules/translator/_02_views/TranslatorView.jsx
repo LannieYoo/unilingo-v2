@@ -156,10 +156,7 @@ export function TranslatorView() {
   }
 
   return (
-    <PageLayout 
-      title="Translator" 
-      subtitle="Translate between various English dialects, Chinese (Simplified), and Korean"
-    >
+    <PageLayout title="Translator">
       <PageBox>
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">
@@ -178,7 +175,7 @@ export function TranslatorView() {
           
           <div className="translator-arrow">→</div>
           
-          <div className="translator-lang-group">
+          <div className="translator-lang-group translator-target-lang-group">
             <label>Target Language</label>
             <select
               value={targetLang}
@@ -211,6 +208,20 @@ export function TranslatorView() {
         >
           {isTranslating ? 'Translating...' : 'Translate'}
         </button>
+
+        {/* Target Language (모바일에서만 표시) */}
+        <div className="translator-target-lang-mobile">
+          <label>Target Language</label>
+          <select
+            value={targetLang}
+            onChange={(e) => setTargetLang(e.target.value)}
+            className="translator-lang-select"
+          >
+            {TARGET_LANGUAGES.map(lang => (
+              <option key={lang.code} value={lang.code}>{lang.name}</option>
+            ))}
+          </select>
+        </div>
 
         {/* 출력 */}
         <div className="translator-section">
