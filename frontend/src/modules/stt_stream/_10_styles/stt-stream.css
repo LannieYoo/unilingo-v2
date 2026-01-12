@@ -486,3 +486,63 @@
     justify-content: space-between;
   }
 }
+
+
+/* ========================================
+   Auth Bar 스타일
+   ======================================== */
+
+.stt-auth-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.stt-auth-guest {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stt-guest-notice {
+  font-size: 13px;
+  color: #64748b;
+  padding: 6px 12px;
+  background: #fef3c7;
+  border-radius: 6px;
+  border: 1px solid #fcd34d;
+}
+
+/* Character limit bar */
+.stt-char-limit-bar {
+  padding: 12px 20px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafbfc;
+  flex-shrink: 0;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .stt-auth-bar {
+    padding: 10px 16px;
+    justify-content: center;
+  }
+  
+  .stt-auth-guest {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .stt-guest-notice {
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  .stt-char-limit-bar {
+    padding: 10px 12px;
+  }
+}

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import LogoIcon from './LogoIcon'
+import { useAuthStore, GoogleLoginButton, UserProfile } from '../../modules/auth'
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
+  const { isAuthenticated } = useAuthStore()
 
   const menuItems = [
     { path: '/', label: 'Translator', name: 'home' },
@@ -13,6 +15,9 @@ function Header() {
     { path: '/stt-stream', label: 'Speech to Text', name: 'speechToText' },
     { path: '/speech-to-recording', label: 'Recording', name: 'recording' },
   ]
+
+  // Menu items (Admin moved to user profile dropdown)
+  const allMenuItems = menuItems;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -35,7 +40,7 @@ function Header() {
       
       <div className="hidden md:flex flex-1 items-center justify-end gap-6">
         <nav className="flex items-center gap-6">
-          {menuItems.map((item) => (
+          {allMenuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -50,6 +55,15 @@ function Header() {
             </Link>
           ))}
         </nav>
+        
+        {/* Auth section */}
+        <div className="flex items-center ml-4 pl-4 border-l border-border-light dark:border-border-dark">
+          {isAuthenticated ? (
+            <UserProfile compact />
+          ) : (
+            <GoogleLoginButton />
+          )}
+        </div>
       </div>
       
       <button 
@@ -63,7 +77,7 @@ function Header() {
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg md:hidden">
           <div className="flex flex-col px-4 py-3">
-            {menuItems.map((item) => (
+            {allMenuItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -77,6 +91,17 @@ function Header() {
                 {item.label}
               </Link>
             ))}
+            
+            {/* Mobile auth section */}
+            <div className="mt-3 pt-3 border-t border-border-light dark:border-border-dark">
+              {isAuthenticated ? (
+                <UserProfile mobile onMenuClick={closeMenu} />
+              ) : (
+                <div className="px-2">
+                  <GoogleLoginButton />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

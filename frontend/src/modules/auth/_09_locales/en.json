@@ -1,0 +1,11 @@
+{
+  "login": "Login",
+  "logout": "Logout",
+  "signInWithGoogle": "Sign in with Google",
+  "characterLimitReached": "Character Limit Reached",
+  "characterLimitMessage": "Guest users can use up to {limit} characters. Sign in to use without limits.",
+  "continueAsGuest": "Continue as Guest",
+  "characters": "characters",
+  "remaining": "remaining",
+  "limitReached": "Limit reached"
+}

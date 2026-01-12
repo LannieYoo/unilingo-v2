@@ -26,7 +26,10 @@ from backend.src.common.modules import (
     dictionary_bp,
     stt_bp,
     health_bp,
+    auth_bp,
+    admin_bp,
 )
+from backend.src.common.modules.database import Base, engine
 
 
 def create_app(config_name: str = None) -> Flask:
@@ -71,6 +74,17 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(dictionary_bp)
     app.register_blueprint(stt_bp)
     app.register_blueprint(health_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
+    
+    # Create database tables
+    # Import models to register them with Base
+    try:
+        from backend.src.common.modules.auth._06_models import UserModel, LoginLogModel, SttLogModel
+        Base.metadata.create_all(bind=engine)
+        app.logger.info("Database tables created successfully")
+    except Exception as e:
+        app.logger.warning(f"Database connection failed: {e}. Auth features will be disabled.")
     
     # Root endpoint
     @app.route('/')

@@ -12,7 +12,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-from flask import Flask, request, g
+from flask import Flask, request, g, has_request_context, has_app_context
 
 
 class JSONFormatter(logging.Formatter):
@@ -28,12 +28,14 @@ class JSONFormatter(logging.Formatter):
             'module': record.name,
             'function': record.funcName,
             'line': record.lineno,
-            'trace_id': getattr(g, 'trace_id', None) if self._has_request_context() else None,
-            'user_id': getattr(g, 'user_id', None) if self._has_request_context() else None,
+            'trace_id': None,
+            'user_id': None,
         }
         
-        # 요청 컨텍스트 정보 추가
-        if self._has_request_context():
+        # 요청 컨텍스트 정보 추가 (Flask 내장 함수 사용)
+        if has_request_context():
+            log_data['trace_id'] = getattr(g, 'trace_id', None)
+            log_data['user_id'] = getattr(g, 'user_id', None)
             log_data['request_path'] = request.path
             log_data['request_method'] = request.method
             log_data['remote_addr'] = request.remote_addr
@@ -47,13 +49,6 @@ class JSONFormatter(logging.Formatter):
             log_data['extra_data'] = record.extra_data
         
         return json.dumps(log_data, ensure_ascii=False, default=str)
-    
-    def _has_request_context(self) -> bool:
-        """Flask 요청 컨텍스트 존재 여부 확인"""
-        try:
-            return request is not None
-        except RuntimeError:
-            return False
 
 
 class ConsoleFormatter(logging.Formatter):
@@ -71,13 +66,12 @@ class ConsoleFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         color = self.COLORS.get(record.levelname, self.RESET)
         
-        # trace_id 가져오기
+        # trace_id 가져오기 (Flask 내장 함수 사용)
         trace_id = ''
-        try:
-            if hasattr(g, 'trace_id'):
-                trace_id = f" [{g.trace_id[:8]}]"
-        except RuntimeError:
-            pass
+        if has_request_context():
+            tid = getattr(g, 'trace_id', None)
+            if tid:
+                trace_id = f" [{tid[:8]}]"
         
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return f"{color}{timestamp} - {record.levelname:8}{self.RESET}{trace_id} - {record.getMessage()}"

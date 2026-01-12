@@ -39,6 +39,9 @@ from .stt import STTService, stt_bp
 # Health
 from .health import health_bp
 
+# Auth
+from .auth import router as auth_bp, admin_router as admin_bp, login_required, get_current_user, get_optional_user, admin_required, is_admin
+
 __all__ = [
     # Middleware
     'init_cors',
@@ -66,4 +69,12 @@ __all__ = [
     'stt_bp',
     # Health
     'health_bp',
+    # Auth
+    'auth_bp',
+    'admin_bp',
+    'login_required',
+    'get_current_user',
+    'get_optional_user',
+    'admin_required',
+    'is_admin',
 ]

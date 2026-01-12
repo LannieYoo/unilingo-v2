@@ -1,0 +1,11 @@
+{
+  "login": "로그인",
+  "logout": "로그아웃",
+  "signInWithGoogle": "Google로 로그인",
+  "characterLimitReached": "글자 수 제한에 도달했습니다",
+  "characterLimitMessage": "비로그인 사용자는 {limit}자까지만 사용할 수 있습니다. 로그인하시면 제한 없이 사용하실 수 있습니다.",
+  "continueAsGuest": "게스트로 계속하기",
+  "characters": "글자",
+  "remaining": "남음",
+  "limitReached": "제한 도달"
+}

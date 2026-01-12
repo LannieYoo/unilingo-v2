@@ -11,10 +11,14 @@ from typing import List
 from dotenv import load_dotenv
 
 
-# Load .env file
+# Load .env file (check both backend and root directories)
 env_path = Path(__file__).parent / '.env'
+root_env_path = Path(__file__).parent.parent / '.env'
+
+if root_env_path.exists():
+    load_dotenv(root_env_path)
 if env_path.exists():
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)
 
 
 class Config:
@@ -27,7 +31,7 @@ class Config:
     
     # Server Configuration
     HOST = os.getenv('FLASK_HOST', '127.0.0.1')
-    PORT = int(os.getenv('FLASK_PORT', 8000))
+    PORT = int(os.getenv('FLASK_PORT', 8001))
     
     # CORS Configuration
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:5173').split(',')
