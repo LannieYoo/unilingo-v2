@@ -117,13 +117,31 @@
 /* 반응형 */
 @media (max-width: 768px) {
   .translator-lang-selectors {
+    gap: 0.75rem;
+  }
+
+  .translator-arrow {
+    font-size: 1.25rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .translator-lang-group {
+    min-width: 140px;
+  }
+}
+
+/* 매우 작은 화면 (500px 이하) */
+@media (max-width: 500px) {
+  .translator-lang-selectors {
     flex-direction: column;
+    gap: 1rem;
   }
 
   .translator-arrow {
     transform: rotate(90deg);
     text-align: center;
     padding: 0;
+    font-size: 1.5rem;
   }
   
   .translator-lang-group {
