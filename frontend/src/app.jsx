@@ -8,7 +8,7 @@ import Logs from './pages/logs/logs'
 
 // New modular pages (following frontend module layering standard)
 import { SttStreamView } from './modules/stt_stream'
-import { TranslatorView } from './modules/translator'
+import { TranslatorView, TranslationHistoryView } from './modules/translator'
 import { RecordingView } from './modules/recording'
 import { DictionaryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
@@ -103,7 +103,7 @@ function AppContent() {
       <Layout>
         <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Navigate to="/translator" replace />} />
             <Route path="/dictionary" element={<DictionaryView />} />
             <Route path="/text-to-speech" element={<TextToSpeech />} />
             
@@ -116,6 +116,7 @@ function AppContent() {
             {/* New modular pages */}
             <Route path="/speech-to-recording" element={<RecordingView />} />
             <Route path="/translator" element={<TranslatorView />} />
+            <Route path="/translator/history" element={<TranslationHistoryView />} />
             <Route path="/stt-stream" element={<SttStreamView />} />
             
             {/* Admin page */}

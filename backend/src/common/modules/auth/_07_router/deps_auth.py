@@ -143,10 +143,13 @@ def get_current_user() -> Optional[DUser]:
     return getattr(g, 'current_user', None)
 
 
-def is_admin(user: Optional[DUser]) -> bool:
+def is_admin(user) -> bool:
     """Check if user is admin."""
     if not user or not ADMIN_USER:
         return False
+    # Handle both DUser object and dict
+    if isinstance(user, dict):
+        return user.get('email') == ADMIN_USER
     return user.email == ADMIN_USER
 
 

@@ -163,6 +163,85 @@ export const authService = {
     });
     return response.data;
   },
+
+  // Translation Log APIs
+  /**
+   * Create translation log.
+   */
+  async createTranslationLog(accessToken, data) {
+    const response = await api.post(ADMIN_ENDPOINTS.TRANSLATION_LOGS, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get recent translation logs for current user.
+   */
+  async getRecentTranslationLogs(accessToken, limit = 10) {
+    const response = await api.get(`${ADMIN_ENDPOINTS.TRANSLATION_LOGS}/recent`, {
+      params: { limit },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get all translation logs for current user.
+   */
+  async getTranslationLogs(accessToken, limit = 100, userId = null) {
+    const params = { limit };
+    if (userId) params.user_id = userId;
+    
+    const response = await api.get(ADMIN_ENDPOINTS.TRANSLATION_LOGS, {
+      params,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete translation log.
+   */
+  async deleteTranslationLog(accessToken, logId) {
+    const response = await api.delete(`${ADMIN_ENDPOINTS.TRANSLATION_LOGS}/${logId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Toggle translation log favorite status.
+   */
+  async toggleTranslationFavorite(accessToken, logId) {
+    const response = await api.post(`${ADMIN_ENDPOINTS.TRANSLATION_LOGS}/${logId}/favorite`, {}, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get favorite translation logs for current user.
+   */
+  async getFavoriteTranslationLogs(accessToken, limit = 100) {
+    const response = await api.get(`${ADMIN_ENDPOINTS.TRANSLATION_LOGS}/favorites`, {
+      params: { limit },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default authService;

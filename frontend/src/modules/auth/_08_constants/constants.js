@@ -29,5 +29,6 @@ export const ADMIN_ENDPOINTS = {
   USERS: '/api/admin/users',
   LOGIN_LOGS: '/api/admin/login-logs',
   STT_LOGS: '/api/admin/stt-logs',
+  TRANSLATION_LOGS: '/api/admin/translation-logs',
   CHECK: '/api/admin/check',
 };

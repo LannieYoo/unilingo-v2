@@ -61,6 +61,16 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
 
         {/* Menu Items */}
         <div className="space-y-1">
+          {/* Translation History */}
+          <Link
+            to="/translator/history"
+            onClick={onMenuClick}
+            className="flex items-center gap-2 px-2 py-2 text-sm text-text-light dark:text-text-dark hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors"
+          >
+            <span className="material-symbols-outlined text-lg">translate</span>
+            Translation History
+          </Link>
+
           {/* Settings - for future use */}
           <button
             className="flex items-center gap-2 w-full px-2 py-2 text-sm text-text-muted-light dark:text-text-muted-dark cursor-not-allowed opacity-50 rounded-md"
@@ -134,6 +144,16 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
 
             {/* Menu Items */}
             <div className="py-1">
+              {/* Translation History */}
+              <Link
+                to="/translator/history"
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-text-light dark:text-text-dark hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">translate</span>
+                Translation History
+              </Link>
+
               {/* Settings - for future use */}
               <button
                 onClick={() => setIsDropdownOpen(false)}
