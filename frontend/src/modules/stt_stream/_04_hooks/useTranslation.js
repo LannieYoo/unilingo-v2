@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useLanguagePreferences } from '../../auth'
+import { useGlossary } from '../../../shared/modules/glossary'
 
 const API_BASE = '/api'
 
@@ -44,6 +45,7 @@ export function useTranslation() {
   const [isRetranslating, setIsRetranslating] = useState(false)
   const [retranslateProgress, setRetranslateProgress] = useState(0)
   const [error, setError] = useState(null)
+  const [isTranslationEnabled, setIsTranslationEnabled] = useState(true)
   
   // 원본 문장들 저장 (재번역용) - {sentence, sourceLang, translatedText, targetLang}
   const sentencesRef = useRef([])
@@ -53,6 +55,9 @@ export function useTranslation() {
 
   // 공통 언어 설정 훅 사용
   const { nativeLanguage, isLoaded } = useLanguagePreferences()
+
+  // Glossary 훅 사용
+  const { domain, setDomain, preProcess, postProcess } = useGlossary('general')
 
   // Load language preferences from settings
   useEffect(() => {
@@ -76,13 +81,16 @@ export function useTranslation() {
     if (sourceLang === targetLang) {
       return text
     }
+
+    // 1. 번역 전 용어 보호
+    const { processedText, termMap } = preProcess(text, sourceLang, targetLang)
     
     try {
       const response = await fetch(`${API_BASE}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: text.trim(),
+          text: processedText.trim(),
           source_lang: sourceLang,
           target_lang: targetLang
         })
@@ -102,13 +110,20 @@ export function useTranslation() {
       }
       
       const data = await response.json()
-      return data.translated_text || null
+      const translatedText = data.translated_text || null
+      
+      // 2. 번역 후 용어 복원
+      if (translatedText) {
+        return postProcess(translatedText, termMap)
+      }
+      
+      return null
     } catch (err) {
       console.error('[Translation] Error:', err)
       setError(err.message)
       return null
     }
-  }, [])
+  }, [preProcess, postProcess])
 
 
   // targetLang을 참조하기 위한 ref (클로저 문제 해결)
@@ -166,6 +181,12 @@ export function useTranslation() {
   const addSentenceToTranslate = useCallback((sentence, sourceLang) => {
     if (!sentence?.trim()) return
     
+    // 번역이 비활성화되어 있으면 번역하지 않음
+    if (!isTranslationEnabled) {
+      console.log(`[Translation] Translation disabled, skipping`)
+      return
+    }
+    
     // ref를 사용하여 최신 targetLang 값 가져오기
     const currentTargetLang = targetLangRef.current
     const index = sentencesRef.current.length
@@ -200,7 +221,7 @@ export function useTranslation() {
       index 
     })
     processQueue()
-  }, [processQueue, updateTranslatedText])
+  }, [processQueue, updateTranslatedText, isTranslationEnabled])
 
   /**
    * 번역 언어 변경 (기존 번역 유지, 이후만 새 언어로)
@@ -266,7 +287,11 @@ export function useTranslation() {
     isRetranslating,
     retranslateProgress,
     error,
+    domain,
+    isTranslationEnabled,
     setTargetLang,
+    setDomain,
+    setIsTranslationEnabled,
     addSentenceToTranslate,
     retranslateAll,
     clearTranslation,

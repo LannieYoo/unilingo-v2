@@ -25,6 +25,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 // Auth callback component
 function AuthCallback() {
   const { isLoading, isAuthenticated, error } = useAuth();
+  const hasCode = new URLSearchParams(window.location.search).has('code');
   
   // Show error if any
   if (error) {
@@ -37,7 +38,7 @@ function AuthCallback() {
         flexDirection: 'column',
         gap: '1rem'
       }}>
-        <p style={{ color: 'red' }}>로그인 실패: {error}</p>
+        <p style={{ color: 'red' }}>Login failed: {error}</p>
         <button 
           onClick={() => window.location.href = '/'}
           style={{
@@ -49,13 +50,14 @@ function AuthCallback() {
             cursor: 'pointer'
           }}
         >
-          홈으로 돌아가기
+          Go to Home
         </button>
       </div>
     );
   }
   
-  if (isLoading) {
+  // Show loading while processing OAuth callback or if code is present
+  if (isLoading || hasCode) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -73,7 +75,7 @@ function AuthCallback() {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }} />
-        <p>로그인 처리 중...</p>
+        <p>Signing in...</p>
         <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }

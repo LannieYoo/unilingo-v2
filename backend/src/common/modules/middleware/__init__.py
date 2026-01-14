@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Middleware Module
-미들웨어 모듈 - CORS, 로깅, 에러 핸들링, Rate Limiting
-"""
+# Middleware module - CORS, 로깅, 에러 핸들링, Rate Limiting
 
-from ._03_impls import (
+from .service import (
     init_cors,
     init_request_logger,
     init_error_handler,
     init_rate_limiter,
     init_logging,
     get_logger,
+    rate_limit,
+    get_rate_limiter,
+    RateLimiter,
 )
 
 __all__ = [
@@ -21,4 +21,7 @@ __all__ = [
     'init_rate_limiter',
     'init_logging',
     'get_logger',
+    'rate_limit',
+    'get_rate_limiter',
+    'RateLimiter',
 ]

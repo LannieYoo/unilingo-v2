@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Exception Module
-예외 처리 모듈
-"""
+# Exception Module - 예외 처리 모듈
 
-from ._01_contracts import (
+from .errors import (
     IException,
     EExceptionLevel,
     DExceptionContext,
-)
-from ._08_utils import (
+    BaseAppException,
     ValidationError,
     TranslationError,
     DictionaryError,
@@ -19,16 +15,14 @@ from ._08_utils import (
     ConfigError,
 )
 
-# Alias for backward compatibility
 ICustomException = IException
 
 __all__ = [
-    # Contracts
     'IException',
     'ICustomException',
     'EExceptionLevel',
     'DExceptionContext',
-    # Exceptions
+    'BaseAppException',
     'ValidationError',
     'TranslationError',
     'DictionaryError',

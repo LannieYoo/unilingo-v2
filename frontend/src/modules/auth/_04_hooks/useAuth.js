@@ -1,9 +1,12 @@
 /**
  * useAuth hook - Authentication logic.
  */
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useAuthStore } from '../_05_stores';
 import { GOOGLE_CLIENT_ID } from '../_08_constants';
+
+// Global flag to prevent double processing across all hook instances
+let callbackProcessing = false;
 
 export function useAuth() {
   const {
@@ -12,14 +15,12 @@ export function useAuth() {
     isAuthenticated,
     isLoading,
     error,
-    login,
+    login: storeLogin,
     logout,
     fetchUser,
     clearError,
     setLoading,
   } = useAuthStore();
-  
-  const callbackProcessed = useRef(false);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -31,31 +32,32 @@ export function useAuth() {
   // Handle OAuth callback on page load
   useEffect(() => {
     const handleCallback = async () => {
-      // Prevent double processing
-      if (callbackProcessed.current) return;
+      // Prevent double processing globally
+      if (callbackProcessing) return;
       
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       
       if (code && window.location.pathname === '/auth/callback') {
-        callbackProcessed.current = true;
+        // Set global flag immediately and clear URL to prevent re-processing
+        callbackProcessing = true;
+        window.history.replaceState({}, document.title, '/auth/callback');
+        setLoading(true);
         
         try {
-          setLoading(true);
           const redirectUri = `${window.location.origin}/auth/callback`;
-          await login(code, redirectUri);
-          // Clear URL params and redirect to home
-          window.history.replaceState({}, document.title, '/');
+          await storeLogin(code, redirectUri);
         } catch (err) {
           console.error('OAuth callback error:', err);
+        } finally {
           setLoading(false);
-          window.history.replaceState({}, document.title, '/');
+          callbackProcessing = false;
         }
       }
     };
     
     handleCallback();
-  }, []); // Empty dependency - run only once on mount
+  }, [storeLogin, setLoading]);
 
   // Google login handler - redirect method (no popup)
   const googleLogin = useCallback(() => {

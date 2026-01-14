@@ -48,7 +48,7 @@ export function useTranslator() {
   const { nativeLanguage, targetLanguage, isLoaded } = useLanguagePreferences()
   
   // Glossary 훅 사용
-  const { domain, setDomain, postProcess } = useGlossary('general')
+  const { domain, setDomain, preProcess, postProcess } = useGlossary('general')
 
   // Load language preferences from settings
   useEffect(() => {
@@ -113,15 +113,18 @@ export function useTranslator() {
         setIsTranslating(false)
         return
       }
+
+      // 1. 번역 전 용어 보호
+      const { processedText, termMap } = preProcess(text, sourceCode, targetCode)
       
       let translatedText = ''
       const timeout = 5000
       
-      // Google Translate API
+      // 2. Google Translate API (보호된 텍스트 번역)
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), timeout)
-        const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(text)}`
+        const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(processedText)}`
         const response = await fetch(googleUrl, { signal: controller.signal })
         clearTimeout(timeoutId)
         
@@ -133,7 +136,7 @@ export function useTranslator() {
               .map(item => item[0])
               .join('')
               .trim()
-            if (translated && translated.length > 0 && translated !== text) {
+            if (translated && translated.length > 0 && translated !== processedText) {
               translatedText = translated
             }
           }
@@ -149,7 +152,7 @@ export function useTranslator() {
         try {
           const controller = new AbortController()
           const timeoutId = setTimeout(() => controller.abort(), timeout)
-          const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`
+          const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(processedText)}&langpair=${sourceCode}|${targetCode}`
           const response = await fetch(myMemoryUrl, { signal: controller.signal })
           clearTimeout(timeoutId)
           
@@ -158,7 +161,7 @@ export function useTranslator() {
             if (data.responseStatus === 200 && data.responseData?.translatedText) {
               let translated = data.responseData.translatedText
               translated = translated.replace(/^t\d+\//, '').replace(/<[^>]*>/g, '').trim()
-              if (translated && translated !== text && translated.toUpperCase() !== text.toUpperCase()) {
+              if (translated && translated !== processedText && translated.toUpperCase() !== processedText.toUpperCase()) {
                 translatedText = translated
               }
             }
@@ -172,9 +175,9 @@ export function useTranslator() {
       
       if (!abortControllerRef.current.signal.aborted) {
         if (translatedText) {
-          // Glossary 후처리 적용
-          const processedText = postProcess(translatedText, text, sourceCode, targetCode)
-          setOutputText(processedText)
+          // 3. 번역 후 용어 복원
+          const finalText = postProcess(translatedText, termMap)
+          setOutputText(finalText)
         } else {
           setOutputText('Translation failed. Please try again.')
         }
@@ -191,7 +194,7 @@ export function useTranslator() {
         setIsTranslating(false)
       }
     }
-  }, [inputText, sourceLang, targetLang, postProcess])
+  }, [inputText, sourceLang, targetLang, preProcess, postProcess])
 
   // 실시간 자동 번역 (debounce)
   useEffect(() => {

@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react'
 import { DEFAULT_DOMAIN } from '../_08_constants'
-import { applyGlossary, postProcessGlossary, findGlossaryTermsInText } from '../_07_utils'
+import { protectTerms, restoreTerms, findGlossaryTermsInText } from '../_07_utils'
 
 /**
  * Glossary 훅
@@ -16,18 +16,18 @@ export function useGlossary(initialDomain = DEFAULT_DOMAIN) {
   const [domain, setDomain] = useState(initialDomain)
 
   /**
-   * 번역 전 glossary 적용
+   * 번역 전 용어 보호
    */
   const preProcess = useCallback((text, sourceLang, targetLang) => {
-    return applyGlossary(text, domain, sourceLang, targetLang)
+    return protectTerms(text, domain, sourceLang, targetLang)
   }, [domain])
 
   /**
-   * 번역 후 glossary 후처리
+   * 번역 후 용어 복원
    */
-  const postProcess = useCallback((translatedText, originalText, sourceLang, targetLang) => {
-    return postProcessGlossary(translatedText, originalText, domain, sourceLang, targetLang)
-  }, [domain])
+  const postProcess = useCallback((translatedText, termMap) => {
+    return restoreTerms(translatedText, termMap)
+  }, [])
 
   /**
    * 텍스트에서 glossary 용어 찾기

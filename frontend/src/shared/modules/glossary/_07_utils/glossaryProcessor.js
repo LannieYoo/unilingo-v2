@@ -1,149 +1,110 @@
 /**
  * Glossary Processor
  * 도메인별 전문 용어 처리 유틸리티
+ * 
+ * 새로운 방식: 번역 전에 용어를 보호하고, 번역 후 복원
  */
 
 import { GLOSSARIES } from '../_08_constants'
 
 /**
- * 텍스트에서 glossary 용어를 찾아 치환
+ * 번역 전 전처리: 원문에서 도메인 용어를 찾아 플레이스홀더로 교체
  * @param {string} text - 원본 텍스트
- * @param {string} domain - 도메인 코드 (it, medical, legal, business, academic)
- * @param {string} sourceLang - 소스 언어 코드
- * @param {string} targetLang - 타겟 언어 코드
- * @returns {Object} { processedText, replacements }
- */
-export function applyGlossary(text, domain, sourceLang, targetLang) {
-  if (!text || domain === 'general') {
-    return { processedText: text, replacements: [] }
-  }
-
-  const glossary = GLOSSARIES[domain]
-  if (!glossary) {
-    return { processedText: text, replacements: [] }
-  }
-
-  const langKey = `${sourceLang}_${targetLang}`
-  const terms = glossary[langKey]
-  if (!terms || Object.keys(terms).length === 0) {
-    return { processedText: text, replacements: [] }
-  }
-
-  let processedText = text
-  const replacements = []
-
-  // 긴 용어부터 먼저 처리 (더 긴 매칭 우선)
-  const sortedTerms = Object.entries(terms).sort((a, b) => b[0].length - a[0].length)
-
-  for (const [term, translation] of sortedTerms) {
-    // 대소문자 무시 매칭
-    const regex = new RegExp(`\\b${escapeRegex(term)}\\b`, 'gi')
-    const matches = processedText.match(regex)
-    
-    if (matches) {
-      processedText = processedText.replace(regex, translation)
-      replacements.push({ original: term, translated: translation, count: matches.length })
-    }
-  }
-
-  return { processedText, replacements }
-}
-
-/**
- * 번역 후 glossary 용어 후처리
- * 번역 결과에서 잘못 번역된 전문 용어를 수정
- * @param {string} translatedText - 번역된 텍스트
- * @param {string} originalText - 원본 텍스트
  * @param {string} domain - 도메인 코드
  * @param {string} sourceLang - 소스 언어 코드
  * @param {string} targetLang - 타겟 언어 코드
- * @returns {string} 후처리된 텍스트
+ * @returns {Object} { processedText, termMap }
  */
-export function postProcessGlossary(translatedText, originalText, domain, sourceLang, targetLang) {
-  if (!translatedText || domain === 'general') {
-    return translatedText
+export function protectTerms(text, domain, sourceLang, targetLang) {
+  if (!text || domain === 'general') {
+    console.log('[Glossary] Skipping protection (general domain)')
+    return { processedText: text, termMap: {} }
   }
 
   const glossary = GLOSSARIES[domain]
   if (!glossary) {
-    return translatedText
+    console.log('[Glossary] No glossary for domain:', domain)
+    return { processedText: text, termMap: {} }
   }
 
   const langKey = `${sourceLang}_${targetLang}`
   const terms = glossary[langKey]
   if (!terms || Object.keys(terms).length === 0) {
-    return translatedText
+    console.log('[Glossary] No terms for:', { domain, langKey })
+    return { processedText: text, termMap: {} }
   }
 
-  let result = translatedText
+  let processedText = text
+  const termMap = {}
+  let termIndex = 0
 
-  // 원본에서 전문 용어 찾기
+  // 긴 용어부터 먼저 처리
   const sortedTerms = Object.entries(terms).sort((a, b) => b[0].length - a[0].length)
-  
+
+  console.log('[Glossary] Protecting terms:', { domain, termCount: sortedTerms.length })
+
   for (const [term, translation] of sortedTerms) {
     const regex = new RegExp(`\\b${escapeRegex(term)}\\b`, 'gi')
-    if (regex.test(originalText)) {
-      // 번역 결과에서 해당 용어의 일반 번역을 전문 용어로 교체
-      // 이미 올바르게 번역된 경우는 건너뜀
-      if (!result.includes(translation)) {
-        // 일반적인 번역 패턴을 전문 용어로 교체 시도
-        const commonTranslations = getCommonTranslations(term, targetLang)
-        for (const common of commonTranslations) {
-          const commonRegex = new RegExp(escapeRegex(common), 'gi')
-          if (commonRegex.test(result)) {
-            result = result.replace(commonRegex, translation)
-            break
-          }
-        }
+    const matches = [...processedText.matchAll(regex)]
+    
+    if (matches.length > 0) {
+      for (const match of matches) {
+        const placeholder = `__TERM${termIndex}__`
+        termMap[placeholder] = translation
+        processedText = processedText.replace(match[0], placeholder)
+        termIndex++
+        console.log('[Glossary] Protected:', { term: match[0], placeholder, translation })
       }
     }
   }
 
+  console.log('[Glossary] Protection complete:', { protectedCount: termIndex })
+  return { processedText, termMap }
+}
+
+/**
+ * 번역 후 복원: 플레이스홀더를 도메인 용어로 교체
+ * @param {string} translatedText - 번역된 텍스트
+ * @param {Object} termMap - 플레이스홀더 → 용어 매핑
+ * @returns {string} 복원된 텍스트
+ */
+export function restoreTerms(translatedText, termMap) {
+  if (!translatedText || !termMap || Object.keys(termMap).length === 0) {
+    console.log('[Glossary] No terms to restore')
+    return translatedText
+  }
+
+  let result = translatedText
+  let restoredCount = 0
+
+  for (const [placeholder, translation] of Object.entries(termMap)) {
+    if (result.includes(placeholder)) {
+      result = result.replace(new RegExp(escapeRegex(placeholder), 'g'), translation)
+      restoredCount++
+      console.log('[Glossary] Restored:', { placeholder, translation })
+    }
+  }
+
+  console.log('[Glossary] Restoration complete:', { restoredCount })
   return result
 }
 
 /**
- * 일반적인 번역 패턴 반환 (잘못된 번역 수정용)
+ * 텍스트에서 glossary 용어를 찾아 치환 (레거시 - 하위 호환성)
+ * @deprecated Use protectTerms + restoreTerms instead
  */
-function getCommonTranslations(term, targetLang) {
-  // 일반적으로 잘못 번역되는 패턴들
-  const commonMistranslations = {
-    ko: {
-      'deploy': ['전개', '배치'],
-      'branch': ['가지', '지점'],
-      'merge': ['합치다', '통합'],
-      'commit': ['저지르다', '약속'],
-      'push': ['밀다', '누르다'],
-      'pull': ['당기다', '끌다'],
-      'bug': ['벌레', '곤충'],
-      'cache': ['은닉처', '숨기다'],
-      'hook': ['갈고리', '걸다'],
-      'thread': ['실', '줄'],
-      'stack': ['쌓다', '더미'],
-      'queue': ['줄', '대기열'],
-      'tree': ['나무'],
-      'node': ['마디', '결절'],
-      'container': ['용기', '그릇'],
-      'pipeline': ['파이프라인', '관로'],
-      'sprint': ['전력질주', '달리기'],
-    },
-    en: {
-      '배포': ['distribution', 'spread'],
-      '브랜치': ['branch'],
-      '병합': ['combination', 'union'],
-      '버그': ['insect', 'beetle'],
-      '캐시': ['hiding place'],
-      '훅': ['hook'],
-      '스레드': ['thread'],
-      '스택': ['pile', 'heap'],
-      '큐': ['cue'],
-      '트리': ['tree'],
-      '컨테이너': ['container', 'vessel'],
-    },
-  }
+export function applyGlossary(text, domain, sourceLang, targetLang) {
+  const { processedText, termMap } = protectTerms(text, domain, sourceLang, targetLang)
+  return { processedText, replacements: Object.entries(termMap).map(([k, v]) => ({ placeholder: k, translation: v })) }
+}
 
-  const termLower = term.toLowerCase()
-  return commonMistranslations[targetLang]?.[termLower] || []
+/**
+ * 번역 후 glossary 용어 후처리
+ * @deprecated 새로운 방식(protectTerms + restoreTerms)을 사용하세요
+ */
+export function postProcessGlossary(translatedText, originalText, domain, sourceLang, targetLang) {
+  console.log('[Glossary] postProcessGlossary is deprecated, use protectTerms + restoreTerms instead')
+  return translatedText
 }
 
 /**
@@ -192,6 +153,8 @@ export function findGlossaryTermsInText(text, domain, sourceLang, targetLang) {
 }
 
 export default {
+  protectTerms,
+  restoreTerms,
   applyGlossary,
   postProcessGlossary,
   getGlossaryTerms,

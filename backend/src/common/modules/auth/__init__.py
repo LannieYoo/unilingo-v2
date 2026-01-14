@@ -1,78 +1,55 @@
-"""
-Auth module - Google OAuth 2.0 authentication.
-"""
-# Contracts
-from ._01_contracts import (
-    IAuthService,
-    IUserRepository,
-    DUser,
-    DUserCreate,
-    DGoogleUserInfo,
-    DToken,
-    DTokenPayload,
-    DGoogleTokens,
-    EAuthProvider,
-    ETokenType,
-    AuthError,
-    GoogleOAuthError,
-    TokenError,
-    TokenExpiredError,
-    InvalidTokenError,
-    UserNotFoundError,
-    DatabaseError,
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Auth module - Google OAuth 2.0 authentication
+
+from .dto import (
+    EAuthProvider, ETokenType,
+    DUser, DUserCreate, DGoogleUserInfo, DLanguagePreferences,
+    DToken, DTokenPayload, DGoogleTokens,
+    DLoginLog, DLoginLogCreate,
+    DSttLog, DSttLogCreate, DSttLogSummary,
+    GoogleAuthRequest, GoogleCallbackRequest, TokenRefreshRequest,
+    TokenResponse, UserResponse, LoginResponse,
+    SttLogCreateRequest, TranslationLogCreateRequest, DictionaryLogCreateRequest,
+    AuthError, GoogleOAuthError, TokenError, TokenExpiredError, InvalidTokenError, UserNotFoundError, DatabaseError,
 )
 
-# Services
-from ._04_services import get_auth_service, AuthService
-
-# DTOs
-from ._05_dtos import (
-    GoogleAuthRequest,
-    GoogleCallbackRequest,
-    TokenRefreshRequest,
-    LoginResponse,
-    UserResponse,
-    TokenResponse,
+from .service import (
+    UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel,
+    UserRepository, LoginLogRepository, SttLogRepository, TranslationLogRepository, DictionaryLogRepository,
+    get_dictionary_log_repository, JWTHelper, GoogleOAuthClient, get_google_oauth_client,
+    AuthService, get_auth_service, ADMIN_USER,
 )
 
-# Router
-from ._07_router import router, admin_router, login_required, get_current_user, get_optional_user, admin_required, is_admin
+from .router import (
+    router, admin_router,
+    login_required, admin_required, token_required,
+    get_current_user, get_optional_user, is_admin,
+)
 
 __all__ = [
-    # Contracts
-    "IAuthService",
-    "IUserRepository",
-    "DUser",
-    "DUserCreate",
-    "DGoogleUserInfo",
-    "DToken",
-    "DTokenPayload",
-    "DGoogleTokens",
-    "EAuthProvider",
-    "ETokenType",
-    "AuthError",
-    "GoogleOAuthError",
-    "TokenError",
-    "TokenExpiredError",
-    "InvalidTokenError",
-    "UserNotFoundError",
-    "DatabaseError",
+    # Enums
+    'EAuthProvider', 'ETokenType',
+    # Domain Data Classes
+    'DUser', 'DUserCreate', 'DGoogleUserInfo', 'DLanguagePreferences',
+    'DToken', 'DTokenPayload', 'DGoogleTokens',
+    'DLoginLog', 'DLoginLogCreate',
+    'DSttLog', 'DSttLogCreate', 'DSttLogSummary',
+    # Pydantic Models
+    'GoogleAuthRequest', 'GoogleCallbackRequest', 'TokenRefreshRequest',
+    'TokenResponse', 'UserResponse', 'LoginResponse',
+    'SttLogCreateRequest', 'TranslationLogCreateRequest', 'DictionaryLogCreateRequest',
+    # Exceptions
+    'AuthError', 'GoogleOAuthError', 'TokenError', 'TokenExpiredError', 'InvalidTokenError', 'UserNotFoundError', 'DatabaseError',
+    # ORM Models
+    'UserModel', 'LoginLogModel', 'SttLogModel', 'TranslationLogModel', 'DictionaryLogModel',
+    # Repositories
+    'UserRepository', 'LoginLogRepository', 'SttLogRepository', 'TranslationLogRepository', 'DictionaryLogRepository',
+    'get_dictionary_log_repository',
     # Services
-    "get_auth_service",
-    "AuthService",
-    # DTOs
-    "GoogleAuthRequest",
-    "GoogleCallbackRequest",
-    "TokenRefreshRequest",
-    "LoginResponse",
-    "UserResponse",
-    "TokenResponse",
+    'JWTHelper', 'GoogleOAuthClient', 'get_google_oauth_client', 'AuthService', 'get_auth_service', 'ADMIN_USER',
     # Router
-    "router",
-    "admin_router",
-    "login_required",
-    "get_current_user",
-    "get_optional_user",
-    "admin_required",
-    "is_admin",
+    'router', 'admin_router',
+    'login_required', 'admin_required', 'token_required',
+    'get_current_user', 'get_optional_user', 'is_admin',
 ]

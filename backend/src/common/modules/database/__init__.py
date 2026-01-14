@@ -1,19 +1,13 @@
-"""
-Database module.
-Provides SQLAlchemy database connection and session management.
-"""
-from ._01_contracts import IDatabase
-from ._03_impls import DatabaseImpl, get_db, engine, Base
-from ._04_services import database_service
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Database Module - 데이터베이스 모듈
+
+from .service import DatabaseImpl, get_db, engine, Base, database_service
 
 __all__ = [
-    # Contracts
-    "IDatabase",
-    # Implementations
     "DatabaseImpl",
     "get_db",
     "engine",
     "Base",
-    # Services
     "database_service",
 ]

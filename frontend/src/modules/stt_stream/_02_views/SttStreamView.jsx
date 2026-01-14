@@ -3,7 +3,7 @@
  * Vosk 기반 실시간 STT + 번역 뷰
  */
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
 import { useVoskRecognition, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES } from '../_04_hooks'
@@ -27,6 +27,9 @@ import {
   MAX_CHARS_GUEST,
   authService,
 } from '../../auth'
+
+// Glossary
+import { DOMAINS } from '../../../shared/modules/glossary'
 
 export function SttStreamView() {
   const {
@@ -58,7 +61,11 @@ export function SttStreamView() {
     isTranslating,
     isRetranslating,
     retranslateProgress,
+    domain,
+    isTranslationEnabled,
     setTargetLang,
+    setDomain,
+    setIsTranslationEnabled,
     addSentenceToTranslate,
     retranslateAll,
     clearTranslation,
@@ -83,6 +90,11 @@ export function SttStreamView() {
 
   // 공통 언어 설정 훅 사용
   const { targetLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
+
+  // Resizable panels state
+  const [leftPanelWidth, setLeftPanelWidth] = useState(50) // percentage
+  const [isResizing, setIsResizing] = useState(false)
+  const containerRef = useRef(null)
 
   // Load language preferences from settings for STT source language
   useEffect(() => {
@@ -110,6 +122,50 @@ export function SttStreamView() {
   const prevFinalTextRef = useRef('')
   const sessionStartTimeRef = useRef(null)
   const sessionWordCountRef = useRef(0)
+
+  // Resizable panel handlers
+  const handleMouseDown = useCallback((e) => {
+    if (!isTranslationEnabled) return
+    setIsResizing(true)
+    e.preventDefault()
+  }, [isTranslationEnabled])
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizing || !containerRef.current) return
+    
+    const container = containerRef.current
+    const containerRect = container.getBoundingClientRect()
+    const offsetX = e.clientX - containerRect.left
+    const percentage = (offsetX / containerRect.width) * 100
+    
+    // 오른쪽 패널 최소 너비 300px 보장 (도메인 선택 제거로 줄어듦)
+    const minRightPanelWidth = 300
+    const maxLeftPercentage = ((containerRect.width - minRightPanelWidth - 8) / containerRect.width) * 100
+    
+    // 왼쪽 패널 최소 너비 300px 보장
+    const minLeftPanelWidth = 300
+    const minLeftPercentage = (minLeftPanelWidth / containerRect.width) * 100
+    
+    // 제한 적용
+    const clampedPercentage = Math.min(Math.max(percentage, minLeftPercentage), maxLeftPercentage)
+    setLeftPanelWidth(clampedPercentage)
+  }, [isResizing])
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false)
+  }, [])
+
+  // Add/remove mouse event listeners
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp])
 
   // STT 상태에 따라 타이머 제어 및 세션 추적
   useEffect(() => {
@@ -212,57 +268,94 @@ export function SttStreamView() {
 
         {/* 컨트롤 버튼 (상단) */}
         <div className="stt-controls-bar">
-          <StatusIndicator status={status} loadProgress={loadProgress} />
-          
-          <div className="stt-buttons-group">
-            {status === STATUS.INIT && (
+          <div className="stt-controls-left">
+            <StatusIndicator status={status} loadProgress={loadProgress} />
+            
+            <div className="stt-buttons-group">
+              {status === STATUS.INIT && (
+                <ActionButton
+                  variant="primary"
+                  onClick={loadModel}
+                  disabled={!isSupported || isLoading}
+                >
+                  Load Model
+                </ActionButton>
+              )}
+              
               <ActionButton
-                variant="primary"
-                onClick={loadModel}
-                disabled={!isSupported || isLoading}
+                variant={isRunning ? 'recording' : 'default'}
+                onClick={handleToggle}
+                disabled={!isSupported || isLoading || (!isAuthenticated && isLimitReached && !isRunning)}
               >
-                Load Model
+                {isRunning ? 'Stop' : 'Start'}
               </ActionButton>
+              
+              <ActionButton
+                variant="secondary"
+                onClick={handleDownload}
+                disabled={isRunning || !fullText}
+              >
+                Download
+              </ActionButton>
+              
+              <ActionButton
+                variant="secondary"
+                onClick={handleClear}
+                disabled={isRunning || !fullText}
+              >
+                Clear
+              </ActionButton>
+              
+              <ActionButton
+                variant="debug"
+                className={showDebug ? 'active' : ''}
+                onClick={() => setShowDebug(!showDebug)}
+              >
+                Debug
+              </ActionButton>
+            </div>
+          </div>
+          
+          <div className="stt-controls-right">
+            {/* 번역하기 체크박스 */}
+            <label className="stt-translation-toggle">
+              <input
+                type="checkbox"
+                checked={isTranslationEnabled}
+                onChange={(e) => setIsTranslationEnabled(e.target.checked)}
+                className="stt-translation-checkbox"
+              />
+              <span className="stt-translation-label">Enable Translation</span>
+            </label>
+            
+            {/* 도메인 선택 */}
+            {isTranslationEnabled && (
+              <select
+                className="stt-domain-select-top"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                title="Translation domain"
+              >
+                {DOMAINS.map(d => (
+                  <option key={d.code} value={d.code}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
             )}
-            
-            <ActionButton
-              variant={isRunning ? 'recording' : 'default'}
-              onClick={handleToggle}
-              disabled={!isSupported || isLoading || (!isAuthenticated && isLimitReached && !isRunning)}
-            >
-              {isRunning ? 'Stop' : 'Start'}
-            </ActionButton>
-            
-            <ActionButton
-              variant="secondary"
-              onClick={handleDownload}
-              disabled={isRunning || !fullText}
-            >
-              Download
-            </ActionButton>
-            
-            <ActionButton
-              variant="secondary"
-              onClick={handleClear}
-              disabled={isRunning || !fullText}
-            >
-              Clear
-            </ActionButton>
-            
-            <ActionButton
-              variant="debug"
-              className={showDebug ? 'active' : ''}
-              onClick={() => setShowDebug(!showDebug)}
-            >
-              Debug
-            </ActionButton>
           </div>
         </div>
 
         {/* 양쪽 패널 */}
-        <div className="stt-dual-panels">
+        <div 
+          className={`stt-dual-panels ${!isTranslationEnabled ? 'stt-translation-disabled' : ''} ${isResizing ? 'stt-resizing' : ''}`}
+          ref={containerRef}
+        >
           {/* 좌측: 원문 */}
-          <div className="stt-panel stt-panel-left">
+          <div 
+            className="stt-panel stt-panel-left"
+            style={isTranslationEnabled ? { width: `${leftPanelWidth}%` } : {}}
+          >
             <div className="stt-panel-header">
               <LanguageSelect
                 value={selectedLang}
@@ -294,13 +387,24 @@ export function SttStreamView() {
             )}
           </div>
 
-          {/* 스왑 버튼 */}
-          <div className="stt-swap-button">
-            <span>↔</span>
-          </div>
+          {/* Resizable divider */}
+          {isTranslationEnabled && (
+            <div 
+              className="stt-resizer"
+              onMouseDown={handleMouseDown}
+            >
+              <div className="stt-resizer-handle">
+                <span className="stt-resizer-icon">⋮</span>
+              </div>
+            </div>
+          )}
 
           {/* 우측: 번역 */}
-          <div className="stt-panel stt-panel-right">
+          {isTranslationEnabled && (
+            <div 
+              className="stt-panel stt-panel-right"
+              style={{ width: `${100 - leftPanelWidth}%` }}
+            >
             <div className="stt-panel-header">
               <div className="stt-target-lang-controls">
                 <select
@@ -356,6 +460,7 @@ export function SttStreamView() {
               )}
             </div>
           </div>
+          )}
         </div>
       </PageBox>
 
