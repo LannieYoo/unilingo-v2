@@ -9,6 +9,7 @@ import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranslator } from '../_04_hooks'
 import { SOURCE_LANGUAGES, TARGET_LANGUAGES, LANG_MAP } from '../_08_constants'
 import { useAuthStore, authService } from '../../auth'
+import { DOMAINS } from '../../../shared/modules/glossary'
 import '../_10_styles/translator.css'
 
 export function TranslatorView() {
@@ -18,9 +19,11 @@ export function TranslatorView() {
     sourceLang,
     targetLang,
     isTranslating,
+    domain,
     setInputText,
     setSourceLang,
     setTargetLang,
+    setDomain,
     translate,
   } = useTranslator()
 
@@ -158,6 +161,24 @@ export function TranslatorView() {
   return (
     <PageLayout title="Translator">
       <PageBox>
+        {/* Domain Selector */}
+        <div className="translator-domain-selector">
+          <label>Domain</label>
+          <div className="translator-domain-buttons">
+            {DOMAINS.map(d => (
+              <button
+                key={d.code}
+                className={`translator-domain-btn ${domain === d.code ? 'active' : ''}`}
+                onClick={() => setDomain(d.code)}
+                title={d.name}
+              >
+                <span className="material-symbols-outlined">{d.icon}</span>
+                <span className="translator-domain-name">{d.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">
           <div className="translator-lang-group">

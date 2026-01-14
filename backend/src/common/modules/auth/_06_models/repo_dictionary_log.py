@@ -114,6 +114,49 @@ class DictionaryLogRepository:
             )
             .first()
         )
+    
+    def find_by_word_and_user(self, user_id: int, search_word: str) -> Optional[DictionaryLogModel]:
+        """사용자의 특정 검색어 로그 조회"""
+        return (
+            self.db_session.query(DictionaryLogModel)
+            .filter(
+                DictionaryLogModel.user_id == user_id,
+                DictionaryLogModel.search_word == search_word
+            )
+            .first()
+        )
+    
+    def upsert_log(
+        self,
+        user_id: int,
+        search_word: str,
+        source_lang: str,
+        target_lang: str,
+        search_results: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None
+    ) -> DictionaryLogModel:
+        """사전 검색 로그 생성 또는 업데이트 (기존 항목 삭제 후 새로 생성)"""
+        # 기존 동일 단어 로그가 있으면 삭제
+        existing_log = self.find_by_word_and_user(user_id, search_word)
+        if existing_log:
+            self.db_session.delete(existing_log)
+            self.db_session.flush()
+        
+        # 새 로그 생성
+        log = DictionaryLogModel(
+            user_id=user_id,
+            search_word=search_word,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            search_results=json.dumps(search_results, ensure_ascii=False) if search_results else None,
+            ip_address=ip_address
+        )
+        
+        self.db_session.add(log)
+        self.db_session.commit()
+        self.db_session.refresh(log)
+        
+        return log
 
 
 # 전역 저장소 인스턴스

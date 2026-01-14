@@ -4,12 +4,12 @@ import './text-to-speech.css'
 
 function TextToSpeech() {
   const [text, setText] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState('ko')
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [isSpeaking, setIsSpeaking] = useState(false)
 
   const languages = [
-    { code: 'ko', name: 'Korean', voice: 'ko-KR' },
     { code: 'en', name: 'English', voice: 'en-US' },
+    { code: 'ko', name: 'Korean', voice: 'ko-KR' },
     { code: 'zh', name: 'Chinese (Simplified)', voice: 'zh-CN' },
   ]
 
@@ -44,10 +44,9 @@ function TextToSpeech() {
   }
 
   return (
-    <PageLayout title="Text to Speech" subtitle="Convert text to speech in multiple languages">
+    <PageLayout title="Text to Speech">
       <PageBox>
           <div className="language-select-wrapper">
-            <label htmlFor="tts-language">Language:</label>
             <select
               id="tts-language"
               value={selectedLanguage}

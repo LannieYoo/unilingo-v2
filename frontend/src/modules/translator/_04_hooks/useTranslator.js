@@ -4,7 +4,9 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { LANG_MAP } from '../_08_constants'
+import { LANG_MAP, SOURCE_LANGUAGES, TARGET_LANGUAGES } from '../_08_constants'
+import { useLanguagePreferences } from '../../auth'
+import { useGlossary } from '../../../shared/modules/glossary'
 
 /**
  * 언어 감지 함수
@@ -34,13 +36,36 @@ export function detectLanguage(text) {
 export function useTranslator() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en-CA')
+  const [sourceLang, setSourceLang] = useState('en')
   const [targetLang, setTargetLang] = useState('ko')
   const [isTranslating, setIsTranslating] = useState(false)
   
   const translateTimeoutRef = useRef(null)
   const abortControllerRef = useRef(null)
   const isManualLangChangeRef = useRef(false)
+
+  // 공통 언어 설정 훅 사용
+  const { nativeLanguage, targetLanguage, isLoaded } = useLanguagePreferences()
+  
+  // Glossary 훅 사용
+  const { domain, setDomain, postProcess } = useGlossary('general')
+
+  // Load language preferences from settings
+  useEffect(() => {
+    if (!isLoaded) return
+    
+    // Settings의 target_language → Translator의 Source Language
+    // Settings의 native_language → Translator의 Target Language
+    const isSourceSupported = SOURCE_LANGUAGES.some(l => l.code === targetLanguage)
+    const isTargetSupported = TARGET_LANGUAGES.some(l => l.code === nativeLanguage)
+    
+    if (isSourceSupported) {
+      setSourceLang(targetLanguage)
+    }
+    if (isTargetSupported) {
+      setTargetLang(nativeLanguage)
+    }
+  }, [isLoaded, nativeLanguage, targetLanguage])
 
   // 입력 텍스트 변경 시 언어 자동 탐지
   useEffect(() => {
@@ -56,22 +81,13 @@ export function useTranslator() {
     
     if (detectedLang === 'ko') {
       setSourceLang(prev => prev !== 'ko' ? 'ko' : prev)
-      setTargetLang(prev => {
-        const isEnglish = ['en-CA', 'en-US', 'en-GB', 'en-IN'].includes(prev)
-        return !isEnglish ? 'en-CA' : prev
-      })
+      setTargetLang(prev => prev !== 'en' ? 'en' : prev)
     } else if (detectedLang === 'en') {
-      setSourceLang(prev => {
-        const isEnglish = ['en-CA', 'en-US', 'en-GB', 'en-IN'].includes(prev)
-        return !isEnglish ? 'en-CA' : prev
-      })
+      setSourceLang(prev => prev !== 'en' ? 'en' : prev)
       setTargetLang(prev => prev !== 'ko' ? 'ko' : prev)
     } else if (detectedLang === 'zh') {
       setSourceLang(prev => prev !== 'zh' ? 'zh' : prev)
-      setTargetLang(prev => {
-        const isEnglish = ['en-CA', 'en-US', 'en-GB', 'en-IN'].includes(prev)
-        return !isEnglish ? 'en-CA' : prev
-      })
+      setTargetLang(prev => prev !== 'en' ? 'en' : prev)
     }
   }, [inputText])
 
@@ -155,7 +171,13 @@ export function useTranslator() {
       }
       
       if (!abortControllerRef.current.signal.aborted) {
-        setOutputText(translatedText || 'Translation failed. Please try again.')
+        if (translatedText) {
+          // Glossary 후처리 적용
+          const processedText = postProcess(translatedText, text, sourceCode, targetCode)
+          setOutputText(processedText)
+        } else {
+          setOutputText('Translation failed. Please try again.')
+        }
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -169,7 +191,7 @@ export function useTranslator() {
         setIsTranslating(false)
       }
     }
-  }, [inputText, sourceLang, targetLang])
+  }, [inputText, sourceLang, targetLang, postProcess])
 
   // 실시간 자동 번역 (debounce)
   useEffect(() => {
@@ -191,7 +213,7 @@ export function useTranslator() {
         clearTimeout(translateTimeoutRef.current)
       }
     }
-  }, [inputText, sourceLang, targetLang, handleTranslate])
+  }, [inputText, sourceLang, targetLang, domain, handleTranslate])
 
   const handleSourceLangChange = useCallback((lang) => {
     isManualLangChangeRef.current = true
@@ -210,13 +232,13 @@ export function useTranslator() {
       const detected = detectLanguage(text)
       if (detected === 'ko') {
         setSourceLang('ko')
-        setTargetLang('en-CA')
+        setTargetLang('en')
       } else if (detected === 'en') {
-        setSourceLang('en-CA')
+        setSourceLang('en')
         setTargetLang('ko')
       } else if (detected === 'zh') {
         setSourceLang('zh')
-        setTargetLang('en-CA')
+        setTargetLang('en')
       }
     }
   }, [])
@@ -227,9 +249,11 @@ export function useTranslator() {
     sourceLang,
     targetLang,
     isTranslating,
+    domain,
     setInputText: handleInputChange,
     setSourceLang: handleSourceLangChange,
     setTargetLang: handleTargetLangChange,
+    setDomain,
     translate: handleTranslate,
   }
 }

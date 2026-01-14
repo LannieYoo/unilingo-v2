@@ -19,6 +19,9 @@ class UserModel(Base):
     avatar_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     token_version = Column(Integer, default=1, nullable=False)  # For single session enforcement
+    # Language preferences
+    native_language = Column(String(10), nullable=True, default='en')  # User's native language
+    target_language = Column(String(10), nullable=True, default='ko')  # Preferred translation target language
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login_at = Column(DateTime, nullable=True)

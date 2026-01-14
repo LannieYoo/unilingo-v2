@@ -27,6 +27,8 @@ class UserRepository(IUserRepository):
             updated_at=model.updated_at,
             last_login_at=model.last_login_at,
             token_version=model.token_version or 1,
+            native_language=model.native_language or 'en',
+            target_language=model.target_language or 'ko',
         )
     
     def get_by_id(self, user_id: int) -> Optional[DUser]:
@@ -97,6 +99,18 @@ class UserRepository(IUserRepository):
         # Increment token_version to invalidate existing sessions when deactivating
         if not is_active:
             model.token_version = (model.token_version or 0) + 1
+        self._db.commit()
+        self._db.refresh(model)
+        return self._to_domain(model)
+    
+    def update_language_preferences(self, user_id: int, native_language: str, target_language: str) -> Optional[DUser]:
+        """Update user's language preferences."""
+        model = self._db.query(UserModel).filter(UserModel.id == user_id).first()
+        if not model:
+            return None
+        model.native_language = native_language
+        model.target_language = target_language
+        model.updated_at = datetime.utcnow()
         self._db.commit()
         self._db.refresh(model)
         return self._to_domain(model)

@@ -2,7 +2,7 @@
 from .i_auth_service import IAuthService
 from .r_user import IUserRepository
 from .r_login_log import ILoginLogRepository
-from .d_user import DUser, DUserCreate, DGoogleUserInfo
+from .d_user import DUser, DUserCreate, DGoogleUserInfo, DLanguagePreferences
 from .d_token import DToken, DTokenPayload, DGoogleTokens
 from .d_login_log import DLoginLog, DLoginLogCreate
 from .e_auth import EAuthProvider, ETokenType
@@ -25,6 +25,7 @@ __all__ = [
     "DUser",
     "DUserCreate",
     "DGoogleUserInfo",
+    "DLanguagePreferences",
     "DToken",
     "DTokenPayload",
     "DGoogleTokens",

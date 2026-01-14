@@ -35,7 +35,6 @@ export function DictionaryView() {
     goBack,
     goForward,
     performSearchDirect,
-    clearHistory,
     deleteHistoryItem,
     searchWithWord,
     fetchSuggestions,
@@ -365,30 +364,39 @@ export function DictionaryView() {
       {isAuthenticated && searchHistory.length > 0 && (
         <div className="search-history-bar">
           <div className="history-words">
-            {searchHistory.map((item, index) => (
-              <span key={index} className="history-item">
-                <span
-                  className="history-word"
-                  onClick={() => searchWithWord(item.word)}
-                >
-                  {item.word}
+            {searchHistory.slice(-20).reverse().map((item, index) => {
+              // Calculate the actual index in the original searchHistory array
+              // slice(-20) takes last 20 items, reverse() flips them
+              // So index 0 in displayed list = last item in original array
+              const actualIndex = searchHistory.length - 1 - index
+              
+              return (
+                <span key={item.id || index} className="history-item">
+                  <span
+                    className="history-word"
+                    onClick={() => searchWithWord(item.word)}
+                  >
+                    {item.word}
+                  </span>
+                  <span
+                    className="history-delete"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteHistoryItem(actualIndex)
+                    }}
+                  >
+                    ✕
+                  </span>
+                  {index < Math.min(searchHistory.length, 20) - 1 && <span className="history-separator">|</span>}
                 </span>
-                <span
-                  className="history-delete"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteHistoryItem(index)
-                  }}
-                >
-                  ✕
-                </span>
-                {index < searchHistory.length - 1 && <span className="history-separator">|</span>}
-              </span>
-            ))}
+              )
+            })}
           </div>
-          <button className="history-clear-btn" onClick={clearHistory}>
-            Clear
-          </button>
+          <div className="history-actions">
+            <a href="/dictionary/history" className="history-view-all-btn">
+              History
+            </a>
+          </div>
         </div>
       )}
     </PageLayout>

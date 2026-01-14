@@ -305,6 +305,31 @@ export const authService = {
     });
     return response.data;
   },
+
+  // User Settings APIs
+  /**
+   * Get user's language preferences.
+   */
+  async getLanguagePreferences(accessToken) {
+    const response = await api.get(`${ADMIN_ENDPOINTS.SETTINGS}/language`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Update user's language preferences.
+   */
+  async updateLanguagePreferences(accessToken, data) {
+    const response = await api.put(`${ADMIN_ENDPOINTS.SETTINGS}/language`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default authService;

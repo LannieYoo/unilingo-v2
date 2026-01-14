@@ -21,6 +21,7 @@ import '../_10_styles/stt-stream.css'
 import {
   useAuthStore,
   useCharacterLimit,
+  useLanguagePreferences,
   LoginModal,
   CharacterCounter,
   MAX_CHARS_GUEST,
@@ -79,6 +80,27 @@ export function SttStreamView() {
     showLoginModal,
     closeLoginModal,
   } = useCharacterLimit(finalText)
+
+  // 공통 언어 설정 훅 사용
+  const { targetLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
+
+  // Load language preferences from settings for STT source language
+  useEffect(() => {
+    if (!preferencesLoaded) return
+    
+    // Settings의 target_language → STT의 Source Language (입력 언어)
+    // Map to STT language codes (en -> en-us)
+    let sttLangCode = targetLanguage
+    if (targetLanguage === 'en') {
+      sttLangCode = 'en-us'
+    }
+    
+    // Check if the language is supported in STT
+    const supportedLangs = ['en-us', 'en-in', 'ko', 'zh', 'ja', 'es', 'fr', 'de', 'hi']
+    if (supportedLangs.includes(sttLangCode)) {
+      setSelectedLang(sttLangCode)
+    }
+  }, [preferencesLoaded, targetLanguage, setSelectedLang])
 
   const fullText = getFullText()
   

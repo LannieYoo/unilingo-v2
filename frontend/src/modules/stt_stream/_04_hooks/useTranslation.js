@@ -3,7 +3,8 @@
  * 실시간 번역 훅
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useLanguagePreferences } from '../../auth'
 
 const API_BASE = '/api'
 
@@ -49,6 +50,21 @@ export function useTranslation() {
   // 번역 큐
   const pendingRef = useRef([])
   const processingRef = useRef(false)
+
+  // 공통 언어 설정 훅 사용
+  const { nativeLanguage, isLoaded } = useLanguagePreferences()
+
+  // Load language preferences from settings
+  useEffect(() => {
+    if (!isLoaded) return
+    
+    // Settings의 native_language → Translation의 Target Language
+    const isSupported = TRANSLATION_LANGUAGES.some(l => l.code === nativeLanguage)
+    
+    if (isSupported) {
+      setTargetLangState(nativeLanguage)
+    }
+  }, [isLoaded, nativeLanguage])
 
   /**
    * 단일 문장 번역 API 호출 (재시도 로직 포함)

@@ -1,18 +1,32 @@
 /**
- * Session Expired Modal - Shows when user is logged out due to login from another device.
+ * Session Expired Modal - Shows when user is logged out due to login from another device or token expiration.
  */
 import { useAuthStore } from '../_05_stores';
 
 export function SessionExpiredModal() {
-  const { sessionExpired, clearSessionExpired } = useAuthStore();
+  const { sessionExpired, tokenExpired, clearSessionExpired } = useAuthStore();
 
-  if (!sessionExpired) {
+  // Show modal for either session expired or token expired
+  const isVisible = sessionExpired || tokenExpired;
+
+  if (!isVisible) {
     return null;
   }
 
   const handleClose = () => {
     clearSessionExpired();
   };
+
+  // Different messages for different expiration types
+  const isSessionExpired = sessionExpired;
+  const title = isSessionExpired ? 'Session Expired' : 'Login Expired';
+  const message = isSessionExpired
+    ? 'You have been logged out because your account was signed in from another device or browser.'
+    : 'Your login session has expired. Please log in again to continue.';
+  const subMessage = isSessionExpired
+    ? 'For security reasons, only one active session is allowed per account.'
+    : 'For security reasons, sessions expire after a period of inactivity.';
+  const iconColor = isSessionExpired ? 'bg-orange-500' : 'bg-blue-500';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -25,13 +39,13 @@ export function SessionExpiredModal() {
       {/* Modal */}
       <div className="relative bg-white dark:bg-card-dark rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-fade-in">
         {/* Header */}
-        <div className="bg-orange-500 px-6 py-4">
+        <div className={`${iconColor} px-6 py-4`}>
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-white text-2xl">
-              warning
+              {isSessionExpired ? 'warning' : 'schedule'}
             </span>
             <h2 className="text-lg font-semibold text-white">
-              Session Expired
+              {title}
             </h2>
           </div>
         </div>
@@ -39,10 +53,10 @@ export function SessionExpiredModal() {
         {/* Content */}
         <div className="px-6 py-5">
           <p className="text-text-light dark:text-text-dark text-base leading-relaxed">
-            You have been logged out because your account was signed in from another device or browser.
+            {message}
           </p>
           <p className="text-text-muted-light dark:text-text-muted-dark text-sm mt-3">
-            For security reasons, only one active session is allowed per account.
+            {subMessage}
           </p>
         </div>
         

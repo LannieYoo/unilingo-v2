@@ -19,6 +19,8 @@ class DUser:
     updated_at: datetime
     last_login_at: Optional[datetime] = None
     token_version: int = 1  # For single session enforcement
+    native_language: Optional[str] = 'en'  # User's native language
+    target_language: Optional[str] = 'ko'  # Preferred translation target language
 
 
 @dataclass
@@ -37,3 +39,10 @@ class DGoogleUserInfo:
     email: str
     name: str
     picture: Optional[str] = None
+
+
+@dataclass
+class DLanguagePreferences:
+    """Language preferences data contract."""
+    native_language: str
+    target_language: str

@@ -38,7 +38,7 @@ function Header() {
         </Link>
       </div>
       
-      <div className="hidden md:flex flex-1 items-center justify-end gap-6">
+      <div className="hidden lg:flex flex-1 items-center justify-end gap-6">
         <nav className="flex items-center gap-6">
           {allMenuItems.map((item) => (
             <Link
@@ -67,7 +67,7 @@ function Header() {
       </div>
       
       <button 
-        className="md:hidden flex items-center justify-center h-14 w-14 -mt-1 text-text-light dark:text-text-dark hover:text-primary transition-colors"
+        className="lg:hidden flex items-center justify-center h-14 w-14 -mt-1 text-text-light dark:text-text-dark hover:text-primary transition-colors"
         onClick={toggleMenu}
         aria-label="Toggle menu"
       >
@@ -75,7 +75,7 @@ function Header() {
       </button>
       
       {isMenuOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg md:hidden">
+        <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg lg:hidden">
           <div className="flex flex-col px-4 py-3">
             {allMenuItems.map((item) => (
               <Link

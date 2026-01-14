@@ -5,6 +5,9 @@
 // Router
 export * from './_01_router';
 
+// Views
+export * from './_02_views';
+
 // Components
 export * from './_03_components';
 

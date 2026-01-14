@@ -14,7 +14,7 @@ import { DictionaryView, DictionaryHistoryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
 
 // Auth module
-import { useAuthStore, useAuth, SessionExpiredModal } from './modules/auth'
+import { useAuthStore, useAuth, SessionExpiredModal, SettingsView } from './modules/auth'
 
 // Legacy imports (for backward compatibility during migration)
 import SpeechToTextTest from './pages/speech-to-text/speech-to-text-test'
@@ -122,6 +122,9 @@ function AppContent() {
             
             {/* Admin page */}
             <Route path="/admin" element={<AdminView />} />
+            
+            {/* Settings page */}
+            <Route path="/settings" element={<SettingsView />} />
             
             <Route path="/logs" element={<Logs />} />
           </Routes>

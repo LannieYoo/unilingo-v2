@@ -539,6 +539,32 @@
   color: rgba(255, 255, 255, 0.4);
 }
 
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.history-view-all-btn {
+  background: rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.history-view-all-btn:hover {
+  background: rgba(59, 130, 246, 0.5);
+  text-decoration: none;
+  color: #ffffff;
+}
+
 .history-clear-btn {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);

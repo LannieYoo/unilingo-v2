@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { translateText, fetchDictionary, fetchSuggestionsFromDatamuse } from '../_06_services'
 import { detectLanguage } from '../_07_utils'
 import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
-import { useAuthStore } from '../../auth/_05_stores'
+import { useAuthStore, useLanguagePreferences } from '../../auth'
 import { authService } from '../../auth/_06_services'
 
 export function useDictionary() {
@@ -27,7 +27,22 @@ export function useDictionary() {
   const suggestionAbortRef = useRef(null)
 
   // Auth store
-  const { user, tokens } = useAuthStore()
+  const { user, tokens, isAuthenticated } = useAuthStore()
+
+  // 공통 언어 설정 훅 사용
+  const { nativeLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
+
+  // Load language preferences from settings
+  useEffect(() => {
+    if (!preferencesLoaded) return
+    
+    // Settings의 native_language → Dictionary의 Target Language
+    const isSupported = DIRECTIONS.some(d => d.value === nativeLanguage)
+    
+    if (isSupported) {
+      setTargetLang(nativeLanguage)
+    }
+  }, [preferencesLoaded, nativeLanguage])
 
   // 페이지 로드 시 데이터베이스에서 검색 히스토리 불러오기
   useEffect(() => {
@@ -272,19 +287,23 @@ export function useDictionary() {
       }
     }
     
-    // 로컬 히스토리 업데이트
+    // 로컬 히스토리 업데이트 (중복 단어 제거 후 새로 추가)
     setSearchHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1)
-      newHistory.push(historyItem)
-      if (newHistory.length > 50) {
-        newHistory.shift()
-        setHistoryIndex(newHistory.length - 1)
-      } else {
-        setHistoryIndex(newHistory.length - 1)
+      // 동일한 단어가 있으면 제거
+      const filteredHistory = prev.filter(item => item.word !== searchWord)
+      
+      // 새 항목 추가
+      filteredHistory.push(historyItem)
+      
+      // 최대 50개 유지
+      if (filteredHistory.length > 50) {
+        filteredHistory.shift()
       }
-      return newHistory
+      
+      setHistoryIndex(filteredHistory.length - 1)
+      return filteredHistory
     })
-  }, [historyIndex, user, tokens])
+  }, [user, tokens])
 
   // 검색 수행
   const performSearch = useCallback(async (fromLang, toLang, searchWord, signal = null, historyWord = null) => {
@@ -760,25 +779,31 @@ export function useDictionary() {
   const deleteHistoryItem = useCallback(async (index) => {
     const itemToDelete = searchHistory[index]
     
+    if (!itemToDelete) {
+      console.error('Item not found at index:', index, 'searchHistory length:', searchHistory.length)
+      return
+    }
+    
     // 로그인한 사용자이고 아이템에 ID가 있는 경우 데이터베이스에서 삭제
-    if (user && tokens?.access_token && itemToDelete?.id) {
+    if (user && tokens?.access_token && itemToDelete.id) {
       try {
         await authService.deleteDictionaryLog(tokens.access_token, itemToDelete.id)
       } catch (error) {
         console.error('Failed to delete dictionary log:', error)
-        // 데이터베이스 삭제 실패 시 로컬에서도 삭제하지 않음
-        return
+        // 데이터베이스 삭제 실패해도 로컬에서는 삭제 진행
       }
     }
     
     // 로컬 히스토리에서 삭제
     setSearchHistory(prev => {
       const newHistory = prev.filter((_, i) => i !== index)
-      if (historyIndex >= index) {
-        setHistoryIndex(Math.max(-1, historyIndex - 1))
-      }
       return newHistory
     })
+    
+    // Update history index separately to avoid closure issues
+    if (historyIndex >= index) {
+      setHistoryIndex(Math.max(-1, historyIndex - 1))
+    }
   }, [historyIndex, searchHistory, user, tokens])
 
   return {

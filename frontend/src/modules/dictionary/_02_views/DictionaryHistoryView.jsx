@@ -59,7 +59,7 @@ export function DictionaryHistoryView() {
 
   const handleUseSearch = (item) => {
     // Navigate to dictionary with the search term
-    navigate('/dictionary', { state: { searchTerm: item.search_term, targetLang: item.target_lang } })
+    navigate('/dictionary', { state: { searchTerm: item.search_word, targetLang: item.target_lang } })
   }
 
   const formatDate = (dateStr) => {
@@ -153,7 +153,7 @@ export function DictionaryHistoryView() {
                     <div className="dictionary-history-card-content">
                       <div className="dictionary-history-card-text">
                         <span className="dictionary-history-card-label">Search Term</span>
-                        <p className="dictionary-history-card-search">{item.search_term}</p>
+                        <p className="dictionary-history-card-search">{item.search_word}</p>
                       </div>
                       {item.result_summary && (
                         <div className="dictionary-history-card-text">

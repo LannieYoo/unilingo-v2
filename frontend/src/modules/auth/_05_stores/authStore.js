@@ -17,6 +17,7 @@ export const useAuthStore = create(
       isLoading: false,
       error: null,
       sessionExpired: false,  // For showing session expired message
+      tokenExpired: false,    // For showing token expired message
 
       // Actions
       setUser: (user) => {
@@ -40,14 +41,30 @@ export const useAuthStore = create(
           isAuthenticated: false,
           isAdmin: false,
           sessionExpired: true,
+          tokenExpired: false,
           error: '다른 기기에서 로그인되어 현재 세션이 만료되었습니다.',
+        });
+      },
+
+      /**
+       * Handle token expired (JWT expired).
+       */
+      handleTokenExpired: () => {
+        set({
+          user: null,
+          tokens: null,
+          isAuthenticated: false,
+          isAdmin: false,
+          sessionExpired: false,
+          tokenExpired: true,
+          error: '로그인 세션이 만료되었습니다. 다시 로그인해주세요.',
         });
       },
 
       /**
        * Clear session expired flag.
        */
-      clearSessionExpired: () => set({ sessionExpired: false }),
+      clearSessionExpired: () => set({ sessionExpired: false, tokenExpired: false }),
 
       /**
        * Login with Google OAuth response.
@@ -184,7 +201,7 @@ export const useAuthStore = create(
       /**
        * Clear error.
        */
-      clearError: () => set({ error: null, sessionExpired: false }),
+      clearError: () => set({ error: null, sessionExpired: false, tokenExpired: false }),
     }),
     {
       name: TOKEN_STORAGE_KEY,

@@ -1013,7 +1013,7 @@ def create_dictionary_log():
                 }), 404
             
             dictionary_log_repo = get_dictionary_log_repository(db)
-            log = dictionary_log_repo.create_log(
+            log = dictionary_log_repo.upsert_log(
                 user_id=user.id,
                 search_word=search_word,
                 source_lang=source_lang,
@@ -1142,6 +1142,147 @@ def clear_dictionary_logs():
             return jsonify({
                 'message': f'Cleared {deleted_count} dictionary logs',
                 'deleted_count': deleted_count,
+                'trace_id': trace_id,
+            }), 200
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+
+# ============== User Settings Endpoints ==============
+
+@router.route('/settings/language', methods=['GET'])
+@token_required
+def get_language_preferences():
+    """Get current user's language preferences."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            user = user_repo.get_by_email(current_user.get('email'))
+            
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            return jsonify({
+                'native_language': user.native_language or 'en',
+                'target_language': user.target_language or 'ko',
+                'trace_id': trace_id,
+            }), 200
+        finally:
+            db.close()
+            
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e),
+                'trace_id': trace_id,
+            }
+        }), 500
+
+
+@router.route('/settings/language', methods=['PUT'])
+@token_required
+def update_language_preferences():
+    """Update current user's language preferences."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    
+    if not current_user:
+        return jsonify({
+            'error': {
+                'code': 'UNAUTHORIZED',
+                'message': 'Authentication required',
+                'trace_id': trace_id,
+            }
+        }), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'error': {
+                    'code': 'INVALID_REQUEST',
+                    'message': 'Request body is required',
+                    'trace_id': trace_id,
+                }
+            }), 400
+        
+        native_language = data.get('native_language', 'en')
+        target_language = data.get('target_language', 'ko')
+        
+        # Validate language codes (basic validation)
+        valid_languages = ['en', 'ko', 'zh', 'ja', 'es', 'fr', 'de', 'pt', 'ru', 'ar', 'hi', 'vi', 'th', 'id']
+        if native_language not in valid_languages:
+            return jsonify({
+                'error': {
+                    'code': 'INVALID_LANGUAGE',
+                    'message': f'Invalid native language: {native_language}',
+                    'trace_id': trace_id,
+                }
+            }), 400
+        
+        if target_language not in valid_languages:
+            return jsonify({
+                'error': {
+                    'code': 'INVALID_LANGUAGE',
+                    'message': f'Invalid target language: {target_language}',
+                    'trace_id': trace_id,
+                }
+            }), 400
+        
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            user = user_repo.get_by_email(current_user.get('email'))
+            
+            if not user:
+                return jsonify({
+                    'error': {
+                        'code': 'USER_NOT_FOUND',
+                        'message': 'User not found',
+                        'trace_id': trace_id,
+                    }
+                }), 404
+            
+            updated_user = user_repo.update_language_preferences(
+                user.id,
+                native_language,
+                target_language
+            )
+            
+            return jsonify({
+                'native_language': updated_user.native_language,
+                'target_language': updated_user.target_language,
+                'message': 'Language preferences updated successfully',
                 'trace_id': trace_id,
             }), 200
         finally:

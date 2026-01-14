@@ -3,3 +3,4 @@
  */
 export { useAuth, default } from './useAuth';
 export { useCharacterLimit } from './useCharacterLimit';
+export { useLanguagePreferences } from './useLanguagePreferences';
