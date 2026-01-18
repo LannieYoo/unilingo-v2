@@ -150,6 +150,14 @@ export const useAuthStore = create(
       fetchUser: async () => {
         const { tokens } = get();
         if (!tokens?.access_token) {
+          // 토큰이 없으면 로그아웃 상태로 설정
+          set({
+            user: null,
+            tokens: null,
+            isAuthenticated: false,
+            isAdmin: false,
+            isLoading: false,
+          });
           return null;
         }
 
@@ -183,6 +191,7 @@ export const useAuthStore = create(
               if (refreshError.response?.data?.error?.code === 'SESSION_EXPIRED') {
                 get().handleSessionExpired();
               } else {
+                // 401 에러는 조용히 처리 - 로그아웃 상태로 설정
                 set({
                   user: null,
                   tokens: null,
@@ -192,6 +201,16 @@ export const useAuthStore = create(
                 });
               }
             }
+          } else {
+            // 401이 아닌 다른 에러 - 로그아웃 상태로 설정
+            console.error('Failed to fetch user:', error);
+            set({
+              user: null,
+              tokens: null,
+              isAuthenticated: false,
+              isAdmin: false,
+              isLoading: false,
+            });
           }
           set({ isLoading: false });
           return null;

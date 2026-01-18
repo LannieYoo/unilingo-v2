@@ -51,7 +51,10 @@ export function useLanguagePreferences() {
           setTargetLanguage(data.target_language)
         }
       } catch (error) {
-        console.error('Failed to load language preferences:', error)
+        // 401 에러는 무시 (비로그인 상태)
+        if (error.response?.status !== 401) {
+          console.error('Failed to load language preferences:', error)
+        }
         // 에러 시 기본값 유지
       } finally {
         setIsLoading(false)

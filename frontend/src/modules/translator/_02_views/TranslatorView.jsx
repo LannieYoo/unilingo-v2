@@ -9,7 +9,6 @@ import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranslator } from '../_04_hooks'
 import { SOURCE_LANGUAGES, TARGET_LANGUAGES, LANG_MAP } from '../_08_constants'
 import { useAuthStore, authService } from '../../auth'
-import { DOMAINS } from '../../../shared/modules/glossary'
 import '../_10_styles/translator.css'
 
 export function TranslatorView() {
@@ -19,11 +18,9 @@ export function TranslatorView() {
     sourceLang,
     targetLang,
     isTranslating,
-    domain,
     setInputText,
     setSourceLang,
     setTargetLang,
-    setDomain,
     translate,
   } = useTranslator()
 
@@ -31,10 +28,11 @@ export function TranslatorView() {
   const navigate = useNavigate()
   const [recentHistory, setRecentHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [lastSavedText, setLastSavedText] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, text }
   const [deletingId, setDeletingId] = useState(null)
   const [togglingFavoriteId, setTogglingFavoriteId] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSavedText, setLastSavedText] = useState('')
 
   // Load recent history on mount
   useEffect(() => {
@@ -48,34 +46,28 @@ export function TranslatorView() {
     
     setLoadingHistory(true)
     try {
-      const data = await authService.getRecentTranslationLogs(tokens.access_token, 10)
+      const data = await authService.getRecentTranslationLogs(tokens.access_token, 5)
       setRecentHistory(data.logs || [])
     } catch (err) {
-      console.error('Failed to load translation history:', err)
+      // 401 에러는 무시 (비로그인 상태)
+      if (err.response?.status !== 401) {
+        console.error('Failed to load translation history:', err)
+      }
     } finally {
       setLoadingHistory(false)
     }
   }
 
-  // Save translation to history when translation completes
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      tokens?.access_token &&
-      outputText &&
-      inputText?.trim() &&
-      outputText !== inputText &&
-      !outputText.includes('failed') &&
-      !outputText.includes('error') &&
-      inputText !== lastSavedText
-    ) {
-      saveTranslation()
+  const handleSaveToHistory = async () => {
+    if (!isAuthenticated || !tokens?.access_token) {
+      return
     }
-  }, [outputText])
-
-  const saveTranslation = async () => {
-    if (!tokens?.access_token || !inputText?.trim() || !outputText?.trim()) return
     
+    if (!inputText?.trim() || !outputText?.trim()) {
+      return
+    }
+    
+    setIsSaving(true)
     try {
       await authService.createTranslationLog(tokens.access_token, {
         source_text: inputText,
@@ -84,11 +76,19 @@ export function TranslatorView() {
         target_lang: LANG_MAP[targetLang] || 'ko',
         provider: 'google',
       })
-      setLastSavedText(inputText)
+      setLastSavedText(outputText)
       // Reload history
-      loadRecentHistory()
+      await loadRecentHistory()
     } catch (err) {
       console.error('Failed to save translation:', err)
+      // 네트워크 에러 또는 서버 에러 시 사용자에게 알림
+      if (err.response?.status === 500) {
+        alert('Failed to save translation. Please check your internet connection and try again.')
+      } else {
+        alert('Failed to save translation. Please try again.')
+      }
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -158,27 +158,15 @@ export function TranslatorView() {
     return langMap[code] || code?.toUpperCase()
   }
 
+  const handleSwapLanguages = () => {
+    const temp = sourceLang
+    setSourceLang(targetLang)
+    setTargetLang(temp)
+  }
+
   return (
     <PageLayout title="Translator">
       <PageBox>
-        {/* Domain Selector */}
-        <div className="translator-domain-selector">
-          <label>Domain</label>
-          <div className="translator-domain-buttons">
-            {DOMAINS.map(d => (
-              <button
-                key={d.code}
-                className={`translator-domain-btn ${domain === d.code ? 'active' : ''}`}
-                onClick={() => setDomain(d.code)}
-                title={d.name}
-              >
-                <span className="material-symbols-outlined">{d.icon}</span>
-                <span className="translator-domain-name">{d.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">
           <div className="translator-lang-group">
@@ -194,7 +182,13 @@ export function TranslatorView() {
             </select>
           </div>
           
-          <div className="translator-arrow">→</div>
+          <button 
+            onClick={handleSwapLanguages}
+            className="translator-swap-btn"
+            title="Swap languages"
+          >
+            <span className="material-symbols-outlined">swap_horiz</span>
+          </button>
           
           <div className="translator-lang-group translator-target-lang-group">
             <label>Target Language</label>
@@ -211,7 +205,7 @@ export function TranslatorView() {
         </div>
 
         {/* 입력 */}
-        <div className="translator-section">
+        <div className="translator-section translator-input-wrapper">
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -219,16 +213,44 @@ export function TranslatorView() {
             className="translator-textarea"
             rows={8}
           />
+          {inputText && (
+            <button
+              onClick={() => setInputText('')}
+              className="translator-clear-btn"
+              title="Clear text"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          )}
         </div>
 
         {/* 번역 버튼 */}
-        <button
-          onClick={() => translate()}
-          disabled={isTranslating || !inputText?.trim()}
-          className="translator-btn"
-        >
-          {isTranslating ? 'Translating...' : 'Translate'}
-        </button>
+        <div className="translator-btn-group">
+          <button
+            onClick={() => translate()}
+            disabled={isTranslating || !inputText?.trim()}
+            className="translator-btn"
+          >
+            {isTranslating ? 'Translating...' : 'Translate'}
+          </button>
+          
+          {/* Save to History 버튼 */}
+          {isAuthenticated && outputText && (
+            <button
+              onClick={handleSaveToHistory}
+              disabled={isSaving || !outputText?.trim() || outputText === lastSavedText}
+              className="translator-save-btn"
+              title={outputText === lastSavedText ? 'Already saved' : 'Save to History'}
+            >
+              <span className="material-symbols-outlined">
+                {outputText === lastSavedText ? 'bookmark' : 'bookmark_add'}
+              </span>
+              <span className="translator-save-btn-text">
+                {isSaving ? 'Saving...' : outputText === lastSavedText ? 'Saved' : 'Save'}
+              </span>
+            </button>
+          )}
+        </div>
 
         {/* Target Language (모바일에서만 표시) */}
         <div className="translator-target-lang-mobile">

@@ -161,14 +161,51 @@
   padding-bottom: 0.5rem;
 }
 
+.translator-swap-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-bottom: 0.25rem;
+}
+
+.translator-swap-btn:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: rotate(180deg);
+}
+
+.translator-swap-btn:active {
+  transform: rotate(180deg) scale(0.95);
+}
+
+.translator-swap-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
 /* 텍스트 영역 */
 .translator-section {
   margin-bottom: 1.5rem;
 }
 
+.translator-input-wrapper {
+  position: relative;
+}
+
 .translator-textarea {
   width: 100%;
   padding: 1.25rem;
+  padding-right: 3rem;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   font-size: 1rem;
@@ -193,11 +230,48 @@
 .translator-textarea--output {
   background-color: #f8fafc;
   border-color: rgba(59, 130, 246, 0.2);
+  padding-right: 1.25rem;
+}
+
+.translator-clear-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.translator-clear-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+  opacity: 1;
+}
+
+.translator-clear-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* 번역 버튼 그룹 */
+.translator-btn-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 /* 번역 버튼 */
 .translator-btn {
-  width: 100%;
+  flex: 1;
   padding: 1rem 2rem;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
@@ -207,7 +281,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 1.5rem;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
@@ -225,6 +298,47 @@
   cursor: not-allowed;
 }
 
+/* Save to History 버튼 */
+.translator-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem 1.25rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+}
+
+.translator-save-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+}
+
+.translator-save-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.translator-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.translator-save-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.translator-save-btn-text {
+  display: inline;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
   .translator-lang-selectors {
@@ -236,8 +350,25 @@
     padding-bottom: 0.5rem;
   }
   
+  .translator-swap-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .translator-swap-btn .material-symbols-outlined {
+    font-size: 20px;
+  }
+  
   .translator-lang-group {
     min-width: 140px;
+  }
+  
+  .translator-save-btn-text {
+    display: none;
+  }
+  
+  .translator-save-btn {
+    padding: 1rem;
   }
 }
 
@@ -251,6 +382,10 @@
 
   .translator-arrow {
     display: none; /* 화살표 숨기기 */
+  }
+  
+  .translator-swap-btn {
+    display: none; /* 스왑 버튼 숨기기 */
   }
   
   .translator-lang-group {
@@ -282,8 +417,11 @@
   }
 
   /* 번역 버튼 여백 줄이기 */
-  .translator-btn {
+  .translator-btn-group {
     margin-bottom: 0.75rem;
+  }
+  
+  .translator-btn {
     padding: 0.875rem 1.5rem;
   }
 
@@ -302,6 +440,32 @@
 /* 다크 모드 */
 .dark .translator-target-lang-mobile label {
   color: #94a3b8;
+}
+
+.dark .translator-textarea {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.dark .translator-textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.dark .translator-textarea--output {
+  background: #0f172a;
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.dark .translator-clear-btn {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.dark .translator-clear-btn:hover {
+  background: #475569;
+  color: #e2e8f0;
 }
 
 
