@@ -11,4 +11,3 @@ export { TranscriptDisplay, default as transcriptDisplay } from './TranscriptDis
 export { ModelDownloadManager } from './ModelDownloadManager'
 export { DownloadOverlay } from './DownloadOverlay'
 export { ModelDownloadPrompt } from './ModelDownloadPrompt'
-export { WhisperStatusIndicator } from './WhisperStatusIndicator'

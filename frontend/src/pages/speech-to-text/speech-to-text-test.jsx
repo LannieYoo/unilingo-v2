@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import './speech-to-text.css'
+import '../../modules/stt_stream/_10_styles/stt-stream.css'
 
 function SpeechToTextTest() {
   const [isRecording, setIsRecording] = useState(false)
