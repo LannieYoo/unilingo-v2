@@ -12,12 +12,20 @@ build/
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 frontend/.env
+frontend/.env.*
 backend/.env
+backend/.env.*
+
+# Config files (sensitive)
+backend/config.py
+backend/src/common/config.py
+**/config.local.py
 
 # IDE
 .vscode/

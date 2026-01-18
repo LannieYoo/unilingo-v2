@@ -15,13 +15,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.config import get_config
 from backend.src.common.modules import (
-    # Middleware
     init_cors,
     init_request_logger,
     init_error_handler,
     init_rate_limiter,
     init_logging,
-    # Blueprints
     translation_bp,
     dictionary_bp,
     stt_bp,
@@ -29,7 +27,7 @@ from backend.src.common.modules import (
     auth_bp,
     admin_bp,
 )
-from backend.src.common.modules.database import Base, engine
+from backend.src.common.supabase import Base
 
 
 def create_app(config_name: str = None) -> Flask:
@@ -79,9 +77,29 @@ def create_app(config_name: str = None) -> Flask:
     
     # Create database tables
     try:
+        from sqlalchemy import create_engine
+        from backend.src.common.supabase import SUPABASE_DB_URI
         from backend.src.common.modules.auth.service import UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel
-        Base.metadata.create_all(bind=engine)
-        app.logger.info("Database tables created successfully")
+        
+        if SUPABASE_DB_URI:
+            from urllib.parse import quote_plus
+            
+            # URL에 특수문자가 있으면 인코딩 처리
+            db_uri = SUPABASE_DB_URI
+            if '!' in db_uri and '%21' not in db_uri:
+                parts = db_uri.split('@')
+                if len(parts) == 2:
+                    user_pass = parts[0].split('://')[-1]
+                    if ':' in user_pass:
+                        user, password = user_pass.rsplit(':', 1)
+                        encoded_password = quote_plus(password)
+                        db_uri = f"postgresql://{user}:{encoded_password}@{parts[1]}"
+            
+            engine = create_engine(db_uri, pool_pre_ping=True)
+            Base.metadata.create_all(bind=engine)
+            app.logger.info("Database tables created successfully")
+        else:
+            app.logger.warning("SUPABASE_DB_URI not configured. Skipping table creation.")
     except Exception as e:
         app.logger.warning(f"Database connection failed: {e}. Auth features will be disabled.")
     

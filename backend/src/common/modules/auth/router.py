@@ -8,7 +8,7 @@ from functools import wraps
 from typing import Optional
 from flask import Blueprint, request, jsonify, g
 
-from ..database import get_db
+from ...supabase import get_db
 from .dto import GoogleOAuthError, TokenError, TokenExpiredError, InvalidTokenError, DSttLogCreate
 from .service import (
     get_auth_service, UserRepository, LoginLogRepository, SttLogRepository,

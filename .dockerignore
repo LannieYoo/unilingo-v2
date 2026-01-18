@@ -3,9 +3,22 @@ npm-debug.log
 .git
 .gitignore
 README.md
+
+# Environment files
 .env
+.env.*
 .env.local
 .env.*.local
+frontend/.env
+frontend/.env.*
+backend/.env
+backend/.env.*
+
+# Config files (sensitive)
+backend/config.py
+backend/src/common/config.py
+**/config.local.py
+
 dist
 build
 *.log

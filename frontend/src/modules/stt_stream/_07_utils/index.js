@@ -6,3 +6,4 @@
 export { normalizeText, addPunctuation, normalizeForComparison, detectLanguage } from './textFormatter'
 export { overlapMerge } from './overlapMerge'
 export { generateFileName, downloadAsFile } from './fileHelper'
+export { isWhisperSupported, shouldFallbackToVosk, getBrowserInfo, getRecommendedBrowsers } from './browserCompatibility'

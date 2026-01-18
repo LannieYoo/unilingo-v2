@@ -1,9 +1,13 @@
 @echo off
+setlocal enabledelayedexpansion
+
 REM ========================================
-REM UniLingo - Run Frontend and Backend
+REM UniLingo - Optimized Server Startup
 REM ========================================
-REM Each server runs in a separate window
+REM Parallel server startup with health checks
 REM Browser opens automatically via Vite
+
+title UniLingo Server Manager
 
 echo.
 echo ========================================
@@ -15,114 +19,181 @@ REM Get current directory
 set "PROJECT_DIR=%~dp0"
 cd /d "%PROJECT_DIR%"
 
-REM Check if Node.js is installed
+REM ========================================
+REM Step 1: Environment Validation
+REM ========================================
+echo [1/5] Validating environment...
+
+REM Check Node.js
 where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Node.js is not installed. Please install Node.js first.
+    echo [ERROR] Node.js not found
     echo Download: https://nodejs.org/
     pause
     exit /b 1
 )
 
-REM Check if Python is installed
+REM Check Python
 where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Python is not installed. Please install Python first.
+    echo [ERROR] Python not found
     echo Download: https://www.python.org/
     pause
     exit /b 1
 )
 
-REM Check if Docker is installed
-where docker >nul 2>nul
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Docker is not installed. Database may not work.
-    echo Download: https://www.docker.com/
-) else (
-    echo [0/3] Checking PostgreSQL database...
-    
-    REM Check if Docker is running
-    docker info >nul 2>nul
+REM Check .env file
+if not exist ".env" (
+    echo [ERROR] .env file missing
+    echo Copy .env.example to .env and configure Supabase credentials
+    pause
+    exit /b 1
+)
+
+echo      Environment OK
+
+REM ========================================
+REM Step 2: Port Cleanup
+REM ========================================
+echo [2/5] Cleaning up ports...
+
+REM Kill processes on port 3001 and 8001 in parallel
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3001 " ^| findstr "LISTENING"') do (
+    taskkill /F /PID %%a >nul 2>nul
+)
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8001 " ^| findstr "LISTENING"') do (
+    taskkill /F /PID %%a >nul 2>nul
+)
+
+REM Brief wait for port release
+timeout /t 1 /nobreak >nul
+echo      Ports cleared
+
+REM ========================================
+REM Step 3: Backend Setup
+REM ========================================
+echo [3/5] Preparing backend...
+
+cd /d "%PROJECT_DIR%"
+
+REM Check if venv exists and is valid
+if not exist "venv\Scripts\activate.bat" (
+    echo      Creating virtual environment...
+    python -m venv venv
     if %ERRORLEVEL% neq 0 (
-        echo      [WARNING] Docker is not running. Please start Docker Desktop.
-    ) else (
-        REM Check if container exists
-        docker ps -a --filter "name=unilingo-postgres" --format "{{.Names}}" | findstr "unilingo-postgres" >nul 2>nul
-        if %ERRORLEVEL% neq 0 (
-            echo      Creating PostgreSQL container...
-            docker run -d --name unilingo-postgres -e POSTGRES_USER=starsite -e POSTGRES_PASSWORD=Rmrehd106!! -e POSTGRES_DB=unilingo -p 5444:5432 postgres:16-alpine
-        ) else (
-            REM Check if container is running
-            docker ps --filter "name=unilingo-postgres" --format "{{.Names}}" | findstr "unilingo-postgres" >nul 2>nul
-            if %ERRORLEVEL% neq 0 (
-                echo      Starting PostgreSQL container...
-                docker start unilingo-postgres
-            ) else (
-                echo      PostgreSQL is already running.
-            )
-        )
-        
-        REM Wait for database to be ready
-        echo      Waiting for database to be ready...
-        timeout /t 3 /nobreak >nul
+        echo [ERROR] Failed to create virtual environment
+        pause
+        exit /b 1
     )
 )
 
-REM Kill existing processes on port 3001 (Frontend) - IPv4 and IPv6
-echo [1/3] Checking for existing processes...
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3001 " ^| findstr "LISTENING"') do (
-    echo      Killing process on port 3001 (PID: %%a)
-    taskkill /F /PID %%a >nul 2>nul
+REM Activate venv and check if requirements are installed
+call venv\Scripts\activate.bat
+
+REM Quick check if Flask is installed
+python -c "import flask" >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo      Installing backend dependencies...
+    pip install -q -r backend\requirements.txt
+    if %ERRORLEVEL% neq 0 (
+        echo [ERROR] Failed to install backend dependencies
+        pause
+        exit /b 1
+    )
 )
 
-REM Kill existing processes on port 8001 (Backend) - IPv4 and IPv6
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8001 " ^| findstr "LISTENING"') do (
-    echo      Killing process on port 8001 (PID: %%a)
-    taskkill /F /PID %%a >nul 2>nul
+echo      Backend ready
+
+REM ========================================
+REM Step 4: Frontend Setup
+REM ========================================
+echo [4/5] Preparing frontend...
+
+cd /d "%PROJECT_DIR%frontend"
+
+REM Check if node_modules exists and is valid
+if not exist "node_modules\vite" (
+    echo      Installing frontend dependencies...
+    call npm install --silent
+    if %ERRORLEVEL% neq 0 (
+        echo [ERROR] Failed to install frontend dependencies
+        pause
+        exit /b 1
+    )
 )
 
-REM Wait a moment for ports to be released
+echo      Frontend ready
+
+REM ========================================
+REM Step 5: Start Servers
+REM ========================================
+echo [5/5] Starting servers...
+
+REM Start Backend (minimized window)
+cd /d "%PROJECT_DIR%"
+start "UniLingo Backend" /MIN cmd /c "call venv\Scripts\activate.bat && cd backend && python app.py"
+
+REM Brief wait for backend initialization
 timeout /t 2 /nobreak >nul
 
-REM Start Backend Flask server first (new window)
-echo [2/3] Starting Backend Flask server on port 8001...
-cd /d "%PROJECT_DIR%"
-if not exist "venv" (
-    echo      Creating virtual environment...
-    python -m venv venv
-    call venv\Scripts\activate.bat
-    echo      Installing backend requirements...
-    pip install -r backend\requirements.txt
-) else (
-    call venv\Scripts\activate.bat
-)
-start "UniLingo Backend (8001)" cmd /k "cd /d "%PROJECT_DIR%" && call venv\Scripts\activate.bat && cd backend && python app.py"
+REM Start Frontend (minimized window)
+cd /d "%PROJECT_DIR%frontend"
+start "UniLingo Frontend" /MIN cmd /c "npm run dev"
 
-REM Wait for backend to start
-echo      Waiting for backend to initialize...
+REM Wait for servers to fully initialize
+echo      Waiting for servers to start...
 timeout /t 3 /nobreak >nul
 
-REM Start Frontend (new window) - Browser opens automatically via Vite
-echo [3/3] Starting Frontend server on port 3001...
-cd /d "%PROJECT_DIR%frontend"
-if not exist "node_modules" (
-    echo      Installing npm packages...
-    call npm install
-)
-start "UniLingo Frontend (3001)" cmd /k "cd /d "%PROJECT_DIR%frontend" && npm run dev"
-
+REM ========================================
+REM Success Message
+REM ========================================
+cls
 echo.
 echo ========================================
-echo        Servers Started Successfully
+echo     Servers Running Successfully!
 echo ========================================
 echo.
-echo  Database:   PostgreSQL on port 5444
 echo  Frontend:   http://localhost:3001
 echo  Backend:    http://localhost:8001
-echo  STT Stream: http://localhost:3001/stt-stream
-echo.
-echo  Browser will open automatically.
-echo  Close this window to keep servers running.
+echo  Database:   Supabase (Cloud)
 echo.
 echo ========================================
-pause
+echo  Quick Links
+echo ========================================
+echo.
+echo  STT Stream:     /stt-stream
+echo  Translator:     /translator
+echo  Dictionary:     /dictionary
+echo  Admin Panel:    /admin
+echo.
+echo ========================================
+echo  STT Features
+echo ========================================
+echo.
+echo  English: Web Speech API (real-time)
+echo           + Vosk lgraph (backup)
+echo  Other Languages: Vosk offline models
+echo  First use: Model download required
+echo  Models cached in browser
+echo.
+echo ========================================
+echo  Server Management
+echo ========================================
+echo.
+echo  Browser opens automatically
+echo  Servers run in background windows
+echo  Close windows to stop servers
+echo  Re-run this script to restart
+echo.
+echo ========================================
+echo.
+echo Press any key to open browser...
+pause >nul
+
+REM Open browser
+start http://localhost:3001
+
+echo.
+echo Browser opened. Keep this window open.
+echo Press any key to exit (servers will continue)...
+pause >nul

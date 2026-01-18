@@ -1,227 +1,227 @@
-# 编码规范
+# 코딩 규칙
 
-## 必须
+## 필수 사항
 
-### 前端导入
+### 프론트엔드 import
 
-- `common/` → 无依赖，可被任何层导入
-- `libs/` → 只导入 `common/`
-- `modules/*/types/` → 只导入 `common/`
-- `modules/*/services/` → 导入 `common/`, `libs/`, 同模块 `types/`
-- `modules/*/hooks/` → 导入 `common/`, 同模块 `services/`, `types/`
-- `modules/*/components/` → 导入 `common/`, `libs/`, 同模块 `types/`（禁止导入 hooks/services）
-- `modules/*/views/` → 导入同模块 `hooks/`, `components/` + `common/` + `libs/`
+- `common/` → 의존성 없음, 모든 레이어에서 import 가능
+- `libs/` → `common/`만 import
+- `modules/*/types/` → `common/`만 import
+- `modules/*/services/` → `common/`, `libs/`, 같은 모듈의 `types/` import
+- `modules/*/hooks/` → `common/`, 같은 모듈의 `services/`, `types/` import
+- `modules/*/components/` → `common/`, `libs/`, 같은 모듈의 `types/` import (hooks/services import 금지)
+- `modules/*/views/` → 같은 모듈의 `hooks/`, `components/` + `common/` + `libs/` import
 
-### 导出
+### export
 
-- `common/enum.ts` → 所有枚举和常量映射
-- `common/helper.ts` → 所有工具函数
-- `common/types.ts` → 所有类型定义（按模块分类）
-- `common/stores.ts` → 所有全局状态（按模块分类）
-- `common/components/` → 通用 UI 组件（无业务逻辑）
-- `modules/*/components/` → 业务组件（可用同模块 hooks）
+- `common/enum.ts` → 모든 열거형과 상수 매핑
+- `common/helper.ts` → 모든 유틸리티 함수
+- `common/types.ts` → 모든 타입 정의 (모듈별 분류)
+- `common/stores.ts` → 모든 전역 상태 (모듈별 분류)
+- `common/components/` → 공통 UI 컴포넌트 (비즈니스 로직 없음)
+- `modules/*/components/` → 비즈니스 컴포넌트 (같은 모듈의 hooks 사용 가능)
 
-### 代码
+### 코드
 
-- 数据从 API 获取
-- 错误抛出异常，由 UI 层处理
-- 使用 TypeScript 严格类型
-- 函数/变量使用 camelCase，组件使用 PascalCase
-- 文件名与默认导出一致
-- 异步函数使用 async/await
-- 条件渲染使用早返回
-- 复杂逻辑抽取为自定义 hook
-- 后端分页使用 `paginate()` 函数
-- 前端 API 响应使用 `keysToCamel()` 转换 snake_case → camelCase
-- 通用 UI 组件放 `common/components/`，业务组件放 `modules/*/components/`
-- 优先用 `libs/shadcn/ui/` 基础组件
+- 데이터는 API에서 가져오기
+- 에러는 예외를 던지고, UI 레이어에서 처리
+- TypeScript 엄격한 타입 사용
+- 함수/변수는 camelCase, 컴포넌트는 PascalCase 사용
+- 파일명은 기본 export와 일치
+- 비동기 함수는 async/await 사용
+- 조건부 렌더링은 early return 사용
+- 복잡한 로직은 커스텀 hook으로 추출
+- 백엔드 페이지네이션은 `paginate()` 함수 사용
+- 프론트엔드 API 응답은 `keysToCamel()`로 snake_case → camelCase 변환
+- 공통 UI 컴포넌트는 `common/components/`, 비즈니스 컴포넌트는 `modules/*/components/`에 배치
+- `libs/shadcn/ui/` 기본 컴포넌트 우선 사용
 
-### 注释
+### 주석
 
-- 只允许单行注释
-- 解释 why，不解释 what
-- 文件头部：模块用途说明
-- TODO/FIXME：标注待处理事项
+- 단일 라인 주석만 허용
+- why를 설명하고, what은 설명하지 않음
+- 파일 상단: 모듈 용도 설명
+- TODO/FIXME: 처리 대기 사항 표시
 
-### services 层
+### services 레이어
 
-- 只负责 API 调用和数据转换
-- 从 `common/types` 导入类型
+- API 호출과 데이터 변환만 담당
+- `common/types`에서 타입 import
 
-### hooks 层
+### hooks 레이어
 
-- 只负责状态管理和业务逻辑
-- 从 `common/types` 导入类型
-- 返回类型由 TypeScript 自动推断
-- Options 参数用内联类型或放 `common/types.ts`
-- 提供表单默认值生成方法（如 `getModelForm`）
+- 상태 관리와 비즈니스 로직만 담당
+- `common/types`에서 타입 import
+- 반환 타입은 TypeScript가 자동 추론
+- Options 파라미터는 인라인 타입 또는 `common/types.ts`에 배치
+- 폼 기본값 생성 메서드 제공 (예: `getModelForm`)
 
-### components 层
+### components 레이어
 
-- 负责 UI 渲染和样式
-- 从 `common/types` 导入类型
-- 可以写 `className` 样式
-- 只通过 Props 接收数据（纯展示组件）
-- 可直接使用 i18n（从 `@/common/i18n` 导入）
+- UI 렌더링과 스타일 담당
+- `common/types`에서 타입 import
+- `className` 스타일 작성 가능
+- Props를 통해서만 데이터 수신 (순수 표시 컴포넌트)
+- i18n 직접 사용 가능 (`@/common/i18n`에서 import)
 
-### views 层
+### views 레이어
 
-- 只负责页面布局和组合组件
-- 从 `common/types` 导入类型
-- 调用 hook 方法生成表单初始数据，通过 Props 传给组件
+- 페이지 레이아웃과 컴포넌트 조합만 담당
+- `common/types`에서 타입 import
+- hook 메서드를 호출하여 폼 초기 데이터 생성, Props로 컴포넌트에 전달
 
-### 后端导入
+### 백엔드 import
 
-- `common/` → 无依赖，可被任何层导入
-- `modules/*/dto.py` → 只导入 `pydantic`
-- `modules/*/service.py` → 导入 `common/`
-- `modules/*/router.py` → 导入 `common/`, 同模块 `dto`, `service`
+- `common/` → 의존성 없음, 모든 레이어에서 import 가능
+- `modules/*/dto.py` → `pydantic`만 import
+- `modules/*/service.py` → `common/` import
+- `modules/*/router.py` → `common/`, 같은 모듈의 `dto`, `service` import
 
-### 后端导出
+### 백엔드 export
 
-- `common/enum.py` → 所有枚举和常量
-- `common/helper.py` → 所有工具函数
-- `common/errors.py` → 所有错误类型
-- `common/response.py` → 统一响应格式
-- `common/auth.py` → 认证相关
-- `common/supabase.py` → 数据库连接
-- `common/document.py` → 文档存储
+- `common/enum.py` → 모든 열거형과 상수
+- `common/helper.py` → 모든 유틸리티 함수
+- `common/errors.py` → 모든 에러 타입
+- `common/response.py` → 통일된 응답 형식
+- `common/auth.py` → 인증 관련
+- `common/supabase.py` → 데이터베이스 연결
+- `common/document.py` → 문서 저장소
 
-### 后端代码
+### 백엔드 코드
 
-- 使用 FastAPI 框架
-- 使用 Pydantic 做数据验证
-- 函数/变量使用 snake_case
-- 类名使用 PascalCase
-- 异步函数使用 async/await
-- 分页使用 `paginate()` 函数
-- 响应使用 `success_response()` 包装
-- 错误抛出 `AppError` 异常
+- FastAPI 프레임워크 사용
+- Pydantic으로 데이터 검증
+- 함수/변수는 snake_case 사용
+- 클래스명은 PascalCase 사용
+- 비동기 함수는 async/await 사용
+- 페이지네이션은 `paginate()` 함수 사용
+- 응답은 `success_response()`로 래핑
+- 에러는 `AppError` 예외 발생
 
-### router 层
+### router 레이어
 
-- 只负责路由定义和参数解析
-- 调用 service 处理业务逻辑
-- 使用 `success_response()` 返回数据
+- 라우트 정의와 파라미터 파싱만 담당
+- service를 호출하여 비즈니스 로직 처리
+- `success_response()`로 데이터 반환
 
-### service 层
+### service 레이어
 
-- 只负责业务逻辑
-- 从 `common/` 导入工具
-- 抛出 `AppError` 处理错误
+- 비즈니스 로직만 담당
+- `common/`에서 유틸리티 import
+- `AppError`를 발생시켜 에러 처리
 
-### dto 层
+### dto 레이어
 
-- 只负责请求/响应数据结构定义
-- 使用 Pydantic BaseModel
+- 요청/응답 데이터 구조 정의만 담당
+- Pydantic BaseModel 사용
 
 ---
 
-## 禁止
+## 금지 사항
 
-### 前端导入
+### 프론트엔드 import
 
-- `common/components/` 导入 `services/` 或 `hooks/`
-- `modules/admin/` 与 `modules/member/` 互相导入
-- 跨模块导入非 `common/` 内容
-- 循环依赖
+- `common/components/`에서 `services/` 또는 `hooks/` import
+- `modules/admin/`과 `modules/member/` 간 상호 import
+- 모듈 간 `common/` 외 내용 import
+- 순환 의존성
 
-### 导出
+### export
 
-- 模块内分散导出枚举/常量
-- 模块内分散导出工具函数
-- 使用 `index.ts` 文件（直接导入具体文件）
+- 모듈 내에서 열거형/상수 분산 export
+- 모듈 내에서 유틸리티 함수 분산 export
+- `index.ts` 파일 사용 (구체적인 파일을 직접 import)
 
-### 代码
+### 코드
 
-- 硬编码 fallback 数据
-- 组件内定义常量（应放 `enum.ts`）
-- 模块内定义工具函数（应放 `helper.ts`）
-- 模块内定义 `interface`（应放 `common/types.ts`）
-- 使用 TypeScript `enum` 关键字（用 `const` + `type` 模式）
-- 使用 `any` 类型
-- 魔法字符串/数字
-- 在 service 层 catch 异常后静默处理
-- console.log 调试代码提交
-- 注释掉的代码提交
-- 重复代码超过 3 行
-- 函数超过 50 行
-- 文件超过 300 行
-- 嵌套超过 3 层
-- 直接修改 props 或 state
-- 在组件内直接调用 fetch/axios（应通过 hooks/service）
-- 中英文混合命名
+- 하드코딩된 fallback 데이터
+- 컴포넌트 내 상수 정의 (`enum.ts`에 배치해야 함)
+- 모듈 내 유틸리티 함수 정의 (`helper.ts`에 배치해야 함)
+- 모듈 내 `interface` 정의 (`common/types.ts`에 배치해야 함)
+- TypeScript `enum` 키워드 사용 (`const` + `type` 패턴 사용)
+- `any` 타입 사용
+- 매직 문자열/숫자
+- service 레이어에서 예외를 catch한 후 무시
+- console.log 디버그 코드 커밋
+- 주석 처리된 코드 커밋
+- 3줄 이상 중복 코드
+- 50줄 이상 함수
+- 300줄 이상 파일
+- 3단계 이상 중첩
+- props 또는 state 직접 수정
+- 컴포넌트 내에서 fetch/axios 직접 호출 (hooks/service를 통해야 함)
+- 한영 혼합 네이밍
 
-### 注释
+### 주석
 
-- 多行注释块
-- 函数内部注释
-- 解释 what 的注释（代码本身应自解释）
-- 过时注释
-- 注释掉的代码
+- 여러 줄 주석 블록
+- 함수 내부 주석
+- what을 설명하는 주석 (코드 자체가 자명해야 함)
+- 오래된 주석
+- 주석 처리된 코드
 
-### services 层
+### services 레이어
 
-- `interface` 定义
-- `const` 常量定义
-- 工具函数定义
-- 导入 `hooks/` 或 `components/`
+- `interface` 정의
+- `const` 상수 정의
+- 유틸리티 함수 정의
+- `hooks/` 또는 `components/` import
 
-### hooks 层
+### hooks 레이어
 
-- `interface` 定义
-- `const` 常量定义
-- 工具函数定义
-- 导入 `components/` 或 `views/`
+- `interface` 정의
+- `const` 상수 정의
+- 유틸리티 함수 정의
+- `components/` 또는 `views/` import
 
-### components 层
+### components 레이어
 
-- `interface` 定义（Props 类型除外）
-- `const` 常量定义
-- 工具函数定义（应放 `common/helper.ts`）
-- 生成默认值（由 View 通过 Props 传入）
-- 导入 `views/`
-- 导入 `hooks/`（数据通过 Props 传入）
-- 导入 `services/`
+- `interface` 정의 (Props 타입 제외)
+- `const` 상수 정의
+- 유틸리티 함수 정의 (`common/helper.ts`에 배치해야 함)
+- 기본값 생성 (View에서 Props로 전달해야 함)
+- `views/` import
+- `hooks/` import (데이터는 Props로 전달해야 함)
+- `services/` import
 
-### views 层
+### views 레이어
 
-- `interface` 定义（Props 类型除外）
-- `const` 常量定义
-- 工具函数定义
-- `className` 样式代码
-- 直接调用 `services/`（应通过 hooks）
+- `interface` 정의 (Props 타입 제외)
+- `const` 상수 정의
+- 유틸리티 함수 정의
+- `className` 스타일 코드
+- `services/` 직접 호출 (hooks를 통해야 함)
 
-### 后端导入
+### 백엔드 import
 
-- `modules/admin/` 与 `modules/member/` 互相导入
-- 跨模块导入非 `common/` 内容
-- 循环依赖
+- `modules/admin/`과 `modules/member/` 간 상호 import
+- 모듈 간 `common/` 외 내용 import
+- 순환 의존성
 
-### 后端代码
+### 백엔드 코드
 
-- 硬编码配置值（应放 `common/config.py`）
-- 在 service 层 catch 异常后静默处理
-- print 调试代码提交
-- 注释掉的代码提交
-- 函数超过 50 行
-- 文件超过 500 行
-- 嵌套超过 3 层
-- 直接返回数据库原始数据（应转换格式）
-- 在 router 层写业务逻辑
+- 하드코딩된 설정값 (`common/config.py`에 배치해야 함)
+- service 레이어에서 예외를 catch한 후 무시
+- print 디버그 코드 커밋
+- 주석 처리된 코드 커밋
+- 50줄 이상 함수
+- 500줄 이상 파일
+- 3단계 이상 중첩
+- 데이터베이스 원시 데이터 직접 반환 (형식 변환해야 함)
+- router 레이어에서 비즈니스 로직 작성
 
-### router 层
+### router 레이어
 
-- 业务逻辑代码
-- 直接操作数据库
-- 复杂数据处理
+- 비즈니스 로직 코드
+- 데이터베이스 직접 조작
+- 복잡한 데이터 처리
 
-### service 层
+### service 레이어
 
-- 直接返回 HTTP 响应
-- 导入 `router`
+- HTTP 응답 직접 반환
+- `router` import
 
-### dto 层
+### dto 레이어
 
-- 业务逻辑代码
-- 导入 `service` 或 `router`
+- 비즈니스 로직 코드
+- `service` 또는 `router` import

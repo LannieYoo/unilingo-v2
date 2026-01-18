@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Database Module - 데이터베이스 모듈
+# Database Module - Supabase 연결
 
-from .service import DatabaseImpl, get_db, engine, Base, database_service
+from ...supabase import get_db, get_supabase, supabase_client, check_connection, Base
 
 __all__ = [
-    "DatabaseImpl",
     "get_db",
-    "engine",
+    "get_supabase",
+    "supabase_client",
+    "check_connection",
     "Base",
-    "database_service",
 ]

@@ -4,6 +4,9 @@
  */
 
 export { useVoskRecognition, default as voskRecognition } from './useVoskRecognition'
+export { useHybridSTT } from './useHybridSTT'
+export { useWhisperSTT } from './useWhisperSTT'
 export { useAutoScroll } from './useAutoScroll'
 export { useTranslation, TRANSLATION_LANGUAGES } from './useTranslation'
 export { useTimer } from './useTimer'
+export { useModelCache, MODEL_INFO } from './useModelCache'

@@ -4,21 +4,24 @@
  */
 
 // Supported language options
+// en-us uses Web Speech API (real-time) + Vosk lgraph (gap filling)
+// Other languages use Vosk (browser-based, offline)
 export const LANGUAGE_OPTIONS = [
-  { value: 'en-us', label: 'English (US)' },
-  { value: 'en-in', label: 'English (Indian)' },
+  { value: 'en-us', label: 'English', usesHybrid: true },
+  { value: 'en-in', label: 'English (India)' },
   { value: 'ko', label: 'Korean' },
   { value: 'zh', label: 'Chinese' },
   { value: 'ja', label: 'Japanese' },
   { value: 'es', label: 'Spanish' },
   { value: 'fr', label: 'French' },
   { value: 'de', label: 'German' },
-  { value: 'hi', label: 'Hindi' },
+  { value: 'ar', label: 'Arabic' },
 ]
 
 // Vosk 모델 URL (Vite 프록시를 통해 CORS 우회)
 export const MODEL_URLS = {
   'en-us': '/vosk-models/vosk-model-small-en-us-0.15.zip',
+  'en-us-lgraph': '/vosk-models/vosk-model-en-us-0.22-lgraph.zip',
   'en-in': '/vosk-models/vosk-model-small-en-in-0.4.zip',
   'ko': '/vosk-models/vosk-model-small-ko-0.22.zip',
   'zh': '/vosk-models/vosk-model-small-cn-0.22.zip',
@@ -26,8 +29,11 @@ export const MODEL_URLS = {
   'es': '/vosk-models/vosk-model-small-es-0.42.zip',
   'fr': '/vosk-models/vosk-model-small-fr-0.22.zip',
   'de': '/vosk-models/vosk-model-small-de-0.15.zip',
-  'hi': '/vosk-models/vosk-model-small-hi-0.22.zip',
+  'ar': '/vosk-models/vosk-model-ar-mgb2-0.4.zip',
 }
+
+// Vosk lgraph 모델 URL (128MB, 7.82% WER - gap filling용)
+export const VOSK_LGRAPH_MODEL_URL = '/vosk-models/vosk-model-en-us-0.22-lgraph.zip'
 
 // Status messages
 export const STATUS = {
@@ -61,6 +67,9 @@ export const LOG_TYPE_COLORS = {
 export const DEFAULT_LANGUAGE = 'en-us'
 export const MAX_LOGS = 100
 export const SAMPLE_RATE = 16000
+
+// Backend URL for hybrid STT
+export const BACKEND_STT_URL = import.meta.env.VITE_BACKEND_STT_URL || 'http://localhost:8001/api/stt/process-missing'
 
 export default {
   LANGUAGE_OPTIONS,
