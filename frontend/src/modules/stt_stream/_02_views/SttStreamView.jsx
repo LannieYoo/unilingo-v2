@@ -6,7 +6,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
-import { useVoskRecognition, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache } from '../_04_hooks'
+import { useVoskRecognition, useWhisperSTT, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache } from '../_04_hooks'
 import {
   DebugPanel,
   LanguageSelect,
@@ -46,6 +46,7 @@ export function SttStreamView() {
   const isHybridMode = selectedLang === 'en-us'
 
   const voskHook = useVoskRecognition()
+  const whisperHook = useWhisperSTT()
   const hybridHook = useHybridSTT()
 
   const {
@@ -56,17 +57,28 @@ export function SttStreamView() {
   } = voskHook
 
   const {
+    stop: whisperStop,
+    toggle: whisperToggle,
+    isRunning: whisperIsRunning,
+    isProcessing: whisperIsProcessing,
+    transcript: whisperTranscript,
+    modelStatus,
+    downloadProgress: whisperDownloadProgress,
+    downloadModel,
+    stats: whisperStats,
+  } = whisperHook
+
+  const {
     stop: hybridStop,
     toggle: hybridToggle,
     isRunning: hybridIsRunning,
-    isRestarting,
+    isRestarting: hybridIsRestarting,
     transcript: hybridTranscript,
     interimTranscript: hybridInterimTranscript,
-    voskStatus,
-    voskProgress,
     stats: hybridStats,
   } = hybridHook
 
+  // 영어는 Web Speech API (하이브리드), 다른 언어는 Vosk
   const isRunning = isHybridMode ? hybridIsRunning : voskIsRunning
   const stop = isHybridMode ? hybridStop : voskStop
   const toggle = isHybridMode ? hybridToggle : voskHook.toggle
@@ -257,12 +269,11 @@ export function SttStreamView() {
           <div className="stt-controls-left">
             <StatusIndicator status={status} loadProgress={loadProgress} />
             
-            {isHybridMode && isRunning && (
+            {isHybridMode && (
               <div className="stt-hybrid-status">
-                <span className="stt-hybrid-badge">🎯 Web Speech API</span>
-                <span className={`stt-restart-indicator ${isRestarting ? 'active' : ''}`}>🔄</span>
-                {voskStatus === 'loading' && <span className="stt-vosk-loading">Vosk: {voskProgress}%</span>}
-                {voskStatus === 'ready' && <span className="stt-vosk-ready">Vosk ✓</span>}
+                <span className="stt-hybrid-badge">🎯 Web Speech API (Real-time)</span>
+                {hybridIsRestarting && <span className="stt-processing">Reconnecting...</span>}
+                <span className="stt-stats">Restarts: {hybridStats.restartCount}</span>
               </div>
             )}
             
@@ -315,11 +326,6 @@ export function SttStreamView() {
             </label>
           </div>
         </div>
-
-
-        {!isHybridMode && !isModelCached(selectedLang) && !isRunning && (
-          <ModelDownloadManager selectedLang={selectedLang} />
-        )}
 
         <div 
           className={`stt-dual-panels ${!isTranslationEnabled ? 'stt-translation-disabled' : ''} ${isResizing ? 'stt-resizing' : ''}`}
@@ -440,7 +446,7 @@ export function SttStreamView() {
       )}
 
       <div className="stt-stream-notes">
-        📝 English uses Web Speech API (real-time) + Vosk lgraph (gap filling) • Other languages use Vosk offline
+        📝 English uses Web Speech API (real-time, free, unlimited) • Other languages use Vosk offline
         {!isAuthenticated && ` • Guest limit: ${MAX_CHARS_GUEST.toLocaleString()} characters`}
       </div>
 

@@ -1,7 +1,7 @@
-// WebSpeechManager v3.0 - 완전히 새로 작성
-// 2026-01-17 - 텍스트 유실 방지 및 실시간 받아쓰기 최적화
+// WebSpeechManagerV3 - 안정적인 Web Speech API 구현
+// 2026-01-19 - Chrome 확장 프로그램 수준의 안정성
 
-export class WebSpeechManager {
+export class WebSpeechManagerV3 {
   constructor(language, callbacks) {
     this.language = language
     this.callbacks = callbacks
@@ -13,11 +13,13 @@ export class WebSpeechManager {
     this.lastActivityTime = 0
     this.watchdogTimer = null
     this.resultIndex = 0
+    this.isRestarting = false
     
-    // 설정
-    this.WATCHDOG_INTERVAL = 2000
-    this.MAX_SILENCE_DURATION = 5000
-    this.RESTART_DELAY = 100
+    // 최적화된 타이밍
+    this.WATCHDOG_INTERVAL = 1000 // 1초마다 체크 (더 빠른 감지)
+    this.MAX_SILENCE_DURATION = 4000 // 4초 침묵 후 재시작 (더 빠른 재시작)
+    this.RESTART_DELAY = 50 // 50ms 지연 (거의 즉시)
+    this.ERROR_RESTART_DELAY = 200 // 에러 시 200ms 지연
   }
 
   start() {
@@ -38,6 +40,7 @@ export class WebSpeechManager {
 
         this.recognition.onstart = () => {
           this.isRunning = true
+          this.isRestarting = false
           this.lastActivityTime = Date.now()
           console.log('[WebSpeech v3] Started')
           resolve()
@@ -51,7 +54,6 @@ export class WebSpeechManager {
           let interimText = ''
           let finalText = ''
 
-          // resultIndex부터 처리 (중복 방지)
           for (let i = this.resultIndex; i < event.results.length; i++) {
             const result = event.results[i]
             const text = result[0].transcript
@@ -59,19 +61,17 @@ export class WebSpeechManager {
             if (result.isFinal) {
               finalText += text + ' '
               this.resultIndex = i + 1
-              this.lastInterimText = '' // final 받으면 interim 클리어
+              this.lastInterimText = ''
             } else {
               interimText += text
             }
           }
 
-          // final 먼저 처리
           if (finalText.trim()) {
             console.log('[WebSpeech v3] FINAL:', finalText.trim())
             this.callbacks.onResult(finalText.trim(), true)
           }
           
-          // interim 처리
           if (interimText.trim()) {
             this.lastInterimText = interimText.trim()
             this.callbacks.onResult(interimText.trim(), false)
@@ -79,42 +79,25 @@ export class WebSpeechManager {
         }
 
         this.recognition.onend = () => {
-          console.log('[WebSpeech v3] onend, shouldRestart:', this.shouldRestart, 'savedInterim:', this.lastInterimText)
+          const savedInterim = this.lastInterimText
+          console.log('[WebSpeech v3] onend, shouldRestart:', this.shouldRestart, 'savedInterim:', savedInterim)
           this.isRunning = false
 
-          if (this.shouldRestart) {
+          if (this.shouldRestart && !this.isRestarting) {
+            this.isRestarting = true
             this.restartCount++
-            const savedInterim = this.lastInterimText
             
-            // onRestart 콜백 호출 (savedInterim 전달)
             if (this.callbacks.onRestart) {
+              console.log('[WebSpeech v3] Auto-restarted, count:', this.restartCount)
               this.callbacks.onRestart(this.restartCount, savedInterim)
             }
             
-            // 상태 초기화
             this.lastInterimText = ''
             this.resultIndex = 0
             
-            // 재시작
             setTimeout(() => {
               if (this.shouldRestart && this.recognition) {
-                try {
-                  this.recognition.start()
-                  console.log('[WebSpeech v3] Restarted #' + this.restartCount)
-                } catch (e) {
-                  console.error('[WebSpeech v3] Restart failed:', e)
-                  // 재시도
-                  setTimeout(() => {
-                    if (this.shouldRestart && this.recognition) {
-                      try {
-                        this.recognition.start()
-                        console.log('[WebSpeech v3] Retry restart succeeded')
-                      } catch (e2) {
-                        console.error('[WebSpeech v3] Retry restart failed:', e2)
-                      }
-                    }
-                  }, 500)
-                }
+                this.restartRecognition()
               }
             }, this.RESTART_DELAY)
           }
@@ -123,12 +106,16 @@ export class WebSpeechManager {
         this.recognition.onerror = (event) => {
           console.log('[WebSpeech v3] Error:', event.error)
           
-          // 무시할 에러들
+          // no-speech와 aborted는 정상적인 상황
           if (event.error === 'no-speech' || event.error === 'aborted') {
             return
           }
-
-          if (this.callbacks.onError) {
+          
+          // 다른 에러는 재시작 시도
+          if (event.error === 'network' || event.error === 'audio-capture') {
+            console.log('[WebSpeech v3] Recoverable error, will restart')
+            // onend에서 자동 재시작됨
+          } else if (this.callbacks.onError) {
             this.callbacks.onError(new Error(`Speech recognition error: ${event.error}`))
           }
         }
@@ -143,6 +130,44 @@ export class WebSpeechManager {
     })
   }
 
+  restartRecognition() {
+    if (!this.recognition || !this.shouldRestart) return
+
+    try {
+      this.recognition.start()
+      console.log('[WebSpeech v3] Restarted #' + this.restartCount)
+    } catch (e) {
+      console.error('[WebSpeech v3] Restart failed:', e)
+      
+      // 재시도 (더 긴 지연)
+      setTimeout(() => {
+        if (this.shouldRestart && this.recognition) {
+          try {
+            this.recognition.start()
+            console.log('[WebSpeech v3] Retry succeeded')
+          } catch (e2) {
+            console.error('[WebSpeech v3] Retry failed:', e2)
+            
+            // 마지막 재시도
+            setTimeout(() => {
+              if (this.shouldRestart && this.recognition) {
+                try {
+                  this.recognition.start()
+                  console.log('[WebSpeech v3] Final retry succeeded')
+                } catch (e3) {
+                  console.error('[WebSpeech v3] All retries failed:', e3)
+                  if (this.callbacks.onError) {
+                    this.callbacks.onError(new Error('Failed to restart recognition'))
+                  }
+                }
+              }
+            }, this.ERROR_RESTART_DELAY * 2)
+          }
+        }
+      }, this.ERROR_RESTART_DELAY)
+    }
+  }
+
   startWatchdog() {
     this.stopWatchdog()
     
@@ -154,13 +179,17 @@ export class WebSpeechManager {
 
       const silenceDuration = Date.now() - this.lastActivityTime
       
-      if (silenceDuration > this.MAX_SILENCE_DURATION) {
+      // 침묵이 너무 길면 강제 재시작
+      if (silenceDuration > this.MAX_SILENCE_DURATION && !this.isRestarting) {
         console.log('[WebSpeech v3] Watchdog: Silence detected (' + silenceDuration + 'ms), forcing restart')
         
         try {
           this.recognition.stop()
         } catch (e) {
-          console.error('[WebSpeech v3] Watchdog: stop() failed:', e)
+          console.error('[WebSpeech v3] Watchdog stop failed:', e)
+          // stop 실패 시 직접 재시작
+          this.isRestarting = true
+          this.restartRecognition()
         }
         
         this.lastActivityTime = Date.now()
@@ -178,6 +207,7 @@ export class WebSpeechManager {
   stop() {
     console.log('[WebSpeech v3] Stopping...')
     this.shouldRestart = false
+    this.isRestarting = false
     this.lastInterimText = ''
     this.stopWatchdog()
 
@@ -185,7 +215,7 @@ export class WebSpeechManager {
       try {
         this.recognition.stop()
       } catch (error) {
-        console.error('[WebSpeech v3] Error stopping:', error)
+        console.error('[WebSpeech v3] Stop error:', error)
       }
     }
 

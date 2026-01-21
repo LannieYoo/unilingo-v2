@@ -17,20 +17,17 @@ import { GLOSSARIES } from '../_08_constants'
  */
 export function protectTerms(text, domain, sourceLang, targetLang) {
   if (!text || domain === 'general') {
-    console.log('[Glossary] Skipping protection (general domain)')
     return { processedText: text, termMap: {} }
   }
 
   const glossary = GLOSSARIES[domain]
   if (!glossary) {
-    console.log('[Glossary] No glossary for domain:', domain)
     return { processedText: text, termMap: {} }
   }
 
   const langKey = `${sourceLang}_${targetLang}`
   const terms = glossary[langKey]
   if (!terms || Object.keys(terms).length === 0) {
-    console.log('[Glossary] No terms for:', { domain, langKey })
     return { processedText: text, termMap: {} }
   }
 
@@ -40,8 +37,6 @@ export function protectTerms(text, domain, sourceLang, targetLang) {
 
   // 긴 용어부터 먼저 처리
   const sortedTerms = Object.entries(terms).sort((a, b) => b[0].length - a[0].length)
-
-  console.log('[Glossary] Protecting terms:', { domain, termCount: sortedTerms.length })
 
   for (const [term, translation] of sortedTerms) {
     const regex = new RegExp(`\\b${escapeRegex(term)}\\b`, 'gi')
@@ -53,12 +48,10 @@ export function protectTerms(text, domain, sourceLang, targetLang) {
         termMap[placeholder] = translation
         processedText = processedText.replace(match[0], placeholder)
         termIndex++
-        console.log('[Glossary] Protected:', { term: match[0], placeholder, translation })
       }
     }
   }
 
-  console.log('[Glossary] Protection complete:', { protectedCount: termIndex })
   return { processedText, termMap }
 }
 
@@ -70,22 +63,17 @@ export function protectTerms(text, domain, sourceLang, targetLang) {
  */
 export function restoreTerms(translatedText, termMap) {
   if (!translatedText || !termMap || Object.keys(termMap).length === 0) {
-    console.log('[Glossary] No terms to restore')
     return translatedText
   }
 
   let result = translatedText
-  let restoredCount = 0
-
+  
   for (const [placeholder, translation] of Object.entries(termMap)) {
     if (result.includes(placeholder)) {
       result = result.replace(new RegExp(escapeRegex(placeholder), 'g'), translation)
-      restoredCount++
-      console.log('[Glossary] Restored:', { placeholder, translation })
     }
   }
 
-  console.log('[Glossary] Restoration complete:', { restoredCount })
   return result
 }
 
@@ -103,7 +91,6 @@ export function applyGlossary(text, domain, sourceLang, targetLang) {
  * @deprecated 새로운 방식(protectTerms + restoreTerms)을 사용하세요
  */
 export function postProcessGlossary(translatedText, originalText, domain, sourceLang, targetLang) {
-  console.log('[Glossary] postProcessGlossary is deprecated, use protectTerms + restoreTerms instead')
   return translatedText
 }
 
