@@ -4,10 +4,13 @@
 
 import re
 import requests
+import logging
 from typing import Dict, Any, Optional, List
 
 from ..cache import get_cache_service
 from ..translation import get_translation_service
+
+logger = logging.getLogger(__name__)
 
 
 class DictionaryService:
@@ -254,6 +257,48 @@ class DictionaryService:
         except Exception:
             pass
         return suggestions
+    
+    def save(self, word: str, source_lang: str, target_lang: str, search_results: Optional[str], source: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
+        """사전 검색 결과 저장"""
+        from flask import g, request
+        from ...supabase import get_supabase, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+        from supabase import create_client
+        
+        user_id = g.get('user_id')
+        if not user_id:
+            raise Exception('User not authenticated')
+        
+        ip_address = request.remote_addr if request else None
+        
+        # dictionary_logs 테이블에 저장
+        try:
+            # SERVICE_ROLE_KEY로 새 클라이언트 생성 (백엔드 작업용)
+            if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+                raise Exception('Supabase configuration not available')
+            
+            supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+            
+            result = supabase.table('dictionary_logs').insert({
+                'user_id': user_id,
+                'search_word': word,
+                'source_lang': source_lang,
+                'target_lang': target_lang,
+                'search_results': search_results,
+                'source': source,
+                'ip_address': ip_address
+            }).execute()
+            
+            if result.data and len(result.data) > 0:
+                return {
+                    'success': True,
+                    'id': result.data[0]['id'],
+                    'created_at': result.data[0]['created_at']
+                }
+            else:
+                raise Exception('Failed to save dictionary log')
+        except Exception as e:
+            logger.error(f"Error saving dictionary log: {e}")
+            raise Exception(f'Failed to save dictionary log: {str(e)}')
 
 
 _dictionary_service: Optional[DictionaryService] = None

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
-import { useVoskRecognition, useWhisperSTT, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache } from '../_04_hooks'
+import { useVoskRecognition, useWhisperSTT, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache, useInlineDictionary } from '../_04_hooks'
 import {
   DebugPanel,
   LanguageSelect,
@@ -14,6 +14,7 @@ import {
   ActionButton,
   ModelDownloadManager,
   DownloadOverlay,
+  DictionaryTooltip,
 } from '../_03_components'
 import { downloadAsFile, generateFileName } from '../_07_utils'
 import '../_10_styles/stt-stream.css'
@@ -98,6 +99,18 @@ export function SttStreamView() {
     retranslateAll,
     clearTranslation,
   } = useTranslation()
+
+  const {
+    selectedWord,
+    position,
+    dictionaryData,
+    translation,
+    isFavorited,
+    isLoading: isDictionaryLoading,
+    handleWordClick,
+    toggleFavorite,
+    closeTooltip
+  } = useInlineDictionary(targetLang)
 
   const {
     formattedTime,
@@ -252,6 +265,37 @@ export function SttStreamView() {
     toggle()
   }, [isRunning, isAuthenticated, displayFinalText.length, toggle])
 
+  // 텍스트를 단어로 분리하여 클릭 가능하게 렌더링
+  const renderClickableText = useCallback((text) => {
+    if (!text) return null
+    
+    // 단어와 공백/구두점을 분리
+    const tokens = text.split(/(\s+|[.,!?;:()[\]{}'"—-])/g)
+    
+    return tokens.map((token, index) => {
+      // 공백이나 구두점은 그대로 렌더링
+      if (!token || /^\s+$/.test(token) || /^[.,!?;:()[\]{}'"—-]+$/.test(token)) {
+        return <span key={index}>{token}</span>
+      }
+      
+      // 로그인하지 않은 경우 클릭 불가능
+      if (!isAuthenticated) {
+        return <span key={index}>{token}</span>
+      }
+      
+      // 단어는 클릭 가능하게
+      return (
+        <span
+          key={index}
+          className={`clickable-word ${selectedWord === token ? 'selected' : ''}`}
+          onClick={(e) => handleWordClick(token, e)}
+        >
+          {token}
+        </span>
+      )
+    })
+  }, [selectedWord, handleWordClick, isAuthenticated])
+
   return (
     <PageLayout title="Speech to Text" fullHeight>
       <PageBox noPadding flex>
@@ -351,7 +395,11 @@ export function SttStreamView() {
               ref={leftRef}
               onScroll={handleLeftScroll}
             >
-              {displayFinalText && <span className="stt-final-text">{displayFinalText}</span>}
+              {displayFinalText && (
+                <span className="stt-final-text">
+                  {renderClickableText(displayFinalText)}
+                </span>
+              )}
               {displayInterimText && <span className="stt-interim-text">{displayInterimText}</span>}
               {!displayFinalText && !displayInterimText && (
                 <span className="stt-placeholder">Speech recognition results will appear here...</span>
@@ -459,6 +507,17 @@ export function SttStreamView() {
       />
       
       <LoginModal isOpen={showLoginModal || (!isAuthenticated && isLimitReached)} onClose={closeLoginModal} />
+      
+      <DictionaryTooltip
+        word={selectedWord}
+        position={position}
+        dictionaryData={dictionaryData}
+        translation={translation}
+        isFavorited={isFavorited}
+        isLoading={isDictionaryLoading}
+        onClose={closeTooltip}
+        onToggleFavorite={toggleFavorite}
+      />
     </PageLayout>
   )
 }

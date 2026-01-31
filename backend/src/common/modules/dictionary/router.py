@@ -66,3 +66,79 @@ def autocomplete():
         return jsonify({'suggestions': suggestions, 'trace_id': trace_id}), 200
     except Exception:
         return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': 'An unexpected error occurred', 'trace_id': trace_id}}), 500
+
+
+@router.route('/save', methods=['POST'])
+def save():
+    """사전 검색 결과 저장 API"""
+    from ..auth import login_required, get_current_user
+    
+    trace_id = g.get('trace_id', 'unknown')
+    
+    # 인증 확인
+    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+    if not token:
+        return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Not authenticated', 'trace_id': trace_id}}), 401
+    
+    # 토큰 검증 및 사용자 정보 가져오기
+    from ...supabase import get_db
+    from ..auth import get_auth_service
+    
+    db = next(get_db())
+    try:
+        auth_service = get_auth_service(db)
+        payload = auth_service.verify_token(token)
+        if not payload:
+            return jsonify({'error': {'code': 'INVALID_TOKEN', 'message': 'Invalid token', 'trace_id': trace_id}}), 401
+        
+        user = auth_service.get_user_by_id(payload.user_id)
+        if not user or not user.is_active:
+            return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found or inactive', 'trace_id': trace_id}}), 401
+        
+        g.user_id = user.id
+    except Exception as e:
+        return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Authentication failed', 'trace_id': trace_id}}), 401
+    finally:
+        db.close()
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Request body is required', 'trace_id': trace_id}}), 400
+    
+    word = data.get('word')
+    source_lang = data.get('source_lang')
+    target_lang = data.get('target_lang')
+    search_results = data.get('search_results')
+    source = data.get('source', 'dictionary')  # 'dictionary' or 'stt'
+    
+    if not word:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Missing required field: word', 'trace_id': trace_id}}), 400
+    if not source_lang:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Missing required field: source_lang', 'trace_id': trace_id}}), 400
+    if not target_lang:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Missing required field: target_lang', 'trace_id': trace_id}}), 400
+    
+    valid_langs = ['ko', 'en', 'zh']
+    if source_lang not in valid_langs:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': f'Invalid source_lang. Must be one of: {valid_langs}', 'trace_id': trace_id}}), 400
+    if target_lang not in valid_langs:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': f'Invalid target_lang. Must be one of: {valid_langs}', 'trace_id': trace_id}}), 400
+    
+    valid_sources = ['dictionary', 'stt']
+    if source not in valid_sources:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': f'Invalid source. Must be one of: {valid_sources}', 'trace_id': trace_id}}), 400
+    
+    try:
+        result = dictionary_service.save(
+            word=word,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            search_results=search_results,
+            source=source,
+            trace_id=trace_id
+        )
+        result['trace_id'] = trace_id
+        return jsonify(result), 200
+    except Exception as e:
+        print(f"Error saving dictionary: {e}")
+        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': 'An unexpected error occurred', 'trace_id': trace_id}}), 500

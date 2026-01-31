@@ -152,7 +152,9 @@ export function DictionaryHistoryView() {
                     </div>
                     <div className="dictionary-history-card-content">
                       <div className="dictionary-history-card-text">
-                        <span className="dictionary-history-card-label">Search Term</span>
+                        <span className="dictionary-history-card-label">
+                          {item.source === 'stt' ? 'STT Term' : 'Search Term'}
+                        </span>
                         <p className="dictionary-history-card-search">{item.search_word}</p>
                       </div>
                       {item.result_summary && (
