@@ -1,20 +1,38 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PageLayout, PageBox } from '../../components/layout/PageLayout'
 import './text-to-speech.css'
 
 function TextToSpeech() {
   const [text, setText] = useState('')
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [targetLanguage, setTargetLanguage] = useState('en')
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const [speechRate, setSpeechRate] = useState(1.0)
   const [currentCharIndex, setCurrentCharIndex] = useState(0)
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [currentTranslatedText, setCurrentTranslatedText] = useState('')
+  const [textareaHeight, setTextareaHeight] = useState(250)
+  const [isResizing, setIsResizing] = useState(false)
+  const [highlightStart, setHighlightStart] = useState(0)
+  const [highlightEnd, setHighlightEnd] = useState(0)
+  const [isRepeatMode, setIsRepeatMode] = useState(false)
   const utteranceRef = useRef(null)
+  const resizeStartY = useRef(0)
+  const resizeStartHeight = useRef(0)
+  const isRepeatModeRef = useRef(false)
 
   const languages = [
     { code: 'en', name: 'English', voice: 'en-US' },
     { code: 'ko', name: 'Korean', voice: 'ko-KR' },
     { code: 'zh', name: 'Chinese (Simplified)', voice: 'zh-CN' },
   ]
+
+  const LANG_MAP = {
+    'en': 'en',
+    'ko': 'ko',
+    'zh': 'zh-CN'
+  }
 
   // 언어 감지 함수
   const detectLanguage = (text) => {
@@ -36,6 +54,58 @@ function TextToSpeech() {
     return 'en'
   }
 
+  // 번역 함수
+  const translateText = async (text, sourceLang, targetLang) => {
+    if (!text.trim()) return text
+    if (sourceLang === targetLang) return text
+
+    setIsTranslating(true)
+    
+    try {
+      const sourceCode = LANG_MAP[sourceLang] || 'en'
+      const targetCode = LANG_MAP[targetLang] || 'en'
+      
+      // Google Translate API 사용
+      const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(text)}`
+      const response = await fetch(googleUrl)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data?.[0] && Array.isArray(data[0])) {
+          const translated = data[0]
+            .filter(item => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
+            .map(item => item[0])
+            .join('')
+            .trim()
+          if (translated && translated.length > 0) {
+            setIsTranslating(false)
+            return translated
+          }
+        }
+      }
+      
+      // Fallback: MyMemory API
+      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`
+      const fallbackResponse = await fetch(myMemoryUrl)
+      
+      if (fallbackResponse.ok) {
+        const data = await fallbackResponse.json()
+        if (data.responseStatus === 200 && data.responseData?.translatedText) {
+          const translated = data.responseData.translatedText.trim()
+          setIsTranslating(false)
+          return translated
+        }
+      }
+      
+      setIsTranslating(false)
+      return text
+    } catch (error) {
+      console.error('Translation error:', error)
+      setIsTranslating(false)
+      return text
+    }
+  }
+
   // 텍스트 변경 핸들러
   const handleTextChange = (e) => {
     const newText = e.target.value
@@ -45,6 +115,8 @@ function TextToSpeech() {
     if (newText.trim()) {
       const detectedLang = detectLanguage(newText)
       setSelectedLanguage(detectedLang)
+      // target language도 source language와 같게 설정
+      setTargetLanguage(detectedLang)
     }
   }
 
@@ -54,7 +126,7 @@ function TextToSpeech() {
     
     // 재생 중이면 현재 위치부터 새로운 속도로 재시작
     if (isSpeaking && window.speechSynthesis.speaking) {
-      const remainingText = text.substring(currentCharIndex)
+      const remainingText = currentTranslatedText.substring(currentCharIndex)
       
       if (remainingText.trim()) {
         // 현재 재생 중단
@@ -66,21 +138,54 @@ function TextToSpeech() {
     }
   }
 
+  // Target Language 변경 핸들러
+  const handleTargetLanguageChange = async (newTargetLang) => {
+    setTargetLanguage(newTargetLang)
+    
+    // 재생 중이면 현재 위치부터 새로운 언어로 재시작
+    if (isSpeaking && window.speechSynthesis.speaking) {
+      const remainingOriginalText = text.substring(currentCharIndex)
+      
+      if (remainingOriginalText.trim()) {
+        // 현재 재생 중단
+        window.speechSynthesis.cancel()
+        
+        // 남은 텍스트를 번역 (필요한 경우)
+        let textToSpeak = remainingOriginalText
+        if (selectedLanguage !== newTargetLang) {
+          textToSpeak = await translateText(remainingOriginalText, selectedLanguage, newTargetLang)
+        }
+        
+        // 번역된 텍스트를 현재 속도와 새로운 언어로 재생
+        speakText(textToSpeak, speechRate, 0, newTargetLang)
+      }
+    }
+  }
+
   // 텍스트 읽기 함수
-  const speakText = (textToSpeak, rate, startIndex = 0) => {
+  const speakText = (textToSpeak, rate, startIndex = 0, langCode = targetLanguage) => {
     if (!textToSpeak.trim()) return
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak)
-    const selectedLang = languages.find(lang => lang.code === selectedLanguage)
-    utterance.lang = selectedLang?.voice || 'ko-KR'
+    const selectedLang = languages.find(lang => lang.code === langCode)
+    utterance.lang = selectedLang?.voice || 'en-US'
     utterance.rate = rate
     utterance.pitch = 1.0
     utterance.volume = 1.0
 
-    // 단어 경계 이벤트로 현재 위치 추적
+    // 단어 경계 이벤트로 현재 위치 추적 및 하이라이트
     utterance.onboundary = (event) => {
       if (event.name === 'word') {
-        setCurrentCharIndex(startIndex + event.charIndex)
+        const currentIndex = startIndex + event.charIndex
+        setCurrentCharIndex(currentIndex)
+        
+        // 현재 단어의 끝 위치 계산 (다음 공백까지)
+        const remainingText = textToSpeak.substring(event.charIndex)
+        const wordMatch = remainingText.match(/^\S+/)
+        const wordLength = wordMatch ? wordMatch[0].length : 0
+        
+        setHighlightStart(currentIndex)
+        setHighlightEnd(currentIndex + wordLength)
       }
     }
 
@@ -92,27 +197,64 @@ function TextToSpeech() {
     utterance.onend = () => {
       setIsSpeaking(false)
       setCurrentCharIndex(0)
+      setHighlightStart(0)
+      setHighlightEnd(0)
       utteranceRef.current = null
+      
+      // 반복 모드가 켜져 있으면 다시 재생 (ref 사용하여 최신 값 참조)
+      if (isRepeatModeRef.current) {
+        setTimeout(() => {
+          handleSpeak()
+        }, 500) // 0.5초 대기 후 재시작
+      }
     }
 
     utterance.onerror = () => {
       setIsSpeaking(false)
       setCurrentCharIndex(0)
+      setHighlightStart(0)
+      setHighlightEnd(0)
       utteranceRef.current = null
     }
 
     window.speechSynthesis.speak(utterance)
   }
 
-  const handleSpeak = () => {
+  const handleSpeak = async () => {
     if (!text.trim()) return
 
     if ('speechSynthesis' in window) {
+      // Pause 상태에서 Resume
+      if (isPaused) {
+        window.speechSynthesis.resume()
+        setIsPaused(false)
+        setIsSpeaking(true)
+        return
+      }
+
       window.speechSynthesis.cancel()
       setCurrentCharIndex(0)
-      speakText(text, speechRate, 0)
+      
+      // 번역이 필요한 경우
+      let textToSpeak = text
+      if (selectedLanguage !== targetLanguage) {
+        textToSpeak = await translateText(text, selectedLanguage, targetLanguage)
+      }
+      
+      // 번역된 텍스트 저장
+      setCurrentTranslatedText(textToSpeak)
+      
+      speakText(textToSpeak, speechRate, 0, targetLanguage)
     } else {
       alert('This browser does not support speech synthesis.')
+    }
+  }
+
+  const handlePause = () => {
+    if ('speechSynthesis' in window && isSpeaking) {
+      window.speechSynthesis.pause()
+      setIsPaused(true)
+      setIsSpeaking(false)
     }
   }
 
@@ -120,17 +262,75 @@ function TextToSpeech() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel()
       setIsSpeaking(false)
+      setIsPaused(false)
+      setCurrentCharIndex(0)
+      setHighlightStart(0)
+      setHighlightEnd(0)
     }
   }
 
+  // 하이라이트된 텍스트 렌더링
+  const renderHighlightedText = () => {
+    if (!isSpeaking || highlightStart === 0 || highlightEnd === 0) {
+      return text
+    }
+
+    const before = text.substring(0, highlightStart)
+    const highlight = text.substring(highlightStart, highlightEnd)
+    const after = text.substring(highlightEnd)
+
+    return (
+      <>
+        {before}
+        <span className="highlight-text">{highlight}</span>
+        {after}
+      </>
+    )
+  }
+
+  // Resize 핸들러
+  const handleResizeStart = (e) => {
+    e.preventDefault()
+    resizeStartY.current = e.clientY
+    resizeStartHeight.current = textareaHeight
+    setIsResizing(true)
+  }
+
+  // isRepeatMode 변경 시 ref 업데이트
+  useEffect(() => {
+    isRepeatModeRef.current = isRepeatMode
+  }, [isRepeatMode])
+
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleResizeMove = (e) => {
+      const deltaY = e.clientY - resizeStartY.current
+      const newHeight = Math.min(Math.max(resizeStartHeight.current + deltaY, 200), 800)
+      setTextareaHeight(newHeight)
+    }
+
+    const handleResizeEnd = () => {
+      setIsResizing(false)
+    }
+
+    document.addEventListener('mousemove', handleResizeMove)
+    document.addEventListener('mouseup', handleResizeEnd)
+
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove)
+      document.removeEventListener('mouseup', handleResizeEnd)
+    }
+  }, [isResizing])
+
   return (
     <PageLayout title="Text to Speech">
-      <PageBox>
+      <PageBox flex>
           <div className="tts-controls-wrapper">
             <div className="language-select-wrapper">
-              <label htmlFor="tts-language" className="control-label">Language</label>
+              <label htmlFor="tts-source-language" className="control-label">Source Language</label>
               <select
-                id="tts-language"
+                id="tts-source-language"
                 value={selectedLanguage}
                 onChange={(e) => setSelectedLanguage(e.target.value)}
                 className="language-select"
@@ -141,10 +341,35 @@ function TextToSpeech() {
               </select>
             </div>
 
+            <div className="language-select-wrapper">
+              <label htmlFor="tts-target-language" className="control-label">Target Language</label>
+              <select
+                id="tts-target-language"
+                value={targetLanguage}
+                onChange={(e) => handleTargetLanguageChange(e.target.value)}
+                className="language-select"
+              >
+                {languages.map(lang => (
+                  <option key={lang.code} value={lang.code}>{lang.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="speed-control-wrapper">
-              <label htmlFor="speech-rate" className="control-label">
-                Speed: {speechRate.toFixed(1)}x
-              </label>
+              <div className="speed-header">
+                <label htmlFor="speech-rate" className="control-label">
+                  Speed: {speechRate.toFixed(1)}x
+                </label>
+                <label className="repeat-checkbox-label" title="Repeat">
+                  <input
+                    type="checkbox"
+                    checked={isRepeatMode}
+                    onChange={(e) => setIsRepeatMode(e.target.checked)}
+                    className="repeat-checkbox"
+                  />
+                  <span className="repeat-label-text">🔁</span>
+                </label>
+              </div>
               <input
                 id="speech-rate"
                 type="range"
@@ -165,31 +390,52 @@ function TextToSpeech() {
             </div>
           </div>
 
-          <div className="input-section">
-            <textarea
-              value={text}
-              onChange={handleTextChange}
-              placeholder="Enter text to convert to speech..."
-              className="input-textarea"
-              rows={10}
-            />
-          </div>
-
           <div className="button-group">
             <button
               onClick={handleSpeak}
-              disabled={isSpeaking || !text.trim()}
+              disabled={(isSpeaking && !isPaused) || !text.trim() || isTranslating}
               className="speak-btn"
             >
-              {isSpeaking ? '🔊 Playing...' : '▶ Play'}
+              {isTranslating ? '🔄 Translating...' : isPaused ? '▶ Resume' : isSpeaking ? '🔊 Playing...' : '▶ Play'}
+            </button>
+            <button
+              onClick={handlePause}
+              disabled={!isSpeaking || isPaused}
+              className="pause-btn"
+            >
+              ⏸ Pause
             </button>
             <button
               onClick={handleStop}
-              disabled={!isSpeaking}
+              disabled={!isSpeaking && !isPaused}
               className="stop-btn"
             >
               ⏹ Stop
             </button>
+          </div>
+
+          <div className="input-section">
+            <div className="text-display-wrapper" style={{ height: `${textareaHeight}px` }}>
+              {isSpeaking ? (
+                <div className="text-display">
+                  {renderHighlightedText()}
+                </div>
+              ) : (
+                <textarea
+                  value={text}
+                  onChange={handleTextChange}
+                  placeholder="Enter text to convert to speech..."
+                  className="input-textarea"
+                  style={{ height: `${textareaHeight}px` }}
+                />
+              )}
+            </div>
+            <div 
+              className="resize-handle"
+              onMouseDown={handleResizeStart}
+            >
+              <div className="resize-handle-bar"></div>
+            </div>
           </div>
         </PageBox>
     </PageLayout>
