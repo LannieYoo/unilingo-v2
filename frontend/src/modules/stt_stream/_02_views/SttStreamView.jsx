@@ -48,7 +48,7 @@ export function SttStreamView() {
 
   const voskHook = useVoskRecognition()
   const whisperHook = useWhisperSTT()
-  const hybridHook = useHybridSTT()
+  const hybridHook = useHybridSTT(selectedLang)
 
   const {
     setLanguage,

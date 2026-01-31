@@ -11,7 +11,7 @@ import { useState, useRef, useCallback } from 'react'
 import { WebSpeechManager } from '../_07_utils/WebSpeechManager'
 import { addPunctuation } from '../_07_utils/textFormatter'
 
-export function useHybridSTT() {
+export function useHybridSTT(selectedLang = 'en-us') {
   const [isRunning, setIsRunning] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
@@ -27,7 +27,8 @@ export function useHybridSTT() {
 
   const start = useCallback(async () => {
     try {
-      webSpeechRef.current = new WebSpeechManager('en-US', {
+      console.log('[Hybrid STT] Starting with language:', selectedLang)
+      webSpeechRef.current = new WebSpeechManager(selectedLang, {
         onResult: (text, isFinal) => {
           if (isFinal) {
             // 중복 방지: 같은 텍스트가 연속으로 오면 무시
@@ -71,7 +72,7 @@ export function useHybridSTT() {
       stop()
       return false
     }
-  }, [])
+  }, [selectedLang])
 
   const stop = useCallback(() => {
     if (webSpeechRef.current) {

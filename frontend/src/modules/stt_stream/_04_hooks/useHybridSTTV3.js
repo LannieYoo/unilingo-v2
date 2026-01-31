@@ -7,7 +7,7 @@ import { addPunctuation } from '../_07_utils/textFormatter'
 
 console.log('[HybridSTTV3] Module loaded - 2026-01-17 16:00')
 
-export function useHybridSTTV3() {
+export function useHybridSTTV3(selectedLang = 'en-us') {
   const [isRunning, setIsRunning] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
@@ -30,9 +30,9 @@ export function useHybridSTTV3() {
 
   const start = useCallback(async () => {
     try {
-      console.log('[HybridSTTV3] Starting...')
+      console.log('[HybridSTTV3] Starting with language:', selectedLang)
 
-      webSpeechRef.current = new WebSpeechManagerV3('en-US', {
+      webSpeechRef.current = new WebSpeechManagerV3(selectedLang, {
         onResult: (text, isFinal) => {
           if (isFinal) {
             const textWithPunctuation = addPunctuation(text, 'en')
@@ -87,7 +87,7 @@ export function useHybridSTTV3() {
       stop()
       return false
     }
-  }, [updateStats])
+  }, [selectedLang, updateStats])
 
   const stop = useCallback(() => {
     console.log('[HybridSTTV3] Stopping')
