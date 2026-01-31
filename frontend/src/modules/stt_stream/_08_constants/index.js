@@ -1,24 +1,22 @@
 /**
  * STT Stream Constants
- * Constants definition
+ * 중앙 언어 설정(config/languages.js)을 사용
  */
 
-// Supported language options
-// en-us uses Web Speech API (real-time) + Vosk lgraph (gap filling)
-// Other languages use Vosk (browser-based, offline)
-export const LANGUAGE_OPTIONS = [
-  { value: 'en-us', label: 'English', usesHybrid: true },
-  { value: 'en-in', label: 'English (India)' },
-  { value: 'ko', label: 'Korean' },
-  { value: 'zh', label: 'Chinese' },
-  { value: 'ja', label: 'Japanese' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fr', label: 'French' },
-  { value: 'de', label: 'German' },
-  { value: 'ar', label: 'Arabic' },
-]
+import { LANGUAGES } from '../../../config/languages'
 
-// Vosk 모델 URL (Vite 프록시를 통해 CORS 우회)
+// STT에서 지원하는 언어 (Web Speech API 기반)
+const STT_SUPPORTED_CODES = ['en-US', 'en-GB', 'en-IN', 'en-AU', 'ko', 'zh', 'ja', 'es', 'fr', 'de', 'ar']
+
+export const LANGUAGE_OPTIONS = LANGUAGES
+  .filter(lang => STT_SUPPORTED_CODES.includes(lang.code))
+  .map(lang => ({
+    value: lang.voice.toLowerCase(), // en-US -> en-us
+    label: lang.name,
+    usesHybrid: lang.code === 'en-US' // 미국 영어만 하이브리드 모드
+  }))
+
+// Vosk 모델 URL (현재 사용하지 않음 - 참고용으로만 유지)
 export const MODEL_URLS = {
   'en-us': '/vosk-models/vosk-model-small-en-us-0.15.zip',
   'en-us-lgraph': '/vosk-models/vosk-model-en-us-0.22-lgraph.zip',

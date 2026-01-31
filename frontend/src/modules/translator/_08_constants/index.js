@@ -1,21 +1,33 @@
 /**
  * Translator 모듈 상수
+ * 중앙 언어 설정(config/languages.js)을 사용
  */
 
-export const SOURCE_LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ko', name: 'Korean' },
-]
+import { LANGUAGES, getTranslateCode } from '../../../config/languages'
 
-export const TARGET_LANGUAGES = [
-  { code: 'ko', name: 'Korean' },
-  { code: 'en', name: 'English' },
-  { code: 'zh', name: 'Chinese' },
-]
+// Translator에서 사용할 언어만 필터링
+const TRANSLATOR_LANG_CODES = ['en-US', 'en-GB', 'en-IN', 'en-AU', 'ko', 'zh', 'ja', 'es', 'fr', 'de', 'ar', 'hi', 'pt', 'ru', 'it']
 
-export const LANG_MAP = {
-  'ko': 'ko',
-  'en': 'en',
-  'zh': 'zh'
+export const SOURCE_LANGUAGES = LANGUAGES
+  .filter(lang => TRANSLATOR_LANG_CODES.includes(lang.code))
+  .map(lang => ({
+    code: lang.translateCode,
+    name: lang.name
+  }))
+  // 중복 제거 (en-US, en-GB 등이 모두 'en'으로 매핑됨)
+  .filter((item, index, self) => 
+    index === self.findIndex(t => t.code === item.code)
+  )
+
+export const TARGET_LANGUAGES = [...SOURCE_LANGUAGES]
+
+// 언어 코드 매핑 함수 (기존 LANG_MAP 대체)
+export const getLangCode = (code) => {
+  return getTranslateCode(code)
 }
+
+// 하위 호환성을 위한 LANG_MAP (deprecated)
+export const LANG_MAP = LANGUAGES.reduce((acc, lang) => {
+  acc[lang.translateCode] = lang.translateCode
+  return acc
+}, {})

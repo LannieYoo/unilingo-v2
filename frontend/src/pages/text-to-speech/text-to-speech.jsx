@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { PageLayout, PageBox } from '../../components/layout/PageLayout'
+import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage } from '../../config/languages'
 import './text-to-speech.css'
 
 function TextToSpeech() {
@@ -22,38 +23,7 @@ function TextToSpeech() {
   const resizeStartHeight = useRef(0)
   const isRepeatModeRef = useRef(false)
 
-  const languages = [
-    { code: 'en', name: 'English', voice: 'en-US' },
-    { code: 'ko', name: 'Korean', voice: 'ko-KR' },
-    { code: 'zh', name: 'Chinese (Simplified)', voice: 'zh-CN' },
-  ]
-
-  const LANG_MAP = {
-    'en': 'en',
-    'ko': 'ko',
-    'zh': 'zh-CN'
-  }
-
-  // 언어 감지 함수
-  const detectLanguage = (text) => {
-    if (!text.trim()) return 'en'
-    
-    // 한글 감지
-    const koreanRegex = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/
-    if (koreanRegex.test(text)) {
-      return 'ko'
-    }
-    
-    // 중국어 감지
-    const chineseRegex = /[\u4E00-\u9FFF]/
-    if (chineseRegex.test(text)) {
-      return 'zh'
-    }
-    
-    // 기본값은 영어
-    return 'en'
-  }
-
+  // 번역 함수
   // 번역 함수
   const translateText = async (text, sourceLang, targetLang) => {
     if (!text.trim()) return text
@@ -62,8 +32,8 @@ function TextToSpeech() {
     setIsTranslating(true)
     
     try {
-      const sourceCode = LANG_MAP[sourceLang] || 'en'
-      const targetCode = LANG_MAP[targetLang] || 'en'
+      const sourceCode = getTranslateCode(sourceLang)
+      const targetCode = getTranslateCode(targetLang)
       
       // Google Translate API 사용
       const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(text)}`
@@ -167,8 +137,7 @@ function TextToSpeech() {
     if (!textToSpeak.trim()) return
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak)
-    const selectedLang = languages.find(lang => lang.code === langCode)
-    utterance.lang = selectedLang?.voice || 'en-US'
+    utterance.lang = getVoiceCode(langCode)
     utterance.rate = rate
     utterance.pitch = 1.0
     utterance.volume = 1.0
@@ -335,7 +304,7 @@ function TextToSpeech() {
                 onChange={(e) => setSelectedLanguage(e.target.value)}
                 className="language-select"
               >
-                {languages.map(lang => (
+                {LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code}>{lang.name}</option>
                 ))}
               </select>
@@ -349,7 +318,7 @@ function TextToSpeech() {
                 onChange={(e) => handleTargetLanguageChange(e.target.value)}
                 className="language-select"
               >
-                {languages.map(lang => (
+                {LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code}>{lang.name}</option>
                 ))}
               </select>
