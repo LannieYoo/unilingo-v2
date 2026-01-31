@@ -134,7 +134,7 @@ export const getSTTCode = (code) => {
 
 // 언어 감지 함수
 export const detectLanguage = (text) => {
-  if (!text.trim()) return 'en'
+  if (!text.trim()) return 'en-US'
   
   // 한글 감지
   const koreanRegex = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/
@@ -172,6 +172,6 @@ export const detectLanguage = (text) => {
     return 'ru'
   }
   
-  // 기본값은 영어
-  return 'en'
+  // 기본값은 미국 영어
+  return 'en-US'
 }

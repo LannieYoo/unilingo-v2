@@ -5,8 +5,8 @@ import './text-to-speech.css'
 
 function TextToSpeech() {
   const [text, setText] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
-  const [targetLanguage, setTargetLanguage] = useState('en')
+  const [selectedLanguage, setSelectedLanguage] = useState('en-US')
+  const [targetLanguage, setTargetLanguage] = useState('en-US')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [speechRate, setSpeechRate] = useState(1.0)
@@ -24,17 +24,18 @@ function TextToSpeech() {
   const isRepeatModeRef = useRef(false)
 
   // 번역 함수
-  // 번역 함수
   const translateText = async (text, sourceLang, targetLang) => {
     if (!text.trim()) return text
-    if (sourceLang === targetLang) return text
+    
+    // translateCode로 비교 (en-US, en-GB 등은 모두 'en'으로 변환됨)
+    const sourceCode = getTranslateCode(sourceLang)
+    const targetCode = getTranslateCode(targetLang)
+    
+    if (sourceCode === targetCode) return text
 
     setIsTranslating(true)
     
     try {
-      const sourceCode = getTranslateCode(sourceLang)
-      const targetCode = getTranslateCode(targetLang)
-      
       // Google Translate API 사용
       const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(text)}`
       const response = await fetch(googleUrl)
@@ -120,9 +121,12 @@ function TextToSpeech() {
         // 현재 재생 중단
         window.speechSynthesis.cancel()
         
-        // 남은 텍스트를 번역 (필요한 경우)
+        // 남은 텍스트를 번역 (필요한 경우) - translateCode로 비교
         let textToSpeak = remainingOriginalText
-        if (selectedLanguage !== newTargetLang) {
+        const sourceCode = getTranslateCode(selectedLanguage)
+        const targetCode = getTranslateCode(newTargetLang)
+        
+        if (sourceCode !== targetCode) {
           textToSpeak = await translateText(remainingOriginalText, selectedLanguage, newTargetLang)
         }
         
@@ -204,9 +208,12 @@ function TextToSpeech() {
       window.speechSynthesis.cancel()
       setCurrentCharIndex(0)
       
-      // 번역이 필요한 경우
+      // 번역이 필요한 경우 (translateCode로 비교)
       let textToSpeak = text
-      if (selectedLanguage !== targetLanguage) {
+      const sourceCode = getTranslateCode(selectedLanguage)
+      const targetCode = getTranslateCode(targetLanguage)
+      
+      if (sourceCode !== targetCode) {
         textToSpeak = await translateText(text, selectedLanguage, targetLanguage)
       }
       
