@@ -35,8 +35,11 @@ def search():
         result = dictionary_service.search(word=word, target_lang=target_lang, trace_id=trace_id)
         result['trace_id'] = trace_id
         return jsonify(result), 200
-    except Exception:
-        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': 'An unexpected error occurred', 'trace_id': trace_id}}), 500
+    except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"Dictionary search error: {error_detail}")
+        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
 
 
 @router.route('/autocomplete', methods=['GET'])

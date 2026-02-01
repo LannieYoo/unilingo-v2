@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { PageLayout, PageBox } from '../../components/layout/PageLayout'
-import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage } from '../../config/languages'
+import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage, getLanguageByCode } from '../../config/languages'
 import './text-to-speech.css'
 
 function TextToSpeech() {
@@ -18,6 +18,7 @@ function TextToSpeech() {
   const [highlightStart, setHighlightStart] = useState(0)
   const [highlightEnd, setHighlightEnd] = useState(0)
   const [isRepeatMode, setIsRepeatMode] = useState(false)
+  const [voiceWarning, setVoiceWarning] = useState(null)
   const utteranceRef = useRef(null)
   const resizeStartY = useRef(0)
   const resizeStartHeight = useRef(0)
@@ -141,7 +142,31 @@ function TextToSpeech() {
     if (!textToSpeak.trim()) return
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak)
-    utterance.lang = getVoiceCode(langCode)
+    const voiceCode = getVoiceCode(langCode)
+    utterance.lang = voiceCode
+    
+    // 브라우저에서 지원하는 음성 중 해당 언어에 맞는 음성 선택
+    const voices = window.speechSynthesis.getVoices()
+    const matchingVoice = voices.find(voice => voice.lang === voiceCode)
+    
+    if (matchingVoice) {
+      utterance.voice = matchingVoice
+      console.log('[TTS] Using voice:', matchingVoice.name, 'for lang:', voiceCode)
+      setVoiceWarning(null)
+    } else {
+      console.warn('[TTS] No matching voice found for:', voiceCode)
+      
+      // 언어 이름 가져오기
+      const lang = getLanguageByCode(langCode)
+      const langName = lang?.name || langCode
+      
+      // 경고 메시지 설정
+      setVoiceWarning({
+        language: langName,
+        code: voiceCode
+      })
+    }
+    
     utterance.rate = rate
     utterance.pitch = 1.0
     utterance.volume = 1.0
@@ -203,6 +228,13 @@ function TextToSpeech() {
         setIsPaused(false)
         setIsSpeaking(true)
         return
+      }
+
+      // 음성 목록 로드 대기 (브라우저에 따라 비동기로 로드됨)
+      if (window.speechSynthesis.getVoices().length === 0) {
+        await new Promise(resolve => {
+          window.speechSynthesis.onvoiceschanged = resolve
+        })
       }
 
       window.speechSynthesis.cancel()
@@ -276,6 +308,26 @@ function TextToSpeech() {
   useEffect(() => {
     isRepeatModeRef.current = isRepeatMode
   }, [isRepeatMode])
+
+  // 음성 목록 미리 로드
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      // 음성 목록 로드 트리거
+      window.speechSynthesis.getVoices()
+      
+      // 음성 목록 변경 이벤트 리스너
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices()
+        console.log('[TTS] Available voices loaded:', voices.length)
+        voices.forEach(voice => {
+          console.log(`  - ${voice.name} (${voice.lang})`)
+        })
+      }
+      
+      window.speechSynthesis.onvoiceschanged = loadVoices
+      loadVoices() // 즉시 한 번 실행
+    }
+  }, [])
 
   useEffect(() => {
     if (!isResizing) return
@@ -389,6 +441,51 @@ function TextToSpeech() {
               ⏹ Stop
             </button>
           </div>
+
+          {voiceWarning && (
+            <div className="voice-warning">
+              <div className="voice-warning-icon">⚠️</div>
+              <div className="voice-warning-content">
+                <div className="voice-warning-title">Voice Not Available</div>
+                <div className="voice-warning-message">
+                  The <strong>{voiceWarning.language}</strong> voice ({voiceWarning.code}) is not installed on your system.
+                  The system will use a default voice instead.
+                </div>
+                <div className="voice-warning-instructions">
+                  <strong>To install this voice:</strong>
+                  <ul>
+                    <li>
+                      <strong>Windows:</strong>
+                      <ol className="voice-warning-steps">
+                        <li>Open Settings → Time & Language → <strong>Language & region</strong></li>
+                        <li>Click <strong>"Add a language"</strong></li>
+                        <li>Search and select your language (e.g., "English (India)")</li>
+                        <li>Check <strong>"Text-to-speech"</strong> option</li>
+                        <li>Click <strong>"Install"</strong> and wait for download to complete</li>
+                        <li>Restart your browser</li>
+                      </ol>
+                    </li>
+                    <li><strong>macOS:</strong> System Preferences → Accessibility → Spoken Content → System voice → Customize</li>
+                    <li><strong>Linux:</strong> Install speech-dispatcher and language packs</li>
+                  </ul>
+                  {navigator.platform.toLowerCase().includes('win') && (
+                    <button 
+                      className="voice-warning-settings-btn"
+                      onClick={() => window.open('ms-settings:regionlanguage', '_blank')}
+                    >
+                      🔧 Open Windows Language Settings
+                    </button>
+                  )}
+                </div>
+                <button 
+                  className="voice-warning-close"
+                  onClick={() => setVoiceWarning(null)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="input-section">
             <div className="text-display-wrapper" style={{ height: `${textareaHeight}px` }}>

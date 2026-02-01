@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { translateText, fetchDictionary, fetchSuggestionsFromDatamuse } from '../_06_services'
+import { searchDictionary, fetchAutocompleteSuggestions } from '../_06_services'
 import { detectLanguage } from '../_07_utils'
 import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
 import { useAuthStore, useLanguagePreferences } from '../../auth'
@@ -226,7 +226,32 @@ export function useDictionary() {
     suggestionAbortRef.current = controller
 
     try {
-      const combined = await fetchSuggestionsFromDatamuse(query, controller.signal)
+      const [sugResponse, spellResponse] = await Promise.all([
+        fetch(`https://api.datamuse.com/sug?s=${encodeURIComponent(query)}&max=8`, { signal: controller.signal }),
+        fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(query)}*&max=5`, { signal: controller.signal })
+      ])
+      
+      const sugData = sugResponse.ok ? await sugResponse.json() : []
+      const spellData = spellResponse.ok ? await spellResponse.json() : []
+      
+      const allWords = new Map()
+      
+      sugData.forEach((item, idx) => {
+        if (!allWords.has(item.word)) {
+          allWords.set(item.word, { word: item.word, score: item.score || (1000 - idx), type: 'suggest' })
+        }
+      })
+      
+      spellData.forEach((item, idx) => {
+        if (!allWords.has(item.word)) {
+          allWords.set(item.word, { word: item.word, score: item.score || (500 - idx), type: 'spell' })
+        }
+      })
+      
+      const combined = Array.from(allWords.values())
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10)
+      
       setSuggestions(combined)
       setShowSuggestions(combined.length > 0)
 
@@ -314,267 +339,45 @@ export function useDictionary() {
     if (wordToSearch !== currentSearchTermRef.current) throw new DOMException('Search cancelled', 'AbortError')
 
     try {
-      if (fromLang === 'en') {
-        const dictData = await fetchDictionary(wordToSearch, signal)
-        
-        if (dictData) {
-          let pronunciation = { uk: '', us: '' }
-          if (dictData.phonetics && dictData.phonetics.length > 0) {
-            const phonetic = dictData.phonetics.find(p => p.text) || dictData.phonetics[0]
-            if (phonetic && phonetic.text) {
-              pronunciation.uk = phonetic.text
-              pronunciation.us = phonetic.text
-            }
-          }
-
-          const meanings = []
-          if (dictData.meanings && dictData.meanings.length > 0) {
-            let meaningNumber = 1
-            const textsToTranslate = []
-            const meaningData = []
-
-            const sortedMeanings = [...dictData.meanings].sort((a, b) => {
-              const order = { 'verb': 0, 'noun': 1, 'adjective': 2, 'adverb': 3 }
-              const aOrder = order[a.partOfSpeech] ?? 99
-              const bOrder = order[b.partOfSpeech] ?? 99
-              return aOrder - bOrder
-            })
-
-            for (const meaning of sortedMeanings) {
-              if (meaning.partOfSpeech === 'verb' && meaning.definitions && meaning.definitions.length > 0) {
-                const verbDefs = meaning.definitions.slice(0, 10)
-                for (const def of verbDefs) {
-                  if (def && def.definition) {
-                    meaningData.push({ number: meaningNumber++, definition: def.definition, example: def.example || null })
-                    if (toLang !== 'en') {
-                      textsToTranslate.push(def.definition)
-                      if (def.example) textsToTranslate.push(def.example)
-                    }
-                  }
-                }
-              }
-            }
-
-            for (const meaning of sortedMeanings) {
-              if (meaning.partOfSpeech !== 'verb' && meaning.definitions && meaning.definitions.length > 0) {
-                const mainDef = meaning.definitions[0]
-                if (mainDef && mainDef.definition) {
-                  meaningData.push({ number: meaningNumber++, definition: mainDef.definition, example: mainDef.example || null })
-                  if (toLang !== 'en') {
-                    textsToTranslate.push(mainDef.definition)
-                    if (mainDef.example) textsToTranslate.push(mainDef.example)
-                  }
-                }
-              }
-            }
-
-            const translations = toLang !== 'en'
-              ? await Promise.all(textsToTranslate.slice(0, 20).map(text => translateText(text, 'en', toLang)))
-              : []
-
-            let translationIndex = 0
-            for (const data of meaningData) {
-              const shouldTranslate = toLang !== 'en'
-              let translation = shouldTranslate && translationIndex < translations.length
-                ? translations[translationIndex++] || data.definition
-                : data.definition
-
-              if (shouldTranslate && translation && translation !== data.definition) {
-                const translationLower = translation.toLowerCase().trim()
-                const definitionLower = data.definition.toLowerCase().trim()
-                if (translationLower === definitionLower || translation.length <= 2) {
-                  translation = data.definition
-                }
-              }
-
-              const exampleTranslation = data.example && shouldTranslate && translationIndex < translations.length
-                ? translations[translationIndex++] || null
-                : null
-
-              meanings.push({
-                number: data.number,
-                translation,
-                exampleEn: data.example || null,
-                exampleKo: toLang === 'ko' ? exampleTranslation : null,
-                exampleZh: toLang === 'zh' ? exampleTranslation : null
-              })
-            }
-          }
-
-          const synonyms = []
-          const antonyms = []
-          if (dictData.meanings) {
-            for (const meaning of dictData.meanings) {
-              if (meaning.synonyms) synonyms.push(...meaning.synonyms)
-              if (meaning.antonyms) antonyms.push(...meaning.antonyms)
-            }
-          }
-
-          const result = [{
-            word: wordToSearch,
-            pronunciation: pronunciation.uk || pronunciation.us ? pronunciation : null,
-            meanings,
-            synonyms: [...new Set(synonyms)].slice(0, 10),
-            antonyms: [...new Set(antonyms)].slice(0, 10)
-          }]
-          setResults(result)
-          addToHistory(wordForHistory, result, fromLang, toLang)
-          return
-        } else {
-          const translation = await translateText(wordToSearch, 'en', toLang)
-          if (translation) {
-            const displayTranslation = translation.toLowerCase() === wordToSearch.toLowerCase() ? null : translation
-            const result = [{
-              word: wordToSearch,
-              translation: displayTranslation || `"${wordToSearch}" - 번역을 찾을 수 없습니다.`,
-              isPhrase: true
-            }]
-            setResults(result)
-            addToHistory(wordForHistory, result, fromLang, toLang)
-            return
-          } else {
-            const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 사전에 등록되지 않은 단어입니다.`, isPhrase: true }]
-            setResults(result)
-            addToHistory(wordForHistory, result, fromLang, toLang)
-            return
-          }
-        }
-      }
-
-      // 한국어/중국어 검색
-      if (fromLang === 'ko' || fromLang === 'zh') {
-        let englishWord = await translateText(wordToSearch, fromLang, 'en')
-        if (!englishWord) {
-          const result = [{ word: wordToSearch, translation: `Translation failed for "${wordToSearch}". Please try a different word.` }]
-          setResults(result)
-          addToHistory(wordForHistory, result, fromLang, toLang)
-          return
-        }
-
-        const cleanEnglishWord = englishWord.toLowerCase().trim().split(/\s+/)[0]
-        const dictData = await fetchDictionary(cleanEnglishWord, signal)
-
-        if (!dictData) {
-          let result
-          if (toLang === 'en') {
-            result = [{ word: wordToSearch, englishWord: cleanEnglishWord, translation: `${wordToSearch} → ${cleanEnglishWord}` }]
-          } else {
-            const finalTranslation = await translateText(wordToSearch, fromLang, toLang)
-            result = [{ word: wordToSearch, translation: `${wordToSearch} → ${finalTranslation || cleanEnglishWord}` }]
-          }
-          setResults(result)
-          addToHistory(wordForHistory, result, fromLang, toLang)
-          return
-        }
-
-        let pronunciation = { uk: '', us: '' }
-        if (dictData.phonetics && dictData.phonetics.length > 0) {
-          const phonetic = dictData.phonetics.find(p => p.text) || dictData.phonetics[0]
-          if (phonetic && phonetic.text) {
-            pronunciation.uk = phonetic.text
-            pronunciation.us = phonetic.text
-          }
-        }
-
-        const meanings = []
-        if (dictData.meanings && dictData.meanings.length > 0) {
-          let meaningNumber = 1
-          const textsToTranslate = []
-          const meaningData = []
-
-          const sortedMeanings = [...dictData.meanings].sort((a, b) => {
-            const order = { 'verb': 0, 'noun': 1, 'adjective': 2, 'adverb': 3 }
-            const aOrder = order[a.partOfSpeech] ?? 99
-            const bOrder = order[b.partOfSpeech] ?? 99
-            return aOrder - bOrder
-          })
-
-          for (const meaning of sortedMeanings) {
-            if (meaning.partOfSpeech === 'verb' && meaning.definitions && meaning.definitions.length > 0) {
-              const verbDefs = meaning.definitions.slice(0, 10)
-              for (const def of verbDefs) {
-                if (def && def.definition) {
-                  meaningData.push({ number: meaningNumber++, definition: def.definition, example: def.example || null })
-                  if (toLang !== 'en') {
-                    textsToTranslate.push(def.definition)
-                    if (def.example) textsToTranslate.push(def.example)
-                  }
-                }
-              }
-            }
-          }
-
-          for (const meaning of sortedMeanings) {
-            if (meaning.partOfSpeech !== 'verb' && meaning.definitions && meaning.definitions.length > 0) {
-              const mainDef = meaning.definitions[0]
-              if (mainDef && mainDef.definition) {
-                meaningData.push({ number: meaningNumber++, definition: mainDef.definition, example: mainDef.example || null })
-                if (toLang !== 'en') {
-                  textsToTranslate.push(mainDef.definition)
-                  if (mainDef.example) textsToTranslate.push(mainDef.example)
-                }
-              }
-            }
-          }
-
-          const translations = toLang !== 'en'
-            ? await Promise.all(textsToTranslate.slice(0, 20).map(text => translateText(text, 'en', toLang)))
-            : []
-
-          let translationIndex = 0
-          for (const data of meaningData) {
-            const shouldTranslate = toLang !== 'en'
-            let translation = shouldTranslate && translationIndex < translations.length
-              ? translations[translationIndex++] || data.definition
-              : data.definition
-
-            if (shouldTranslate && translation && translation !== data.definition) {
-              const translationLower = translation.toLowerCase().trim()
-              const definitionLower = data.definition.toLowerCase().trim()
-              if (translationLower === definitionLower || translation.length <= 2) {
-                translation = data.definition
-              }
-            }
-
-            const exampleTranslation = data.example && shouldTranslate && translationIndex < translations.length
-              ? translations[translationIndex++] || null
-              : null
-
-            meanings.push({
-              number: data.number,
-              translation,
-              exampleEn: data.example || null,
-              exampleKo: toLang === 'ko' ? exampleTranslation : null,
-              exampleZh: toLang === 'zh' ? exampleTranslation : null
-            })
-          }
-        }
-
-        const synonyms = []
-        const antonyms = []
-        if (dictData.meanings) {
-          for (const meaning of dictData.meanings) {
-            if (meaning.synonyms) synonyms.push(...meaning.synonyms)
-            if (meaning.antonyms) antonyms.push(...meaning.antonyms)
-          }
-        }
-
-        const result = [{
-          word: wordToSearch,
-          englishWord: cleanEnglishWord,
-          pronunciation: pronunciation.uk || pronunciation.us ? pronunciation : null,
-          meanings,
-          synonyms: [...new Set(synonyms)].slice(0, 10),
-          antonyms: [...new Set(antonyms)].slice(0, 10)
-        }]
+      // 백엔드 API 호출 (언어 자동 감지 및 캐시 처리)
+      const dictData = await searchDictionary(wordToSearch, toLang)
+      
+      if (!dictData || !dictData.term) {
+        const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 검색 결과를 찾을 수 없습니다.`, isPhrase: true }]
         setResults(result)
         addToHistory(wordForHistory, result, fromLang, toLang)
         return
       }
-
-      const noResult = [{ word: wordToSearch, translation: `No results found for "${wordToSearch}".` }]
-      setResults(noResult)
-      addToHistory(wordForHistory, noResult, fromLang, toLang)
+      
+      // 새 API 응답 구조에 맞게 변환
+      const result = [{
+        term: dictData.term,
+        word: dictData.term,
+        pronunciation: dictData.pronunciation && (dictData.pronunciation.ipa || dictData.pronunciation.phonetic) 
+          ? { 
+              ipa: dictData.pronunciation.ipa,
+              phonetic: dictData.pronunciation.phonetic,
+              audioUrl: dictData.pronunciation.audio_url
+            }
+          : null,
+        meanings: dictData.meanings && dictData.meanings.length > 0
+          ? dictData.meanings.map((meaning) => ({
+              part_of_speech: meaning.part_of_speech,
+              partOfSpeech: meaning.part_of_speech,
+              definitions: meaning.definitions.map((def) => ({
+                definition: def.definition,
+                translation: def.translation,
+                examples: def.examples || []
+              }))
+            }))
+          : [],
+        synonyms: [],
+        antonyms: [],
+        cached: dictData.cached || false
+      }]
+      
+      setResults(result)
+      addToHistory(wordForHistory, result, fromLang, toLang)
     } catch (error) {
       console.error('Search error:', error)
       const errorResult = [{ word: wordToSearch, translation: 'Error: ' + error.message }]

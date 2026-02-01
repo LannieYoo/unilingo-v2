@@ -7,25 +7,30 @@ from typing import List, Optional, Dict
 
 
 class PronunciationDTO(BaseModel):
-    uk: str = ''
-    us: str = ''
+    ipa: Optional[str] = None
+    phonetic: Optional[str] = None
+    audio_url: Optional[str] = None
+
+
+class DefinitionDTO(BaseModel):
+    definition: str
+    translation: Optional[str] = None
+    examples: List[str] = []
 
 
 class MeaningDTO(BaseModel):
-    number: int
-    definition: str
-    translation: Optional[str] = None
-    example: Optional[str] = None
-    example_translation: Optional[str] = None
+    part_of_speech: str
+    definitions: List[DefinitionDTO]
 
 
 class SearchResponse(BaseModel):
-    word: str
-    detected_lang: Optional[str]
+    term: str
+    lang: str
     pronunciation: PronunciationDTO
     meanings: List[MeaningDTO]
+    source: str = 'free_dictionary_api'
     cached: bool = False
-    trace_id: str
+    trace_id: Optional[str] = None
 
 
 class SuggestionDTO(BaseModel):

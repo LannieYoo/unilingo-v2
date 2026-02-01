@@ -274,32 +274,33 @@ export function DictionaryView() {
                   <div key={index} className="result-item">
                     <div className="result-header">
                       <div className="result-word-container">
-                        <div className="result-word">{result.word}</div>
+                        <div className="result-word">{result.term || result.word}</div>
                         {result.englishWord && (
                           <div className="result-english-word">{result.englishWord}</div>
                         )}
                       </div>
-                      {result.pronunciation && (
+                      {result.pronunciation && (result.pronunciation.ipa || result.pronunciation.phonetic) && (
                         <div className="result-pronunciation">
                           <div className="pronunciation-item">
-                            <img src="https://flagcdn.com/w40/us.png" alt="US" className="flag-icon" width="24" height="16" />
-                            <span className="pronunciation-label">US</span>
-                            <span className="pronunciation-text">{result.pronunciation.us}</span>
-                            <button className="speaker-btn" onClick={() => playPronunciation(wordToPronounce, 'en-US')}>🔊</button>
-                          </div>
-                          <div className="pronunciation-item">
-                            <img src="https://flagcdn.com/w40/gb.png" alt="UK" className="flag-icon" width="24" height="16" />
-                            <span className="pronunciation-label">UK</span>
-                            <span className="pronunciation-text">{result.pronunciation.uk}</span>
-                            <button className="speaker-btn" onClick={() => playPronunciation(wordToPronounce, 'en-GB')}>🔊</button>
+                            <span className="pronunciation-label">IPA</span>
+                            <span className="pronunciation-text">{result.pronunciation.ipa || result.pronunciation.phonetic}</span>
+                            {result.pronunciation.audioUrl && (
+                              <button className="speaker-btn" onClick={() => {
+                                const audio = new Audio(result.pronunciation.audioUrl)
+                                audio.play()
+                              }}>🔉</button>
+                            )}
+                            {!result.pronunciation.audioUrl && (
+                              <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'en-US')}>🔉</button>
+                            )}
                           </div>
                         </div>
                       )}
                       {!result.pronunciation && targetLang === 'zh' && (
-                        <button className="speaker-btn" onClick={() => playPronunciation(result.word, 'zh-CN')}>🔊</button>
+                        <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'zh-CN')}>🔉</button>
                       )}
                       {!result.pronunciation && targetLang === 'ko' && (
-                        <button className="speaker-btn" onClick={() => playPronunciation(result.word, 'ko-KR')}>🔊</button>
+                        <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'ko-KR')}>🔉</button>
                       )}
                     </div>
 
@@ -307,39 +308,47 @@ export function DictionaryView() {
                       <div className="meanings-section">
                         {result.meanings.map((meaning, idx) => (
                           <div key={idx} className="meaning-item">
-                            <div className="meaning-number">{meaning.number}</div>
+                            <div className="meaning-header">
+                              <span className="part-of-speech">{meaning.partOfSpeech || meaning.part_of_speech}</span>
+                            </div>
                             <div className="meaning-content">
-                              <div className="meaning-translation-container">
-                                <div className="meaning-translation">{meaning.translation}</div>
-                                {targetLang === 'zh' && meaning.translation && (
-                                  <button className="example-speaker-btn" onClick={() => playPronunciation(meaning.translation, 'zh-CN')}>🔊</button>
-                                )}
-                                {targetLang === 'ko' && meaning.translation && (
-                                  <button className="example-speaker-btn" onClick={() => playPronunciation(meaning.translation, 'ko-KR')}>🔊</button>
-                                )}
-                              </div>
-                              {(meaning.exampleKo || meaning.exampleEn || meaning.exampleZh) && (
-                                <div className="meaning-examples">
-                                  {meaning.exampleKo && (
-                                    <div className="example-ko-container">
-                                      <div className="example-ko">{meaning.exampleKo}</div>
-                                      <button className="example-speaker-btn" onClick={() => playPronunciation(meaning.exampleKo, 'ko-KR')}>🔊</button>
+                              {meaning.definitions && meaning.definitions.map((def, defIdx) => (
+                                <div key={defIdx} className="definition-block">
+                                  <div className="definition-number">{defIdx + 1}</div>
+                                  <div className="definition-content">
+                                    <div className="definition-text">
+                                      {def.definition}
+                                      <button className="inline-speaker-btn" onClick={() => playPronunciation(def.definition, 'en-US')} title="Listen">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                        </svg>
+                                      </button>
                                     </div>
-                                  )}
-                                  {meaning.exampleZh && (
-                                    <div className="example-zh-container">
-                                      <div className="example-zh">{meaning.exampleZh}</div>
-                                      <button className="example-speaker-btn" onClick={() => playPronunciation(meaning.exampleZh, 'zh-CN')}>🔊</button>
-                                    </div>
-                                  )}
-                                  {meaning.exampleEn && (
-                                    <div className="example-en-container">
-                                      <div className="example-en">{meaning.exampleEn}</div>
-                                      <button className="example-speaker-btn" onClick={() => playPronunciation(meaning.exampleEn, 'en-US')}>🔊</button>
-                                    </div>
-                                  )}
+                                    {def.translation && (
+                                      <div className="definition-translation">{def.translation}</div>
+                                    )}
+                                    {def.examples && def.examples.length > 0 && (
+                                      <div className="examples-list">
+                                        {def.examples.map((example, exIdx) => (
+                                          <div key={exIdx} className="example-item">
+                                            <span className="example-icon">💬</span>
+                                            <span className="example-text">
+                                              {example}
+                                              <button className="inline-speaker-btn" onClick={() => playPronunciation(example, 'en-US')} title="Listen">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                </svg>
+                                              </button>
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
+                              ))}
                             </div>
                           </div>
                         ))}

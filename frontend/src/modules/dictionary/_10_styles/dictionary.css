@@ -355,9 +355,10 @@
 
 .meaning-item {
   display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -365,6 +366,137 @@
   border-bottom: none;
   margin-bottom: 0;
   padding-bottom: 0;
+}
+
+.meaning-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.part-of-speech {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meaning-content {
+  flex: 1;
+}
+
+.definition-block {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.definition-block:last-child {
+  margin-bottom: 0;
+}
+
+.definition-number {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #64748b;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.definition-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.definition-text {
+  font-size: 1rem;
+  color: #475569;
+  line-height: 1.6;
+  display: inline;
+}
+
+.inline-speaker-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  margin-left: 0.25rem;
+  color: #3b82f6;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+.inline-speaker-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.inline-speaker-btn svg {
+  display: block;
+}
+
+.definition-translation {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 0.25rem;
+}
+
+.examples-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid #3b82f6;
+}
+
+.example-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+
+.example-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.example-text {
+  font-size: 0.9375rem;
+  color: #475569;
+  font-style: italic;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.no-examples {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 6px;
 }
 
 .meaning-number {
@@ -379,10 +511,6 @@
   font-weight: 600;
   font-size: 0.875rem;
   flex-shrink: 0;
-}
-
-.meaning-content {
-  flex: 1;
 }
 
 .meaning-translation-container {

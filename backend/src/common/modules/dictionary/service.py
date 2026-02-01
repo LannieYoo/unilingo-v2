@@ -5,7 +5,9 @@
 import re
 import requests
 import logging
+import json
 from typing import Dict, Any, Optional, List
+from datetime import datetime, timedelta
 
 from ..cache import get_cache_service
 from ..translation import get_translation_service
@@ -18,7 +20,7 @@ class DictionaryService:
     
     def __init__(self, cache_enabled: bool = True, cache_ttl: int = 604800):
         self.cache_enabled = cache_enabled
-        self.cache_ttl = cache_ttl
+        self.cache_ttl = cache_ttl  # 7 days
         self.cache = get_cache_service() if cache_enabled else None
         self.translation_service = get_translation_service()
         self.timeout = 5
@@ -36,41 +38,197 @@ class DictionaryService:
         return None
     
     def search(self, word: str, target_lang: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
-        """단어 검색"""
-        if self.cache_enabled:
-            cache_key = self.cache.generate_key('dict', word=word, target=target_lang)
-            cached_result = self.cache.get(cache_key)
-            if cached_result:
-                cached_result['cached'] = True
-                return cached_result
+        """단어 검색 - Free Dictionary API 사용"""
+        try:
+            detected_lang = self.detect_language(word)
+            
+            # 캐시 임시 비활성화 (에러 방지)
+            # cached_result = self._get_from_db_cache(detected_lang or 'en', word)
+            # if cached_result:
+            #     cached_result['cached'] = True
+            #     cached_result['trace_id'] = trace_id
+            #     return cached_result
+            
+            # API 호출
+            result = {
+                'term': word,
+                'lang': detected_lang or 'en',
+                'pronunciation': {
+                    'ipa': None,
+                    'phonetic': None,
+                    'audio_url': None
+                },
+                'meanings': [],
+                'source': 'free_dictionary_api',
+                'cached': False,
+                'trace_id': trace_id
+            }
+            
+            # Dictionary API 호출
+            if detected_lang == 'en':
+                dict_data = self._fetch_free_dictionary_api(word)
+                if dict_data:
+                    result['pronunciation'] = self._extract_pronunciation_v2(dict_data)
+                    result['meanings'] = self._extract_meanings_v2(dict_data, target_lang)
+            elif detected_lang in ['ko', 'zh']:
+                try:
+                    translation_result = self.translation_service.translate(word, detected_lang, 'en', trace_id)
+                    english_word = translation_result.get('translated_text')
+                    if english_word:
+                        dict_data = self._fetch_free_dictionary_api(english_word)
+                        if dict_data:
+                            result['term'] = english_word
+                            result['pronunciation'] = self._extract_pronunciation_v2(dict_data)
+                            result['meanings'] = self._extract_meanings_v2(dict_data, target_lang)
+                except Exception as e:
+                    logger.error(f"Translation error: {e}")
+            
+            # 캐시 저장 임시 비활성화
+            # self._save_to_db_cache(result['lang'], word, result)
+            
+            return result
+        except Exception as e:
+            logger.error(f"Search error: {e}", exc_info=True)
+            raise
+    
+    def _get_from_db_cache(self, lang: str, term: str) -> Optional[Dict[str, Any]]:
+        """DB 캐시에서 조회"""
+        try:
+            from ...supabase import get_supabase, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+            from supabase import create_client
+            
+            if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+                return None
+            
+            supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+            
+            result = supabase.table('dictionary_cache')\
+                .select('*')\
+                .eq('lang', lang)\
+                .eq('term', term.lower())\
+                .gte('expires_at', datetime.utcnow().isoformat())\
+                .execute()
+            
+            if result.data and len(result.data) > 0:
+                return result.data[0]['payload']
+            
+        except Exception as e:
+            logger.error(f"DB cache read error: {e}")
         
-        detected_lang = self.detect_language(word)
-        result = {
-            'word': word,
-            'detected_lang': detected_lang,
-            'pronunciation': {'uk': '', 'us': ''},
-            'meanings': [],
-            'cached': False
+        return None
+    
+    def _save_to_db_cache(self, lang: str, term: str, payload: Dict[str, Any]) -> None:
+        """DB 캐시에 저장"""
+        try:
+            from ...supabase import get_supabase, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+            from supabase import create_client
+            
+            if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+                return
+            
+            supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+            
+            expires_at = datetime.utcnow() + timedelta(seconds=self.cache_ttl)
+            
+            # payload에서 trace_id 제거 (캐시에 저장하지 않음)
+            cache_payload = {k: v for k, v in payload.items() if k != 'trace_id'}
+            
+            # UPSERT (INSERT or UPDATE)
+            supabase.table('dictionary_cache').upsert({
+                'lang': lang,
+                'term': term.lower(),
+                'payload': json.dumps(cache_payload),
+                'expires_at': expires_at.isoformat()
+            }, on_conflict='lang,term').execute()
+            
+        except Exception as e:
+            logger.error(f"DB cache write error: {e}")
+    
+    def _fetch_free_dictionary_api(self, word: str) -> Optional[Dict]:
+        """Free Dictionary API 호출"""
+        try:
+            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+            response = requests.get(url, timeout=self.timeout)
+            if response.status_code == 200:
+                data = response.json()
+                return data[0] if isinstance(data, list) and len(data) > 0 else data
+        except Exception as e:
+            logger.error(f"Dictionary API error: {e}")
+        return None
+    
+    def _extract_pronunciation_v2(self, dict_data: Dict) -> Dict[str, Optional[str]]:
+        """발음 추출 - IPA, phonetic, audio_url"""
+        pronunciation = {
+            'ipa': None,
+            'phonetic': None,
+            'audio_url': None
         }
         
-        if detected_lang == 'en':
-            dict_data = self._fetch_dictionary_api(word)
-            if dict_data:
-                result['pronunciation'] = self._extract_pronunciation(dict_data)
-                result['meanings'] = self._extract_meanings(dict_data, target_lang)
-        elif detected_lang in ['ko', 'zh']:
-            try:
-                translation_result = self.translation_service.translate(word, detected_lang, 'en', trace_id)
-                english_word = translation_result['translated_text']
-                dict_data = self._fetch_dictionary_api(english_word)
-                if dict_data:
-                    result['meanings'] = self._extract_meanings(dict_data, target_lang)
-            except Exception:
-                pass
+        if 'phonetics' in dict_data and dict_data['phonetics']:
+            for phonetic in dict_data['phonetics']:
+                # IPA 또는 phonetic text
+                if phonetic.get('text') and not pronunciation['ipa']:
+                    pronunciation['ipa'] = phonetic['text']
+                
+                # Audio URL
+                if phonetic.get('audio') and not pronunciation['audio_url']:
+                    pronunciation['audio_url'] = phonetic['audio']
         
-        if self.cache_enabled:
-            self.cache.set(cache_key, result, self.cache_ttl)
-        return result
+        # phonetic 필드는 간단 발음 표기 (IPA와 동일하게 처리)
+        if pronunciation['ipa']:
+            pronunciation['phonetic'] = pronunciation['ipa']
+        
+        return pronunciation
+    
+    def _extract_meanings_v2(self, dict_data: Dict, target_lang: str) -> List[Dict]:
+        """의미 추출 - part_of_speech, definitions, examples"""
+        meanings = []
+        
+        if 'meanings' not in dict_data:
+            return meanings
+        
+        for meaning in dict_data['meanings']:
+            part_of_speech = meaning.get('partOfSpeech', 'unknown')
+            definitions = []
+            
+            if 'definitions' not in meaning or not meaning['definitions']:
+                continue
+            
+            # 최대 2개 정의만 추출 (속도 개선)
+            for definition in meaning['definitions'][:2]:
+                if not definition.get('definition'):
+                    continue
+                
+                def_text = definition['definition']
+                examples = []
+                
+                # 예문 추출 (최대 2개)
+                if definition.get('example'):
+                    examples.append(definition['example'])
+                
+                # 번역 (target_lang이 en이 아닐 때만)
+                translation = None
+                if target_lang != 'en':
+                    try:
+                        trans_result = self.translation_service.translate(def_text, 'en', target_lang)
+                        translation = trans_result.get('translated_text')
+                    except Exception as e:
+                        logger.error(f"Translation error: {e}")
+                        translation = None
+                
+                definitions.append({
+                    'definition': def_text,
+                    'translation': translation,
+                    'examples': examples
+                })
+            
+            if definitions:
+                meanings.append({
+                    'part_of_speech': part_of_speech,
+                    'definitions': definitions
+                })
+        
+        return meanings
     
     def autocomplete(self, query: str, language: Optional[str], target_lang: str, trace_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """자동완성 제안"""
@@ -96,76 +254,6 @@ class DictionaryService:
         if self.cache_enabled:
             self.cache.set(cache_key, suggestions, 3600)
         return suggestions
-    
-    def _fetch_dictionary_api(self, word: str) -> Optional[Dict]:
-        """Dictionary API 호출"""
-        try:
-            url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-            response = requests.get(url, timeout=self.timeout)
-            if response.status_code == 200:
-                data = response.json()
-                return data[0] if isinstance(data, list) and len(data) > 0 else data
-        except Exception:
-            pass
-        return None
-    
-    def _extract_pronunciation(self, dict_data: Dict) -> Dict[str, str]:
-        """발음 추출"""
-        pronunciation = {'uk': '', 'us': ''}
-        if 'phonetics' in dict_data and dict_data['phonetics']:
-            for phonetic in dict_data['phonetics']:
-                if phonetic.get('text'):
-                    pronunciation['uk'] = phonetic['text']
-                    pronunciation['us'] = phonetic['text']
-                    break
-        return pronunciation
-    
-    def _extract_meanings(self, dict_data: Dict, target_lang: str) -> List[Dict]:
-        """의미 추출 및 번역"""
-        meanings = []
-        if 'meanings' not in dict_data:
-            return meanings
-        
-        meaning_number = 1
-        sorted_meanings = sorted(
-            dict_data['meanings'],
-            key=lambda m: {'verb': 0, 'noun': 1, 'adjective': 2, 'adverb': 3}.get(m.get('partOfSpeech', ''), 99)
-        )
-        
-        for meaning in sorted_meanings:
-            if 'definitions' not in meaning or not meaning['definitions']:
-                continue
-            
-            definitions_to_process = meaning['definitions'][:10] if meaning.get('partOfSpeech') == 'verb' else meaning['definitions'][:1]
-            
-            for definition in definitions_to_process:
-                if not definition.get('definition'):
-                    continue
-                
-                def_text = definition['definition']
-                example = definition.get('example', None)
-                translation = None
-                example_translation = None
-                
-                if target_lang != 'en':
-                    try:
-                        trans_result = self.translation_service.translate(def_text, 'en', target_lang)
-                        translation = trans_result['translated_text']
-                        if example:
-                            ex_result = self.translation_service.translate(example, 'en', target_lang)
-                            example_translation = ex_result['translated_text']
-                    except Exception:
-                        pass
-                
-                meanings.append({
-                    'number': meaning_number,
-                    'definition': def_text,
-                    'translation': translation,
-                    'example': example,
-                    'example_translation': example_translation
-                })
-                meaning_number += 1
-        return meanings
     
     def _autocomplete_english(self, query: str, target_lang: str) -> List[Dict]:
         """영어 자동완성"""

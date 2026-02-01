@@ -2,10 +2,76 @@
  * Dictionary API 서비스
  */
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001'
 const TIMEOUT = 5000
 
 /**
- * Google Translate API로 번역
+ * 백엔드 Dictionary API로 단어 검색
+ */
+export async function searchDictionary(word, targetLang) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/dictionary/search?word=${encodeURIComponent(word)}&target_lang=${targetLang}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+    
+    if (!response.ok) {
+      console.error('Dictionary API error:', response.status)
+      return null
+    }
+    
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Dictionary API error:', error)
+    return null
+  }
+}
+
+/**
+ * 백엔드 Dictionary API로 자동완성 제안 가져오기
+ */
+export async function fetchAutocompleteSuggestions(query, language, targetLang) {
+  try {
+    const params = new URLSearchParams({
+      query,
+      target_lang: targetLang
+    })
+    
+    if (language) {
+      params.append('language', language)
+    }
+    
+    const response = await fetch(
+      `${API_BASE_URL}/api/dictionary/autocomplete?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+    
+    if (!response.ok) {
+      console.error('Autocomplete API error:', response.status)
+      return []
+    }
+    
+    const data = await response.json()
+    return data.suggestions || []
+  } catch (error) {
+    console.error('Autocomplete API error:', error)
+    return []
+  }
+}
+
+/**
+ * Google Translate API로 번역 (Fallback용)
  */
 export async function translateText(text, fromLang, toLang) {
   try {
@@ -94,9 +160,10 @@ export async function translateText(text, fromLang, toLang) {
 }
 
 /**
- * Dictionary API에서 단어 정보 가져오기
+ * Dictionary API에서 단어 정보 가져오기 (Deprecated - 백엔드 API 사용)
  */
 export async function fetchDictionary(word, signal = null) {
+  console.warn('fetchDictionary is deprecated. Use searchDictionary instead.')
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT)
@@ -126,9 +193,10 @@ export async function fetchDictionary(word, signal = null) {
 }
 
 /**
- * Datamuse API에서 자동완성 제안 가져오기
+ * Datamuse API에서 자동완성 제안 가져오기 (Deprecated - 백엔드 API 사용)
  */
 export async function fetchSuggestionsFromDatamuse(query, signal = null) {
+  console.warn('fetchSuggestionsFromDatamuse is deprecated. Use fetchAutocompleteSuggestions instead.')
   const [sugResponse, spellResponse] = await Promise.all([
     fetch(`https://api.datamuse.com/sug?s=${encodeURIComponent(query)}&max=8`, { signal }),
     fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(query)}*&max=5`, { signal })
@@ -158,6 +226,8 @@ export async function fetchSuggestionsFromDatamuse(query, signal = null) {
 }
 
 export default {
+  searchDictionary,
+  fetchAutocompleteSuggestions,
   translateText,
   fetchDictionary,
   fetchSuggestionsFromDatamuse

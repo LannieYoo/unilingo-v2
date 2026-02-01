@@ -417,6 +417,146 @@
   cursor: not-allowed;
 }
 
+/* Voice Warning */
+.voice-warning {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+  position: relative;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.voice-warning-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.voice-warning-content {
+  flex: 1;
+}
+
+.voice-warning-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #856404;
+  margin-bottom: 0.5rem;
+}
+
+.voice-warning-message {
+  color: #856404;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.voice-warning-message strong {
+  font-weight: 600;
+}
+
+.voice-warning-instructions {
+  background: #ffffff;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #ffc107;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
+.voice-warning-instructions strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.voice-warning-instructions ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.voice-warning-instructions li {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.voice-warning-instructions li strong {
+  display: inline;
+  margin: 0;
+}
+
+.voice-warning-steps {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+.voice-warning-steps li {
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+  color: #856404;
+}
+
+.voice-warning-steps li strong {
+  font-weight: 700;
+  color: #533f03;
+}
+
+.voice-warning-settings-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #ffc107;
+  color: #856404;
+  border: 1px solid #856404;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voice-warning-settings-btn:hover {
+  background: #ffb300;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.voice-warning-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: #856404;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.voice-warning-close:hover {
+  color: #533f03;
+  transform: scale(1.1);
+}
+
 @media (max-width: 1400px) {
   .text-to-speech-container {
     padding: 0 1rem;
