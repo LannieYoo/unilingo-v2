@@ -6,38 +6,58 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BA
 const TIMEOUT = 5000
 
 /**
- * 백엔드 Dictionary API로 단어 검색
+ * 백엔드 Dictionary API로 단어 검색 (게스트 사용 가능)
  */
 export async function searchDictionary(word, targetLang) {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/dictionary/search?word=${encodeURIComponent(word)}&target_lang=${targetLang}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT)
+    
+    const url = `${API_BASE_URL}/api/dictionary/search?word=${encodeURIComponent(word)}&target_lang=${targetLang}`
+    console.log('[Dictionary Service] Calling API:', url)
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      signal: controller.signal
+    })
+    
+    clearTimeout(timeoutId)
+    
+    console.log('[Dictionary Service] Response status:', response.status)
     
     if (!response.ok) {
-      console.error('Dictionary API error:', response.status)
+      const errorData = await response.json().catch(() => null)
+      console.error('[Dictionary Service] API error:', response.status, errorData)
       return null
     }
     
     const data = await response.json()
+    console.log('[Dictionary Service] Response data:', data)
     return data
   } catch (error) {
-    console.error('Dictionary API error:', error)
+    // Network error - backend server might be down
+    if (error.name === 'AbortError') {
+      console.error('[Dictionary Service] API timeout')
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+      console.error('[Dictionary Service] Backend server is not running. Please start the backend server.')
+    } else {
+      console.error('[Dictionary Service] API error:', error)
+    }
     return null
   }
 }
 
 /**
- * 백엔드 Dictionary API로 자동완성 제안 가져오기
+ * 백엔드 Dictionary API로 자동완성 제안 가져오기 (게스트 사용 가능)
  */
 export async function fetchAutocompleteSuggestions(query, language, targetLang) {
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT)
+    
     const params = new URLSearchParams({
       query,
       target_lang: targetLang
@@ -53,9 +73,12 @@ export async function fetchAutocompleteSuggestions(query, language, targetLang) 
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        signal: controller.signal
       }
     )
+    
+    clearTimeout(timeoutId)
     
     if (!response.ok) {
       console.error('Autocomplete API error:', response.status)
@@ -65,7 +88,14 @@ export async function fetchAutocompleteSuggestions(query, language, targetLang) 
     const data = await response.json()
     return data.suggestions || []
   } catch (error) {
-    console.error('Autocomplete API error:', error)
+    // Network error - backend server might be down
+    if (error.name === 'AbortError') {
+      console.error('Autocomplete API timeout')
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+      console.error('Backend server is not running. Autocomplete disabled.')
+    } else {
+      console.error('Autocomplete API error:', error)
+    }
     return []
   }
 }

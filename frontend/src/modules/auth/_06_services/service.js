@@ -13,6 +13,25 @@ const api = axios.create({
   },
 });
 
+// Response interceptor to handle 401 errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Check if it's a 401 error (token expired)
+    if (error.response?.status === 401) {
+      // Import auth store dynamically to avoid circular dependency
+      import('../_05_stores/authStore').then(({ useAuthStore }) => {
+        const store = useAuthStore.getState();
+        // Only trigger token expired if user was authenticated
+        if (store.isAuthenticated) {
+          store.handleTokenExpired();
+        }
+      });
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   /**
    * Get Google OAuth authorization URL.
@@ -73,9 +92,12 @@ export const authService = {
   /**
    * Get all users (admin only).
    */
-  async getUsers(accessToken, page = 1, limit = 20) {
+  async getUsers(accessToken, page = 1, limit = 20, search = '') {
+    const params = { page, limit };
+    if (search) params.search = search;
+    
     const response = await api.get(ADMIN_ENDPOINTS.USERS, {
-      params: { page, limit },
+      params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -86,9 +108,10 @@ export const authService = {
   /**
    * Get login logs (admin only).
    */
-  async getLoginLogs(accessToken, limit = 100, userId = null) {
-    const params = { limit };
+  async getLoginLogs(accessToken, limit = 100, page = 1, userId = null, search = '') {
+    const params = { limit, page };
     if (userId) params.user_id = userId;
+    if (search) params.search = search;
     
     const response = await api.get(ADMIN_ENDPOINTS.LOGIN_LOGS, {
       params,
@@ -123,6 +146,20 @@ export const authService = {
     return response.data;
   },
 
+  /**
+   * Update user level (admin only).
+   */
+  async updateUserLevel(accessToken, userId, userLevel) {
+    const response = await api.post(`${ADMIN_ENDPOINTS.USERS}/${userId}/update-level`, {
+      user_level: userLevel
+    }, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
   // STT Log APIs
   /**
    * Create STT usage log.
@@ -139,8 +176,8 @@ export const authService = {
   /**
    * Get STT logs (admin only).
    */
-  async getSttLogs(accessToken, limit = 100, userId = null) {
-    const params = { limit };
+  async getSttLogs(accessToken, limit = 100, userId = null, page = 1) {
+    const params = { limit, page };
     if (userId) params.user_id = userId;
     
     const response = await api.get(ADMIN_ENDPOINTS.STT_LOGS, {
@@ -155,8 +192,12 @@ export const authService = {
   /**
    * Get STT usage summary (admin only).
    */
-  async getSttLogsSummary(accessToken) {
+  async getSttLogsSummary(accessToken, limit = 100, page = 1, search = '') {
+    const params = { limit, page };
+    if (search) params.search = search;
+    
     const response = await api.get(`${ADMIN_ENDPOINTS.STT_LOGS}/summary`, {
+      params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -328,6 +369,14 @@ export const authService = {
         Authorization: `Bearer ${accessToken}`,
       },
     });
+    return response.data;
+  },
+
+  /**
+   * Get system health check status.
+   */
+  async getHealthCheck() {
+    const response = await api.get('/api/health');
     return response.data;
   },
 };

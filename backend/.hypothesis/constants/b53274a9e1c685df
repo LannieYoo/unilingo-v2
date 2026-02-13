@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\dictionary\router.py
+# hypothesis_version: 6.150.0
+
+[100, 200, 400, 401, 500, '/api/dictionary', '/autocomplete', '/save', '/search', 'Authorization', 'Bearer ', 'GET', 'INTERNAL_ERROR', 'INVALID_TOKEN', 'Invalid token', 'Not authenticated', 'POST', 'UNAUTHORIZED', 'USER_NOT_FOUND', 'VALIDATION_ERROR', 'code', 'dictionary', 'en', 'error', 'ko', 'language', 'message', 'query', 'search_results', 'source', 'source_lang', 'stt', 'suggestions', 'target_lang', 'trace_id', 'unknown', 'word', 'zh']

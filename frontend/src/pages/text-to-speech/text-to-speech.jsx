@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { PageLayout, PageBox } from '../../components/layout/PageLayout'
 import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage, getLanguageByCode } from '../../config/languages'
 import './text-to-speech.css'
+import { useUsage } from '../../common/hooks/useUsage'
+import { UsageIndicator } from '../../common/components/UsageIndicator'
 
 function TextToSpeech() {
   const [text, setText] = useState('')
@@ -23,6 +25,8 @@ function TextToSpeech() {
   const resizeStartY = useRef(0)
   const resizeStartHeight = useRef(0)
   const isRepeatModeRef = useRef(false)
+
+  const { trackUsage, isLimitExceeded } = useUsage()
 
   // 번역 함수
   const translateText = async (text, sourceLang, targetLang) => {
@@ -251,6 +255,14 @@ function TextToSpeech() {
       
       // 번역된 텍스트 저장
       setCurrentTranslatedText(textToSpeak)
+      
+      // Track usage for TTS
+      const charCount = textToSpeak.length
+      if (charCount > 0) {
+        trackUsage(charCount, 'tts').catch(err => {
+          console.error('Failed to track TTS usage:', err)
+        })
+      }
       
       speakText(textToSpeak, speechRate, 0, targetLanguage)
     } else {
@@ -511,6 +523,11 @@ function TextToSpeech() {
             </div>
           </div>
         </PageBox>
+        
+        {/* TTS Usage Indicator */}
+        <div className="mt-4">
+          <UsageIndicator usageType="tts" label="Text to Speech" />
+        </div>
     </PageLayout>
   )
 }

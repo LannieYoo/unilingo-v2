@@ -12,6 +12,8 @@ from pydantic import ValidationError
 from .service import get_stt_service, get_dependency_status
 from .dto import MissingSegmentRequest, MissingSegmentResponse
 from .vosk_processor import get_vosk_processor
+from ...decorators import require_approval
+from ..auth.router import token_required
 
 router = Blueprint('stt', __name__, url_prefix='/api/stt')
 
@@ -36,6 +38,8 @@ def get_service():
 
 
 @router.route('/transcribe', methods=['POST'])
+@token_required
+@require_approval
 def transcribe():
     """음성인식 API"""
     trace_id = g.get('trace_id', 'unknown')
@@ -88,6 +92,8 @@ def status():
 
 
 @router.route('/process-missing', methods=['POST'])
+@token_required
+@require_approval
 def process_missing():
     """
     Missing segment 처리 API (Hybrid STT용)

@@ -34,9 +34,13 @@ class DUser:
     name: str
     avatar_url: Optional[str]
     is_active: bool
+    user_level: str  # guest, pro, pro_plus, admin
+    is_approved: bool
     created_at: datetime
     updated_at: datetime
     last_login_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    approved_by: Optional[int] = None
     token_version: int = 1
     native_language: Optional[str] = 'en'
     target_language: Optional[str] = 'ko'

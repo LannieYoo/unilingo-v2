@@ -5,7 +5,7 @@
 
 import { STATUS } from '../_08_constants'
 
-export function StatusIndicator({ status, loadProgress = 0 }) {
+export function StatusIndicator({ status, loadProgress = 0, errorMessage = '' }) {
   if (status === STATUS.LOADING) {
     return (
       <div className="stt-stream-loading">
@@ -30,8 +30,9 @@ export function StatusIndicator({ status, loadProgress = 0 }) {
   }
 
   if (status === STATUS.ERROR) {
+    const message = errorMessage || 'Error - Check microphone'
     return (
-      <span className="stt-stream-status-error">Error - Check microphone</span>
+      <span className="stt-stream-status-error">{message}</span>
     )
   }
 

@@ -11,6 +11,7 @@ export const useTranscriptStore = create((set, get) => ({
   finalText: '',
   interimText: '',
   status: STATUS.INIT,
+  errorMessage: '',
   selectedLang: DEFAULT_LANGUAGE,
   loadProgress: 0,
   isSupported: true,
@@ -36,7 +37,7 @@ export const useTranscriptStore = create((set, get) => ({
     }
   }),
 
-  setStatus: (status) => set({ status }),
+  setStatus: (status, errorMessage = '') => set({ status, errorMessage }),
   
   setSelectedLang: (lang) => set({ selectedLang: lang }),
   
@@ -57,6 +58,7 @@ export const useTranscriptStore = create((set, get) => ({
     finalText: '',
     interimText: '',
     status: STATUS.INIT,
+    errorMessage: '',
     loadProgress: 0
   })
 }))

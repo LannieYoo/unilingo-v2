@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\translation\router.py
+# hypothesis_version: 6.150.0
+
+[200, 400, 500, 5000, '/api', '/translate', '/translate/health', 'GET', 'HEALTH_CHECK_ERROR', 'Health check failed', 'INTERNAL_ERROR', 'POST', 'VALIDATION_ERROR', 'available', 'code', 'en', 'error', 'ko', 'message', 'providers', 'service_available', 'source_lang', 'target_lang', 'text', 'trace_id', 'translation', 'unknown', 'zh']

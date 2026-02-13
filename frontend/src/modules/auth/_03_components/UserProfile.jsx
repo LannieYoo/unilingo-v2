@@ -17,15 +17,21 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     }
+    
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isAuthenticated, user]);
 
+  // Early return AFTER all hooks
   if (!isAuthenticated || !user) {
     return null;
   }
@@ -51,6 +57,64 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
 
   // Mobile mode - inline menu items (no dropdown)
   if (mobile) {
+    // Get user level display info
+    const getUserLevelBadge = () => {
+      if (!user.user_level) return null;
+      
+      const isAdmin = user.user_level === 'admin';
+      const isApproved = user.is_approved;
+      
+      // Admin users - always show Admin badge
+      if (isAdmin) {
+        return (
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+              Admin
+            </span>
+          </div>
+        );
+      }
+      
+      // Guest users - show Guest badge
+      if (user.user_level === 'guest') {
+        return (
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              Guest
+            </span>
+          </div>
+        );
+      }
+      
+      // Pro/Pro+ users - check approval status
+      if (!isApproved) {
+        return (
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+              Pending Approval
+            </span>
+          </div>
+        );
+      }
+      
+      // Approved Pro/Pro+ users
+      const levelConfig = {
+        pro_plus: { label: 'Pro+', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+        pro: { label: 'Pro', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+      };
+      
+      const config = levelConfig[user.user_level];
+      if (!config) return null;
+      
+      return (
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+            {config.label}
+          </span>
+        </div>
+      );
+    };
+
     return (
       <>
         <div className={`user-profile-mobile ${className}`}>
@@ -70,6 +134,7 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
               <p className="text-xs text-text-muted-light dark:text-text-muted-dark truncate">
                 {user.email}
               </p>
+              {getUserLevelBadge()}
             </div>
           </div>
 
@@ -161,6 +226,64 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
 
   // Compact mode for header with dropdown
   if (compact) {
+    // Get user level display info
+    const getUserLevelBadge = () => {
+      if (!user.user_level) return null;
+      
+      const isAdmin = user.user_level === 'admin';
+      const isApproved = user.is_approved;
+      
+      // Admin users - always show Admin badge
+      if (isAdmin) {
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+              Admin
+            </span>
+          </div>
+        );
+      }
+      
+      // Guest users - show Guest badge
+      if (user.user_level === 'guest') {
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              Guest
+            </span>
+          </div>
+        );
+      }
+      
+      // Pro/Pro+ users - check approval status
+      if (!isApproved) {
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+              Pending Approval
+            </span>
+          </div>
+        );
+      }
+      
+      // Approved Pro/Pro+ users
+      const levelConfig = {
+        pro_plus: { label: 'Pro+', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+        pro: { label: 'Pro', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+      };
+      
+      const config = levelConfig[user.user_level];
+      if (!config) return null;
+      
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+            {config.label}
+          </span>
+        </div>
+      );
+    };
+
     return (
       <>
         <div className={`user-profile-compact ${className} relative`} ref={dropdownRef}>
@@ -175,9 +298,12 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
               referrerPolicy="no-referrer"
               onError={(e) => { e.target.src = defaultAvatar; }}
             />
-            <span className="text-sm font-medium text-text-light dark:text-text-dark hidden sm:inline">
-              {user.name}
-            </span>
+            <div className="hidden sm:flex sm:flex-col sm:items-start sm:gap-0.5">
+              <span className="text-sm font-medium text-text-light dark:text-text-dark">
+                {user.name}
+              </span>
+              {getUserLevelBadge()}
+            </div>
             <span className="material-symbols-outlined text-sm text-text-muted-light dark:text-text-muted-dark">
               {isDropdownOpen ? 'expand_less' : 'expand_more'}
             </span>
@@ -185,15 +311,16 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg shadow-lg z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg shadow-lg z-50 overflow-hidden">
               {/* User Info */}
               <div className="px-4 py-3 border-b border-border-light dark:border-border-dark">
                 <p className="text-sm font-medium text-text-light dark:text-text-dark truncate">
                   {user.name}
                 </p>
-                <p className="text-xs text-text-muted-light dark:text-text-muted-dark truncate">
+                <p className="text-xs text-text-muted-light dark:text-text-muted-dark truncate mb-2">
                   {user.email}
                 </p>
+                {getUserLevelBadge()}
               </div>
 
               {/* Menu Items */}

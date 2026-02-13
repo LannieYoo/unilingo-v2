@@ -128,6 +128,12 @@ export class WebSpeechManager {
             return
           }
 
+          // onstart 전에 에러 발생 시 promise reject (not-allowed, audio-capture 등)
+          if (!this.isRunning) {
+            reject(new Error(`Speech recognition error: ${event.error}`))
+            return
+          }
+
           if (this.callbacks.onError) {
             this.callbacks.onError(new Error(`Speech recognition error: ${event.error}`))
           }

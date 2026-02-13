@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { LANG_MAP, SOURCE_LANGUAGES, TARGET_LANGUAGES } from '../_08_constants'
 import { useLanguagePreferences } from '../../auth'
 import { useGlossary } from '../../../shared/modules/glossary'
+import { useUsage } from '../../../common/contexts/UsageContext'
 
 /**
  * 언어 감지 함수
@@ -49,6 +50,9 @@ export function useTranslator() {
   
   // Glossary 훅 사용
   const { domain, setDomain, preProcess, postProcess } = useGlossary('general')
+
+  // Usage tracking hook
+  const { trackUsage } = useUsage()
 
   // Load language preferences from settings
   useEffect(() => {
@@ -178,6 +182,10 @@ export function useTranslator() {
           // 3. 번역 후 용어 복원
           const finalText = postProcess(translatedText, termMap)
           setOutputText(finalText)
+          
+          // Track usage - count characters in input text
+          const charCount = text.length
+          await trackUsage(charCount, 'translation')
         } else {
           setOutputText('Translation failed. Please try again.')
         }
@@ -194,7 +202,7 @@ export function useTranslator() {
         setIsTranslating(false)
       }
     }
-  }, [inputText, sourceLang, targetLang, preProcess, postProcess])
+  }, [inputText, sourceLang, targetLang, preProcess, postProcess, trackUsage])
 
   // 실시간 자동 번역 (debounce)
   useEffect(() => {

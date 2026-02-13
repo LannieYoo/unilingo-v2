@@ -50,7 +50,7 @@ export function useVoskRecognition() {
     const modelUrl = MODEL_URLS[selectedLang]
     if (!modelUrl) {
       debugStore.error('Unsupported language', { lang: selectedLang })
-      setStatus(STATUS.ERROR)
+      setStatus(STATUS.ERROR, `Language "${selectedLang}" is not supported for offline mode`)
       return false
     }
 
@@ -113,7 +113,7 @@ export function useVoskRecognition() {
     } catch (error) {
       debugStore.error('Failed to load model', { error: error.message })
       console.error('[STT] Model loading error:', error)
-      setStatus(STATUS.ERROR)
+      setStatus(STATUS.ERROR, `Model loading failed - Check if model file exists for "${selectedLang}"`)
       setLoadProgress(0)
       return false
     }
@@ -211,7 +211,12 @@ export function useVoskRecognition() {
       return true
     } catch (error) {
       debugStore.error('Failed to start recording', { error: error.message })
-      setStatus(STATUS.ERROR)
+      const msg = error.name === 'NotAllowedError' 
+        ? 'Microphone permission denied - Allow microphone access in browser settings'
+        : error.name === 'NotFoundError'
+        ? 'No microphone found - Connect a microphone and try again'
+        : `Microphone error - ${error.message}`
+      setStatus(STATUS.ERROR, msg)
       return false
     }
   }, [loadModel, setStatus, setInterim, appendFinal, selectedLang])

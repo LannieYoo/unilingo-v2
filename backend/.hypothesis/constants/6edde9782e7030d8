@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\supabase.py
+# hypothesis_version: 6.150.0
+
+['!', '%21', '.env', ':', '://', '@', 'Client', 'SUPABASE_ANON_KEY', 'SUPABASE_DB_URI', 'SUPABASE_URL', 'Transaction_pooler', 'id', 'users']

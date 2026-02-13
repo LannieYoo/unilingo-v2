@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\admin\router.py
+# hypothesis_version: 6.150.0
+
+[400, 401, 403, 404, 500, '/api/admin', '/users/bulk-approve', '/users/pending', 'GET', 'NO_TRACE', 'POST', 'Validation error', 'admin', 'admin_bp', 'approved_count', 'count', 'current_user', 'errors', 'id', 'message', 'trace_id', 'unknown', 'user', 'user_level', 'users']

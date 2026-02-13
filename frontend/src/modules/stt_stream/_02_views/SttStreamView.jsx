@@ -6,7 +6,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
-import { useVoskRecognition, useWhisperSTT, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache, useInlineDictionary } from '../_04_hooks'
+import { useVoskRecognition, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache, useInlineDictionary } from '../_04_hooks'
 import {
   DebugPanel,
   LanguageSelect,
@@ -29,11 +29,15 @@ import {
   authService,
 } from '../../auth'
 
+import { useUsage } from '../../../common/hooks/useUsage'
+import { UsageIndicator } from '../../../common/components/UsageIndicator'
+
 export function SttStreamView() {
   const {
     finalText,
     interimText,
     status,
+    errorMessage,
     selectedLang,
     loadProgress,
     isSupported,
@@ -44,30 +48,14 @@ export function SttStreamView() {
     getFullText,
   } = useTranscriptStore()
 
-  const isHybridMode = selectedLang === 'en-us'
-
+  // All languages use Web Speech API (hybrid mode)
   const voskHook = useVoskRecognition()
-  const whisperHook = useWhisperSTT()
   const hybridHook = useHybridSTT(selectedLang)
 
   const {
     setLanguage,
-    isRunning: voskIsRunning,
     isLoading,
-    stop: voskStop,
   } = voskHook
-
-  const {
-    stop: whisperStop,
-    toggle: whisperToggle,
-    isRunning: whisperIsRunning,
-    isProcessing: whisperIsProcessing,
-    transcript: whisperTranscript,
-    modelStatus,
-    downloadProgress: whisperDownloadProgress,
-    downloadModel,
-    stats: whisperStats,
-  } = whisperHook
 
   const {
     stop: hybridStop,
@@ -76,15 +64,16 @@ export function SttStreamView() {
     isRestarting: hybridIsRestarting,
     transcript: hybridTranscript,
     interimTranscript: hybridInterimTranscript,
+    error: hybridError,
     stats: hybridStats,
   } = hybridHook
 
-  // 영어는 Web Speech API (하이브리드), 다른 언어는 Vosk
-  const isRunning = isHybridMode ? hybridIsRunning : voskIsRunning
-  const stop = isHybridMode ? hybridStop : voskStop
-  const toggle = isHybridMode ? hybridToggle : voskHook.toggle
-  const displayFinalText = isHybridMode ? hybridTranscript : finalText
-  const displayInterimText = isHybridMode ? hybridInterimTranscript : interimText
+  // All languages use Web Speech API
+  const isRunning = hybridIsRunning
+  const stop = hybridStop
+  const toggle = hybridToggle
+  const displayFinalText = hybridTranscript
+  const displayInterimText = hybridInterimTranscript
 
   const {
     translatedText,
@@ -127,6 +116,21 @@ export function SttStreamView() {
     showLoginModal,
     closeLoginModal,
   } = useCharacterLimit(displayFinalText)
+
+  const {
+    usage,
+    trackUsage,
+    isLimitExceeded,
+  } = useUsage()
+
+  const [usageLimitExceeded, setUsageLimitExceeded] = useState(false)
+
+  // Update limit exceeded state when usage changes
+  useEffect(() => {
+    if (isAuthenticated && isLimitExceeded()) {
+      setUsageLimitExceeded(true)
+    }
+  }, [isAuthenticated, isLimitExceeded, usage])
 
   const { targetLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
 
@@ -201,6 +205,7 @@ export function SttStreamView() {
       if (sessionStartTimeRef.current && isAuthenticated && tokens?.access_token) {
         const durationSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000)
         const wordCount = sessionWordCountRef.current
+        const charCount = displayFinalText.length
         if (durationSeconds > 0 || wordCount > 0) {
           authService.createSttLog(tokens.access_token, {
             language: selectedLang,
@@ -209,11 +214,18 @@ export function SttStreamView() {
           }).catch(err => {
             console.error('Failed to log STT usage:', err)
           })
+          
+          // Track usage for limit enforcement
+          if (charCount > 0) {
+            trackUsage(charCount, 'stt_stream').catch(err => {
+              console.error('Failed to track STT usage:', err)
+            })
+          }
         }
         sessionStartTimeRef.current = null
       }
     }
-  }, [isRunning, startTimer, stopTimer, isAuthenticated, tokens, selectedLang])
+  }, [isRunning, startTimer, stopTimer, isAuthenticated, tokens, selectedLang, displayFinalText.length, trackUsage])
 
   useEffect(() => {
     if (!isAuthenticated && isRunning && displayFinalText.length >= MAX_CHARS_GUEST) {
@@ -262,8 +274,12 @@ export function SttStreamView() {
     if (!isRunning && !isAuthenticated && displayFinalText.length >= MAX_CHARS_GUEST) {
       return
     }
+    // Check usage limit for authenticated users
+    if (!isRunning && isAuthenticated && usageLimitExceeded) {
+      return
+    }
     toggle()
-  }, [isRunning, isAuthenticated, displayFinalText.length, toggle])
+  }, [isRunning, isAuthenticated, displayFinalText.length, toggle, usageLimitExceeded])
 
   // 텍스트를 단어로 분리하여 클릭 가능하게 렌더링
   const renderClickableText = useCallback((text) => {
@@ -296,6 +312,10 @@ export function SttStreamView() {
     })
   }, [selectedWord, handleWordClick, isAuthenticated])
 
+  const handleUsageLimitExceeded = useCallback(() => {
+    setUsageLimitExceeded(true)
+  }, [])
+
   return (
     <PageLayout title="Speech to Text" fullHeight>
       <PageBox noPadding flex>
@@ -311,13 +331,39 @@ export function SttStreamView() {
 
         <div className="stt-controls-bar">
           <div className="stt-controls-left">
-            <StatusIndicator status={status} loadProgress={loadProgress} />
+            <StatusIndicator status={status} loadProgress={loadProgress} errorMessage={errorMessage} />
             
-            {isHybridMode && (
-              <div className="stt-hybrid-status">
-                <span className="stt-hybrid-badge">🎯 Web Speech API (Real-time)</span>
-                {hybridIsRestarting && <span className="stt-processing">Reconnecting...</span>}
-                <span className="stt-stats">Restarts: {hybridStats.restartCount}</span>
+            <div className="stt-hybrid-status">
+              <span className="stt-hybrid-badge">🎯 Web Speech API (Real-time)</span>
+              {hybridIsRestarting && <span className="stt-processing">Reconnecting...</span>}
+              <span className="stt-stats">Restarts: {hybridStats.restartCount}</span>
+            </div>
+
+            {hybridError && (
+              <div className="stt-error-banner">
+                <span className="stt-error-icon">⚠️</span>
+                <div className="stt-error-content">
+                  <div className="stt-error-title">
+                    {hybridError.message.includes('audio-capture') ? 'Microphone Access Error' : 'Speech Recognition Error'}
+                  </div>
+                  <div className="stt-error-message">
+                    {hybridError.message.includes('audio-capture') ? (
+                      <>
+                        Cannot access microphone. Please check:
+                        <ul className="stt-error-list">
+                          <li>Microphone is not being used by another app (Zoom, Teams, etc.)</li>
+                          <li>Windows Settings → Privacy → Microphone → Allow desktop apps</li>
+                          <li>Chrome Settings → Privacy → Site Settings → Microphone</li>
+                          <li>Microphone is set as default recording device</li>
+                        </ul>
+                      </>
+                    ) : hybridError.message.includes('not-allowed') ? (
+                      'Microphone permission denied. Please allow microphone access in your browser.'
+                    ) : (
+                      hybridError.message
+                    )}
+                  </div>
+                </div>
               </div>
             )}
             
@@ -325,7 +371,7 @@ export function SttStreamView() {
               <ActionButton
                 variant={isRunning ? 'recording' : 'default'}
                 onClick={handleToggle}
-                disabled={!isSupported || isLoading || (!isAuthenticated && isLimitReached && !isRunning)}
+                disabled={!isSupported || isLoading || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
               >
                 {isRunning ? 'Stop' : 'Start'}
               </ActionButton>
@@ -485,18 +531,18 @@ export function SttStreamView() {
             </div>
           )}
         </div>
-      </PageBox>
 
-      {!isSupported && (
-        <div className="stt-warning-box">
-          ⚠️ Microphone access is not supported in this browser.
+        {!isSupported && (
+          <div className="stt-warning-box">
+            ⚠️ Microphone access is not supported in this browser.
+          </div>
+        )}
+
+        <div className="stt-stream-notes">
+          📝 All languages use Web Speech API (real-time, requires internet, Chrome recommended)
+          {!isAuthenticated && ` • Guest limit: ${MAX_CHARS_GUEST.toLocaleString()} characters`}
         </div>
-      )}
-
-      <div className="stt-stream-notes">
-        📝 English uses Web Speech API (real-time, free, unlimited) • Other languages use Vosk offline
-        {!isAuthenticated && ` • Guest limit: ${MAX_CHARS_GUEST.toLocaleString()} characters`}
-      </div>
+      </PageBox>
 
       <DebugPanel isOpen={showDebug && isAdmin} onClose={() => setShowDebug(false)} />
       
@@ -507,6 +553,11 @@ export function SttStreamView() {
       />
       
       <LoginModal isOpen={showLoginModal || (!isAuthenticated && isLimitReached)} onClose={closeLoginModal} />
+      
+      {/* STT Stream Usage Indicator - 고정 높이 컨테이너로 레이아웃 점프 방지 */}
+      <div className="stt-usage-indicator-container">
+        <UsageIndicator usageType="stt_stream" label="STT Stream" />
+      </div>
       
       <DictionaryTooltip
         word={selectedWord}

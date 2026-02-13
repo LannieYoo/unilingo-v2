@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\auth.py
+# hypothesis_version: 6.150.0
+
+['Authorization', 'Bearer ', 'current_user', 'is_admin', 'user_id']

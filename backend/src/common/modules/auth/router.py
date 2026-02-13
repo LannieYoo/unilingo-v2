@@ -151,10 +151,19 @@ def token_required(f):
                     return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found'}}), 401
                 if not user.is_active:
                     return jsonify({'error': {'code': 'USER_INACTIVE', 'message': 'User is inactive'}}), 403
-                if not _is_admin_user(user.email):
-                    if payload.token_version != user.token_version:
-                        return jsonify({'error': {'code': 'SESSION_EXPIRED', 'message': '다른 기기에서 로그인되어 현재 세션이 만료되었습니다.'}}), 401
-                g.current_user = {'id': user.id, 'email': user.email, 'name': user.name}
+                # Check token_version for all users to enforce single session
+                if payload.token_version != user.token_version:
+                    return jsonify({'error': {'code': 'SESSION_EXPIRED', 'message': 'Your session has expired because you logged in from another device.'}}), 401
+                g.current_user = {
+                    'id': user.id, 
+                    'email': user.email, 
+                    'name': user.name,
+                    'user_level': user.user_level,
+                    'is_approved': user.is_approved,
+                    'is_active': user.is_active
+                }
+                # Also set g.user for backward compatibility
+                g.user = g.current_user
                 return f(*args, **kwargs)
             except TokenExpiredError:
                 return jsonify({'error': {'code': 'TOKEN_EXPIRED', 'message': 'Token expired'}}), 401
@@ -251,7 +260,18 @@ def refresh_token():
 def get_me():
     trace_id = g.get('trace_id', 'unknown')
     user = get_current_user()
-    return jsonify({'id': user.id, 'email': user.email, 'name': user.name, 'avatar_url': user.avatar_url, 'is_active': user.is_active, 'created_at': user.created_at.isoformat() if user.created_at else None, 'last_login_at': user.last_login_at.isoformat() if user.last_login_at else None, 'trace_id': trace_id}), 200
+    return jsonify({
+        'id': user.id, 
+        'email': user.email, 
+        'name': user.name, 
+        'avatar_url': user.avatar_url, 
+        'is_active': user.is_active, 
+        'user_level': user.user_level,
+        'is_approved': user.is_approved,
+        'created_at': user.created_at.isoformat() if user.created_at else None, 
+        'last_login_at': user.last_login_at.isoformat() if user.last_login_at else None, 
+        'trace_id': trace_id
+    }), 200
 
 
 @router.route('/logout', methods=['POST'])
@@ -272,13 +292,26 @@ def get_users():
     try:
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 20, type=int)
+        search = request.args.get('search', '', type=str)
+        
         db = next(get_db())
         try:
             user_repo = UserRepository(db)
-            users = user_repo.get_all(page=page, limit=limit)
-            total = user_repo.count()
+            users = user_repo.get_all(page=page, limit=limit, search=search if search else None)
+            total = user_repo.count(search=search if search else None)
             return jsonify({
-                'users': [{'id': u.id, 'email': u.email, 'name': u.name, 'avatar_url': u.avatar_url, 'is_active': u.is_active, 'created_at': u.created_at.isoformat() if u.created_at else None, 'last_login_at': u.last_login_at.isoformat() if u.last_login_at else None} for u in users],
+                'users': [{
+                    'id': u.id, 
+                    'email': u.email, 
+                    'name': u.name, 
+                    'avatar_url': u.avatar_url, 
+                    'is_active': u.is_active, 
+                    'user_level': u.user_level,
+                    'is_approved': u.is_approved,
+                    'created_at': u.created_at.isoformat() if u.created_at else None, 
+                    'last_login_at': u.last_login_at.isoformat() if u.last_login_at else None,
+                    'approved_at': u.approved_at.isoformat() if u.approved_at else None
+                } for u in users],
                 'pagination': {'page': page, 'limit': limit, 'total': total, 'pages': (total + limit - 1) // limit},
                 'trace_id': trace_id,
             }), 200
@@ -293,13 +326,25 @@ def get_users():
 def get_login_logs():
     trace_id = g.get('trace_id', 'unknown')
     try:
-        limit = request.args.get('limit', 100, type=int)
+        limit = request.args.get('limit', 15, type=int)
+        page = request.args.get('page', 1, type=int)
         user_id = request.args.get('user_id', type=int)
+        search = request.args.get('search', '', type=str)
+        
+        # Calculate offset
+        offset = (page - 1) * limit
+        
         db = next(get_db())
         try:
             login_log_repo = LoginLogRepository(db)
             user_repo = UserRepository(db)
-            logs = login_log_repo.get_by_user_id(user_id, limit=limit) if user_id else login_log_repo.get_recent(limit=limit)
+            
+            # Get logs with pagination and search
+            logs = login_log_repo.get_by_user_id(user_id, limit=limit, offset=offset) if user_id else login_log_repo.get_recent(limit=limit, offset=offset, search=search if search else None)
+            
+            # Get total count with search
+            total = login_log_repo.count_by_user_id(user_id) if user_id else login_log_repo.count_all(search=search if search else None)
+            
             user_cache = {}
             result = []
             for log in logs:
@@ -307,7 +352,15 @@ def get_login_logs():
                     user_cache[log.user_id] = user_repo.get_by_id(log.user_id)
                 user = user_cache.get(log.user_id)
                 result.append({'id': log.id, 'user_id': log.user_id, 'user_email': user.email if user else None, 'user_name': user.name if user else None, 'ip_address': log.ip_address, 'user_agent': log.user_agent, 'login_at': log.login_at.isoformat() if log.login_at else None})
-            return jsonify({'logs': result, 'trace_id': trace_id}), 200
+            
+            return jsonify({
+                'logs': result, 
+                'total': total,
+                'page': page,
+                'page_size': limit,
+                'pages': (total + limit - 1) // limit,  # Ceiling division
+                'trace_id': trace_id
+            }), 200
         finally:
             db.close()
     except Exception as e:
@@ -347,6 +400,61 @@ def toggle_user_active(user_id):
         return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
 
 
+@admin_router.route('/users/<int:user_id>/update-level', methods=['POST'])
+@admin_required
+def update_user_level(user_id):
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    try:
+        data = request.get_json()
+        if not data or 'user_level' not in data:
+            return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Missing user_level', 'trace_id': trace_id}}), 400
+        
+        user_level = data.get('user_level')
+        valid_levels = ['guest', 'pro', 'pro_plus', 'admin']
+        if user_level not in valid_levels:
+            return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': f'Invalid user_level. Must be one of {valid_levels}', 'trace_id': trace_id}}), 400
+        
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            target_user = user_repo.get_by_id(user_id)
+            if not target_user:
+                return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found', 'trace_id': trace_id}}), 404
+            
+            # Prevent changing own level
+            if target_user.email == current_user.email:
+                return jsonify({'error': {'code': 'CANNOT_CHANGE_OWN_LEVEL', 'message': 'Cannot change your own user level', 'trace_id': trace_id}}), 400
+            
+            # Prevent changing admin user level
+            if target_user.email == ADMIN_USER and user_level != 'admin':
+                return jsonify({'error': {'code': 'CANNOT_CHANGE_ADMIN_LEVEL', 'message': 'Cannot change admin user level', 'trace_id': trace_id}}), 400
+            
+            # Get current user ID for approved_by
+            current_user_model = user_repo.get_by_email(current_user.email)
+            
+            updated_user = user_repo.update_user_level(user_id, user_level, approved_by=current_user_model.id if current_user_model else None)
+            
+            return jsonify({
+                'user': {
+                    'id': updated_user.id, 
+                    'email': updated_user.email, 
+                    'name': updated_user.name, 
+                    'user_level': updated_user.user_level,
+                    'is_approved': updated_user.is_approved,
+                    'approved_at': updated_user.approved_at.isoformat() if updated_user.approved_at else None
+                }, 
+                'message': f"User level updated to {user_level} successfully", 
+                'trace_id': trace_id
+            }), 200
+        finally:
+            db.close()
+    except ValueError as e:
+        return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': str(e), 'trace_id': trace_id}}), 400
+    except Exception as e:
+        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
+
+
 # ============================================================
 # STT Log Routes
 # ============================================================
@@ -356,13 +464,24 @@ def toggle_user_active(user_id):
 def get_stt_logs():
     trace_id = g.get('trace_id', 'unknown')
     try:
-        limit = request.args.get('limit', 100, type=int)
+        limit = request.args.get('limit', 15, type=int)
+        page = request.args.get('page', 1, type=int)
         user_id = request.args.get('user_id', type=int)
+        
+        # Calculate offset
+        offset = (page - 1) * limit
+        
         db = next(get_db())
         try:
             stt_log_repo = SttLogRepository(db)
             user_repo = UserRepository(db)
-            logs = stt_log_repo.get_by_user_id(user_id, limit=limit) if user_id else stt_log_repo.get_recent(limit=limit)
+            
+            # Get logs with pagination
+            logs = stt_log_repo.get_by_user_id(user_id, limit=limit, offset=offset) if user_id else stt_log_repo.get_recent(limit=limit, offset=offset)
+            
+            # Get total count
+            total = stt_log_repo.count_by_user_id(user_id) if user_id else stt_log_repo.count_all()
+            
             user_cache = {}
             result = []
             for log in logs:
@@ -370,7 +489,15 @@ def get_stt_logs():
                     user_cache[log.user_id] = user_repo.get_by_id(log.user_id)
                 user = user_cache.get(log.user_id)
                 result.append({'id': log.id, 'user_id': log.user_id, 'user_email': user.email if user else None, 'user_name': user.name if user else None, 'language': log.language, 'duration_seconds': log.duration_seconds, 'word_count': log.word_count, 'ip_address': log.ip_address, 'created_at': log.created_at.isoformat() if log.created_at else None})
-            return jsonify({'logs': result, 'trace_id': trace_id}), 200
+            
+            return jsonify({
+                'logs': result, 
+                'total': total,
+                'page': page,
+                'page_size': limit,
+                'pages': (total + limit - 1) // limit,  # Ceiling division
+                'trace_id': trace_id
+            }), 200
         finally:
             db.close()
     except Exception as e:
@@ -382,17 +509,38 @@ def get_stt_logs():
 def get_stt_logs_summary():
     trace_id = g.get('trace_id', 'unknown')
     try:
+        limit = request.args.get('limit', 15, type=int)
+        page = request.args.get('page', 1, type=int)
+        search = request.args.get('search', '', type=str)
+        
+        # Calculate offset
+        offset = (page - 1) * limit
+        
         db = next(get_db())
         try:
             stt_log_repo = SttLogRepository(db)
             user_repo = UserRepository(db)
-            summaries = stt_log_repo.get_all_users_summary()
+            
+            # Get summaries with pagination and search
+            summaries = stt_log_repo.get_all_users_summary(limit=limit, offset=offset, search=search if search else None)
+            
+            # Get total count of users with logs (with search)
+            total = stt_log_repo.count_users_with_logs(search=search if search else None)
+            
             result = []
             for summary in summaries:
                 user = user_repo.get_by_id(summary['user_id'])
                 result.append({'user_id': summary['user_id'], 'user_email': user.email if user else None, 'user_name': user.name if user else None, 'avatar_url': user.avatar_url if user else None, 'total_duration_seconds': summary['total_duration_seconds'], 'total_word_count': summary['total_word_count'], 'session_count': summary['session_count']})
             result.sort(key=lambda x: x['total_duration_seconds'], reverse=True)
-            return jsonify({'summaries': result, 'trace_id': trace_id}), 200
+            
+            return jsonify({
+                'summaries': result, 
+                'total': total,
+                'page': page,
+                'page_size': limit,
+                'pages': (total + limit - 1) // limit,  # Ceiling division
+                'trace_id': trace_id
+            }), 200
         finally:
             db.close()
     except Exception as e:

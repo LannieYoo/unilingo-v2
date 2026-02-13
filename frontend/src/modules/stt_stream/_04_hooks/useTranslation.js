@@ -6,8 +6,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useLanguagePreferences } from '../../auth'
 import { useGlossary } from '../../../shared/modules/glossary'
+import { useUsage } from '../../../common/contexts/UsageContext'
+import { useAuthStore } from '../../auth/_05_stores/authStore'
 
-const API_BASE = '/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
 // Supported languages
 export const TRANSLATION_LANGUAGES = [
@@ -59,6 +61,12 @@ export function useTranslation() {
   // Glossary 훅 사용
   const { domain, setDomain, preProcess, postProcess } = useGlossary('general')
 
+  // Usage tracking hook
+  const { trackUsage } = useUsage()
+  
+  // Auth store for token
+  const { tokens, isAuthenticated } = useAuthStore()
+
   // Load language preferences from settings
   useEffect(() => {
     if (!isLoaded) return
@@ -77,24 +85,46 @@ export function useTranslation() {
   const translateSentence = useCallback(async (text, sourceLang, targetLang, retryCount = 0) => {
     if (!text?.trim()) return null
     
+    console.log(`[Translation] translateSentence called:`, { text, sourceLang, targetLang })
+    
     // 같은 언어면 번역 불필요
     if (sourceLang === targetLang) {
+      console.log(`[Translation] Same language, skipping translation`)
       return text
     }
 
     // 1. 번역 전 용어 보호
     const { processedText, termMap } = preProcess(text, sourceLang, targetLang)
     
+    console.log(`[Translation] Calling API:`, { 
+      url: `${API_BASE}/api/translate`,
+      sourceLang, 
+      targetLang, 
+      textLength: processedText.length,
+      isAuthenticated 
+    })
+    
     try {
-      const response = await fetch(`${API_BASE}/translate`, {
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      
+      // Add authorization header if authenticated
+      if (isAuthenticated && tokens?.access_token) {
+        headers['Authorization'] = `Bearer ${tokens.access_token}`
+      }
+      
+      const response = await fetch(`${API_BASE}/api/translate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           text: processedText.trim(),
           source_lang: sourceLang,
           target_lang: targetLang
         })
       })
+      
+      console.log(`[Translation] API response:`, { status: response.status, ok: response.ok })
       
       // Rate limit 에러 시 재시도
       if (response.status === 429 && retryCount < MAX_RETRIES) {
@@ -106,15 +136,24 @@ export function useTranslation() {
       }
       
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`[Translation] API error:`, errorText)
         throw new Error(`Translation failed: ${response.status}`)
       }
       
       const data = await response.json()
+      console.log(`[Translation] API success:`, { translatedText: data.translated_text })
       const translatedText = data.translated_text || null
       
       // 2. 번역 후 용어 복원
       if (translatedText) {
-        return postProcess(translatedText, termMap)
+        const finalText = postProcess(translatedText, termMap)
+        
+        // Track usage - count characters in original text (STT type)
+        const charCount = text.length
+        await trackUsage(charCount, 'stt')
+        
+        return finalText
       }
       
       return null
@@ -123,7 +162,7 @@ export function useTranslation() {
       setError(err.message)
       return null
     }
-  }, [preProcess, postProcess])
+  }, [preProcess, postProcess, trackUsage])
 
 
   // targetLang을 참조하기 위한 ref (클로저 문제 해결)
@@ -134,18 +173,27 @@ export function useTranslation() {
    * 큐 처리 - 실시간 번역
    */
   const processQueue = useCallback(async () => {
-    if (processingRef.current || pendingRef.current.length === 0) return
+    console.log(`[Translation] processQueue called, processing: ${processingRef.current}, queue length: ${pendingRef.current.length}`)
+    
+    if (processingRef.current || pendingRef.current.length === 0) {
+      console.log(`[Translation] Skipping queue processing`)
+      return
+    }
     
     processingRef.current = true
     setIsTranslating(true)
+    console.log(`[Translation] Starting queue processing...`)
     
     while (pendingRef.current.length > 0) {
       const { sentence, sourceLang, targetLang: tLang, index } = pendingRef.current.shift()
+      console.log(`[Translation] Processing:`, { sentence, sourceLang, targetLang: tLang, index })
       
       let translatedResult = sentence // 기본값은 원본
       
       if (sourceLang !== tLang) {
+        console.log(`[Translation] Calling translateSentence...`)
         const translated = await translateSentence(sentence, sourceLang, tLang)
+        console.log(`[Translation] Result:`, translated)
         if (translated) {
           translatedResult = translated
         }
@@ -163,6 +211,7 @@ export function useTranslation() {
     
     processingRef.current = false
     setIsTranslating(false)
+    console.log(`[Translation] Queue complete`)
   }, [translateSentence])
 
   /**
@@ -179,7 +228,17 @@ export function useTranslation() {
    * 새 문장 번역 요청 (실시간)
    */
   const addSentenceToTranslate = useCallback((sentence, sourceLang) => {
-    if (!sentence?.trim()) return
+    console.log(`[Translation] addSentenceToTranslate called:`, { 
+      sentence, 
+      sourceLang, 
+      isTranslationEnabled,
+      currentTargetLang: targetLangRef.current 
+    })
+    
+    if (!sentence?.trim()) {
+      console.log(`[Translation] Empty sentence, skipping`)
+      return
+    }
     
     // 번역이 비활성화되어 있으면 번역하지 않음
     if (!isTranslationEnabled) {
@@ -194,6 +253,7 @@ export function useTranslation() {
     // 언어 코드 정규화 (en-us, en-in -> en)
     const normalizedSourceLang = normalizeLanguageCode(sourceLang)
     
+    console.log(`[Translation] Normalized source lang: ${sourceLang} -> ${normalizedSourceLang}`)
     console.log(`[Translation] Adding sentence: "${sentence}" (source: ${normalizedSourceLang}, target: ${currentTargetLang})`)
     
     // 문장 저장
@@ -206,20 +266,21 @@ export function useTranslation() {
     
     // 같은 언어면 바로 표시
     if (normalizedSourceLang === currentTargetLang) {
-      console.log(`[Translation] Same language, using original`)
+      console.log(`[Translation] Same language (${normalizedSourceLang} === ${currentTargetLang}), using original`)
       sentencesRef.current[index].translatedText = sentence.trim()
       updateTranslatedText()
       return
     }
     
     // 번역 큐에 추가
-    console.log(`[Translation] Adding to queue for translation`)
+    console.log(`[Translation] Different languages, adding to queue for translation`)
     pendingRef.current.push({ 
       sentence: sentence.trim(), 
       sourceLang: normalizedSourceLang, 
       targetLang: currentTargetLang,
       index 
     })
+    console.log(`[Translation] Queue length: ${pendingRef.current.length}`)
     processQueue()
   }, [processQueue, updateTranslatedText, isTranslationEnabled])
 

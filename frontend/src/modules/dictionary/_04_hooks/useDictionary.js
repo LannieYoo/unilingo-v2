@@ -9,6 +9,7 @@ import { detectLanguage } from '../_07_utils'
 import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
 import { useAuthStore, useLanguagePreferences } from '../../auth'
 import { authService } from '../../auth/_06_services'
+import { useUsage } from '../../../common/contexts/UsageContext'
 
 export function useDictionary() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -28,6 +29,9 @@ export function useDictionary() {
 
   // Auth store
   const { user, tokens, isAuthenticated } = useAuthStore()
+
+  // Usage tracking hook
+  const { trackUsage } = useUsage()
 
   // 공통 언어 설정 훅 사용
   const { nativeLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
@@ -335,14 +339,19 @@ export function useDictionary() {
     const wordToSearch = searchWord
     const wordForHistory = historyWord || searchWord
     
+    console.log('[Dictionary Hook] performSearch called:', { fromLang, toLang, searchWord, historyWord })
+    
     if (signal?.aborted) throw new DOMException('Search cancelled', 'AbortError')
     if (wordToSearch !== currentSearchTermRef.current) throw new DOMException('Search cancelled', 'AbortError')
 
     try {
       // 백엔드 API 호출 (언어 자동 감지 및 캐시 처리)
+      console.log('[Dictionary Hook] Calling searchDictionary:', wordToSearch, toLang)
       const dictData = await searchDictionary(wordToSearch, toLang)
+      console.log('[Dictionary Hook] searchDictionary returned:', dictData)
       
       if (!dictData || !dictData.term) {
+        console.log('[Dictionary Hook] No data or no term, showing error')
         const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 검색 결과를 찾을 수 없습니다.`, isPhrase: true }]
         setResults(result)
         addToHistory(wordForHistory, result, fromLang, toLang)
@@ -350,6 +359,7 @@ export function useDictionary() {
       }
       
       // 새 API 응답 구조에 맞게 변환
+      console.log('[Dictionary Hook] Transforming data...')
       const result = [{
         term: dictData.term,
         word: dictData.term,
@@ -376,15 +386,26 @@ export function useDictionary() {
         cached: dictData.cached || false
       }]
       
+      console.log('[Dictionary Hook] Transformed result:', result)
       setResults(result)
       addToHistory(wordForHistory, result, fromLang, toLang)
+      
+      // Track usage - count as 1 search
+      const searchCount = 1
+      console.log('[Dictionary] Tracking usage:', searchCount, 'search')
+      try {
+        await trackUsage(searchCount, 'dictionary')
+        console.log('[Dictionary] Usage tracked successfully')
+      } catch (err) {
+        console.error('[Dictionary] Failed to track usage:', err)
+      }
     } catch (error) {
       console.error('Search error:', error)
       const errorResult = [{ word: wordToSearch, translation: 'Error: ' + error.message }]
       setResults(errorResult)
       addToHistory(wordForHistory, errorResult, fromLang, toLang)
     }
-  }, [addToHistory])
+  }, [addToHistory, trackUsage])
 
   // 검색 실행
   const handleSearch = useCallback(async () => {

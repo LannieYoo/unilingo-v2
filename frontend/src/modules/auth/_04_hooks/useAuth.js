@@ -24,10 +24,13 @@ export function useAuth() {
 
   // Initialize auth state on mount
   useEffect(() => {
-    if (tokens?.access_token && !user && !isLoading) {
-      fetchUser();
+    if (tokens?.access_token) {
+      // Always fetch user data on mount to ensure we have latest info
+      if (!user || !user.user_level || user.is_approved === undefined) {
+        fetchUser();
+      }
     }
-  }, [tokens?.access_token, user, isLoading, fetchUser]);
+  }, [tokens?.access_token, user, fetchUser]);
 
   // Handle OAuth callback on page load
   useEffect(() => {

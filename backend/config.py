@@ -63,6 +63,34 @@ class Config:
     # External API Keys (if needed)
     GOOGLE_TRANSLATE_API_KEY = os.getenv('GOOGLE_TRANSLATE_API_KEY', None)
     MYMEMORY_API_KEY = os.getenv('MYMEMORY_API_KEY', None)
+    
+    # User Level Usage Limits (characters per month) - Separate limits per feature
+    # guest: 비로그인 및 Pro 비승인 상태 (pending)
+    # approved: Pro 승인 후
+    USAGE_LIMITS = {
+        'translator': {
+            'guest': 5000,      # 비로그인 및 미승인
+            'approved': 50000,  # Pro 승인 후
+            'admin': -1         # 무제한
+        },
+        'tts': {
+            'guest': 8000,      # 비로그인 및 미승인
+            'approved': 80000,  # Pro 승인 후
+            'admin': -1         # 무제한
+        },
+        'stt_stream': {
+            'guest': 1000,      # 비로그인 및 미승인
+            'approved': 70000,  # Pro 승인 후
+            'admin': -1         # 무제한
+        }
+    }
+    
+    # Dictionary Search Limits (searches per month) - separate from translation
+    DICTIONARY_LIMITS = {
+        'guest': 100,         # 비로그인 및 미승인 사용자
+        'approved': 5000,     # Pro 승인 후
+        'admin': -1           # 무제한 (-1)
+    }
 
 
 class DevelopmentConfig(Config):

@@ -16,18 +16,19 @@ export const LANGUAGE_OPTIONS = LANGUAGES
     usesHybrid: lang.code === 'en-US' // 미국 영어만 하이브리드 모드
   }))
 
-// Vosk 모델 URL (현재 사용하지 않음 - 참고용으로만 유지)
+// Vosk 모델 URL (현재 Web Speech API 사용으로 미사용 - Vosk 오프라인 모드 필요 시 모델 파일 추가 후 활성화)
+// Key는 selectedLang 값 (LANGUAGE_OPTIONS의 value = voice.toLowerCase())과 일치해야 함
 export const MODEL_URLS = {
   'en-us': '/vosk-models/vosk-model-small-en-us-0.15.zip',
   'en-us-lgraph': '/vosk-models/vosk-model-en-us-0.22-lgraph.zip',
   'en-in': '/vosk-models/vosk-model-small-en-in-0.4.zip',
-  'ko': '/vosk-models/vosk-model-small-ko-0.22.zip',
-  'zh': '/vosk-models/vosk-model-small-cn-0.22.zip',
-  'ja': '/vosk-models/vosk-model-small-ja-0.22.zip',
-  'es': '/vosk-models/vosk-model-small-es-0.42.zip',
-  'fr': '/vosk-models/vosk-model-small-fr-0.22.zip',
-  'de': '/vosk-models/vosk-model-small-de-0.15.zip',
-  'ar': '/vosk-models/vosk-model-ar-mgb2-0.4.zip',
+  'ko-kr': '/vosk-models/vosk-model-small-ko-0.22.zip',
+  'zh-cn': '/vosk-models/vosk-model-small-cn-0.22.zip',
+  'ja-jp': '/vosk-models/vosk-model-small-ja-0.22.zip',
+  'es-es': '/vosk-models/vosk-model-small-es-0.42.zip',
+  'fr-fr': '/vosk-models/vosk-model-small-fr-0.22.zip',
+  'de-de': '/vosk-models/vosk-model-small-de-0.15.zip',
+  'ar-sa': '/vosk-models/vosk-model-ar-mgb2-0.4.zip',
 }
 
 // Vosk lgraph 모델 URL (128MB, 7.82% WER - gap filling용)

@@ -4,6 +4,8 @@
 
 from flask import Blueprint, request, jsonify, g
 from . import service
+from ...decorators import require_approval
+from ..auth.router import token_required
 
 router = Blueprint('dictionary', __name__, url_prefix='/api/dictionary')
 
@@ -12,7 +14,7 @@ dictionary_service = service.get_dictionary_service()
 
 @router.route('/search', methods=['GET'])
 def search():
-    """단어 검색 API"""
+    """단어 검색 API (게스트 사용 가능)"""
     trace_id = g.get('trace_id', 'unknown')
     
     word = request.args.get('word')
@@ -44,7 +46,7 @@ def search():
 
 @router.route('/autocomplete', methods=['GET'])
 def autocomplete():
-    """자동완성 API"""
+    """자동완성 API (게스트 사용 가능)"""
     trace_id = g.get('trace_id', 'unknown')
     
     query = request.args.get('query')
@@ -72,37 +74,11 @@ def autocomplete():
 
 
 @router.route('/save', methods=['POST'])
+@token_required
+@require_approval
 def save():
     """사전 검색 결과 저장 API"""
-    from ..auth import login_required, get_current_user
-    
     trace_id = g.get('trace_id', 'unknown')
-    
-    # 인증 확인
-    token = request.headers.get('Authorization', '').replace('Bearer ', '')
-    if not token:
-        return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Not authenticated', 'trace_id': trace_id}}), 401
-    
-    # 토큰 검증 및 사용자 정보 가져오기
-    from ...supabase import get_db
-    from ..auth import get_auth_service
-    
-    db = next(get_db())
-    try:
-        auth_service = get_auth_service(db)
-        payload = auth_service.verify_token(token)
-        if not payload:
-            return jsonify({'error': {'code': 'INVALID_TOKEN', 'message': 'Invalid token', 'trace_id': trace_id}}), 401
-        
-        user = auth_service.get_user_by_id(payload.user_id)
-        if not user or not user.is_active:
-            return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found or inactive', 'trace_id': trace_id}}), 401
-        
-        g.user_id = user.id
-    except Exception as e:
-        return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Authentication failed', 'trace_id': trace_id}}), 401
-    finally:
-        db.close()
     
     data = request.get_json()
     if not data:

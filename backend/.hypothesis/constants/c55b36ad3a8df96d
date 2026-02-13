@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\config.py
+# hypothesis_version: 6.150.0
+
+[3600, 8001, 86400, 604800, ',', '../logs', '.env', '1000/minute', '127.0.0.1', '200/minute', '500/minute', 'ADMIN_USER', 'CACHE_ENABLED', 'CACHE_TTL_DICTIONARY', 'CORS_ORIGINS', 'DATABASE_URL', 'DEBUG', 'FLASK_ENV', 'FLASK_HOST', 'FLASK_PORT', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'INFO', 'LOG_DIR', 'LOG_LEVEL', 'MYMEMORY_API_KEY', 'RATE_LIMIT_ENABLED', 'RATE_LIMIT_STT', 'SECRET_KEY', 'STT_COMPUTE_TYPE', 'STT_DEVICE', 'STT_ENABLED', 'STT_ENGINE', 'STT_MODEL', 'cpu', 'default', 'development', 'faster-whisper', 'int8', 'medium', 'production', 'testing', 'true']

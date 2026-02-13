@@ -26,8 +26,14 @@ from backend.src.common.modules import (
     health_bp,
     auth_bp,
     admin_bp,
+    approval_bp,
 )
+from backend.src.common.modules.errors import errors_bp
+from backend.src.common.modules.usage import usage_bp
 from backend.src.common.supabase import Base
+from backend.src.common.trace_middleware import setup_trace_middleware
+from backend.src.common.usage_middleware import setup_usage_middleware
+from backend.src.common.logger import setup_logging
 
 
 def create_app(config_name: str = None) -> Flask:
@@ -52,6 +58,13 @@ def create_app(config_name: str = None) -> Flask:
     
     # Initialize logging first (before other middleware)
     init_logging(app)
+    setup_logging(app)  # Add trace ID support to logging
+    
+    # Initialize trace ID middleware (before other middleware)
+    setup_trace_middleware(app)
+    
+    # Initialize usage limit middleware (after trace, before routes)
+    setup_usage_middleware(app)
     
     # Initialize middleware (order matters!)
     # 1. CORS - must be first to handle preflight requests
@@ -74,12 +87,17 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(approval_bp)
+    app.register_blueprint(errors_bp)
+    app.register_blueprint(usage_bp)
     
     # Create database tables
     try:
         from sqlalchemy import create_engine
         from backend.src.common.supabase import SUPABASE_DB_URI
         from backend.src.common.modules.auth.service import UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel
+        from backend.src.common.modules.errors.service import ErrorEventModel
+        from backend.src.common.modules.usage.service import UsageLog, GuestUsageLog
         
         if SUPABASE_DB_URI:
             from urllib.parse import quote_plus

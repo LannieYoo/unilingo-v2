@@ -4,6 +4,8 @@
 
 from flask import Blueprint, request, jsonify, g
 from .service import get_translation_service
+from ...decorators import require_approval
+from ..auth.router import token_required
 
 router = Blueprint('translation', __name__, url_prefix='/api')
 
@@ -14,7 +16,10 @@ VALID_LANGS = ['ko', 'en', 'zh']
 
 @router.route('/translate', methods=['POST'])
 def translate():
-    """텍스트 번역 API"""
+    """텍스트 번역 API (비로그인 사용자 허용)"""
+    from flask import request as flask_request
+    from ..usage.service import UsageService
+    
     trace_id = g.get('trace_id', 'unknown')
     
     data = request.get_json()
@@ -43,6 +48,22 @@ def translate():
     try:
         result = translation_service.translate(text=text, source_lang=source_lang, target_lang=target_lang, trace_id=trace_id)
         result['trace_id'] = trace_id
+        
+        # Track usage - for authenticated users or guests (by IP)
+        char_count = len(text)
+        user_id = g.get('user_id')  # Will be None for guests
+        
+        if user_id:
+            # Authenticated user
+            UsageService.track_usage(user_id, char_count, 'translation')
+        else:
+            # Guest user - track by IP
+            ip_address = flask_request.headers.get('X-Forwarded-For', flask_request.remote_addr)
+            if ip_address:
+                # Handle multiple IPs in X-Forwarded-For (take first one)
+                ip_address = ip_address.split(',')[0].strip()
+                UsageService.track_guest_usage(ip_address, char_count, 'translation')
+        
         return jsonify(result), 200
     except Exception:
         return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': 'An unexpected error occurred', 'trace_id': trace_id}}), 500

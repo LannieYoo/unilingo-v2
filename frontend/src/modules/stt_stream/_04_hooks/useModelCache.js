@@ -8,18 +8,18 @@ import { MODEL_URLS } from '../_08_constants'
 
 const CACHE_NAME = 'vosk-models-cache-v1'
 
-// 모델 정보 (크기 포함)
+// 모델 정보 (크기 포함) - key는 selectedLang 값과 일치해야 함
 export const MODEL_INFO = {
   'en-us': { name: 'English (US)', size: '40MB', sizeBytes: 40 * 1024 * 1024 },
   'en-us-lg': { name: 'English (US) High Accuracy', size: '128MB', sizeBytes: 128 * 1024 * 1024, large: true, recommended: true },
   'en-in': { name: 'English (Indian)', size: '1GB', sizeBytes: 1024 * 1024 * 1024, large: true, recommended: true },
-  'ar': { name: 'Arabic', size: '318MB', sizeBytes: 318 * 1024 * 1024 },
-  'ko': { name: 'Korean', size: '82MB', sizeBytes: 82 * 1024 * 1024 },
-  'zh': { name: 'Chinese', size: '42MB', sizeBytes: 42 * 1024 * 1024 },
-  'ja': { name: 'Japanese', size: '48MB', sizeBytes: 48 * 1024 * 1024 },
-  'es': { name: 'Spanish', size: '39MB', sizeBytes: 39 * 1024 * 1024 },
-  'fr': { name: 'French', size: '41MB', sizeBytes: 41 * 1024 * 1024 },
-  'de': { name: 'German', size: '45MB', sizeBytes: 45 * 1024 * 1024 },
+  'ar-sa': { name: 'Arabic', size: '318MB', sizeBytes: 318 * 1024 * 1024 },
+  'ko-kr': { name: 'Korean', size: '82MB', sizeBytes: 82 * 1024 * 1024 },
+  'zh-cn': { name: 'Chinese', size: '42MB', sizeBytes: 42 * 1024 * 1024 },
+  'ja-jp': { name: 'Japanese', size: '48MB', sizeBytes: 48 * 1024 * 1024 },
+  'es-es': { name: 'Spanish', size: '39MB', sizeBytes: 39 * 1024 * 1024 },
+  'fr-fr': { name: 'French', size: '41MB', sizeBytes: 41 * 1024 * 1024 },
+  'de-de': { name: 'German', size: '45MB', sizeBytes: 45 * 1024 * 1024 },
 }
 
 export function useModelCache() {

@@ -10,11 +10,15 @@
 import { useState, useRef, useCallback } from 'react'
 import { WebSpeechManager } from '../_07_utils/WebSpeechManager'
 import { addPunctuation } from '../_07_utils/textFormatter'
+import { useTranscriptStore } from '../_05_stores'
+import { STATUS } from '../_08_constants'
 
 export function useHybridSTT(selectedLang = 'en-us') {
   const [isRunning, setIsRunning] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
+  const [isRestarting, setIsRestarting] = useState(false)
+  const [error, setError] = useState(null)
   const [stats, setStats] = useState({
     restartCount: 0,
     totalSegments: 0
@@ -25,8 +29,11 @@ export function useHybridSTT(selectedLang = 'en-us') {
   const segmentCountRef = useRef(0)
   const lastFinalTextRef = useRef('') // 마지막 final 텍스트 추적 (중복 방지)
 
+  const { setStatus } = useTranscriptStore()
+
   const start = useCallback(async () => {
     try {
+      setError(null)
       console.log('[Hybrid STT] Starting with language:', selectedLang)
       webSpeechRef.current = new WebSpeechManager(selectedLang, {
         onResult: (text, isFinal) => {
@@ -38,7 +45,9 @@ export function useHybridSTT(selectedLang = 'en-us') {
             }
             
             lastFinalTextRef.current = text
-            const textWithPunctuation = addPunctuation(text, 'en')
+            // Map selectedLang (e.g. 'zh-cn') to addPunctuation language code (e.g. 'zh')
+            const punctLang = selectedLang.split('-')[0]
+            const textWithPunctuation = addPunctuation(text, punctLang)
             setTranscript(prev => prev + textWithPunctuation + ' ')
             setInterimTranscript('')
             segmentCountRef.current++
@@ -54,25 +63,39 @@ export function useHybridSTT(selectedLang = 'en-us') {
           console.log('[WebSpeech] Auto-restarted, count:', restartCount)
           // 재시작 시 마지막 final 텍스트 초기화 (새 세션 시작)
           lastFinalTextRef.current = ''
+          setIsRestarting(true)
           updateStats()
+          // Brief visual indicator then clear
+          setTimeout(() => setIsRestarting(false), 1000)
         },
         onError: (error) => {
           console.error('[WebSpeech] Error:', error)
+          setError(error)
         }
       })
 
       await webSpeechRef.current.start()
       startTimeRef.current = Date.now()
       setIsRunning(true)
+      setStatus(STATUS.LISTENING)
       
       return true
 
     } catch (error) {
       console.error('Failed to start Web Speech API:', error)
+      const msg = error.message.includes('not supported')
+        ? 'Web Speech API not supported - Use Chrome browser'
+        : error.message.includes('not-allowed')
+        ? 'Microphone permission denied - Allow microphone access'
+        : error.message.includes('audio-capture')
+        ? 'Cannot access microphone - Check microphone connection'
+        : `Speech recognition error - ${error.message}`
+      setError(error)
+      setStatus(STATUS.ERROR, msg)
       stop()
       return false
     }
-  }, [selectedLang])
+  }, [selectedLang, setStatus])
 
   const stop = useCallback(() => {
     if (webSpeechRef.current) {
@@ -81,8 +104,11 @@ export function useHybridSTT(selectedLang = 'en-us') {
     }
 
     lastFinalTextRef.current = ''
+    setError(null)
     setIsRunning(false)
-  }, [])
+    setIsRestarting(false)
+    setStatus(STATUS.STOPPED)
+  }, [setStatus])
 
   const toggle = useCallback(async () => {
     if (isRunning) {
@@ -106,8 +132,10 @@ export function useHybridSTT(selectedLang = 'en-us') {
     stop,
     toggle,
     isRunning,
+    isRestarting,
     transcript,
     interimTranscript,
+    error,
     stats
   }
 }

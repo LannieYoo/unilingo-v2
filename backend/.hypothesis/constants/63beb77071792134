@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\errors\dto.py
+# hypothesis_version: 6.150.0
+
+[1000, 'Browser user agent', 'Current page number', 'Error detail (JSON)', 'Error message', 'ErrorEventDTO', 'ErrorListResponseDTO', 'ErrorReportDTO', 'List of error events', 'Stack trace', 'Trace ID (UUID)', 'message', 'trace_id']

@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\response.py
+# hypothesis_version: 6.150.0
+
+[200, 400, 'ERROR', 'Success', 'Z', 'code', 'data', 'details', 'error', 'has_next', 'has_prev', 'items', 'limit', 'message', 'page', 'pagination', 'success', 'timestamp', 'total', 'total_pages', 'trace_id', 'unknown']

@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\enum.py
+# hypothesis_version: 6.150.0
+
+[200, 201, 300, 400, 401, 403, 404, 500, 503, 3600, 5000, 'Deutsch', 'English', 'Español', 'Français', 'de', 'en', 'es', 'fr', 'ja', 'ko', 'mp3', 'ogg', 'wav', 'webm', 'zh', '中文', '日本語', '한국어']

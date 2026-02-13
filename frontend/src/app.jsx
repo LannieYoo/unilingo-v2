@@ -16,6 +16,9 @@ import { AdminView } from './modules/admin'
 // Auth module
 import { useAuthStore, useAuth, SessionExpiredModal, SettingsView } from './modules/auth'
 
+// Usage Context
+import { UsageProvider } from './common/contexts/UsageContext'
+
 // Legacy imports (for backward compatibility during migration)
 import SpeechToTextTest from './pages/speech-to-text/speech-to-text-test'
 
@@ -139,8 +142,10 @@ function AppContent() {
 function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AppContent />
-      <SessionExpiredModal />
+      <UsageProvider>
+        <AppContent />
+        <SessionExpiredModal />
+      </UsageProvider>
     </GoogleOAuthProvider>
   )
 }

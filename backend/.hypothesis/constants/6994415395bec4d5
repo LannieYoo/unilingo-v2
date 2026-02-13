@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\health\service.py
+# hypothesis_version: 6.150.0
+
+[200, 'STT_ENABLED', 'client', 'degraded', 'dictionary', 'down', 'dt', 'en', 'gtx', 'healthy', 'ko', 'operational', 'q', 'sl', 'stt', 't', 'test', 'tl', 'translation', 'unhealthy']

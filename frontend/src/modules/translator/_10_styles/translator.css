@@ -202,6 +202,55 @@
   position: relative;
 }
 
+.translator-output-wrapper {
+  position: relative;
+}
+
+/* Image Upload Container */
+.translator-image-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.translator-image-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+
+.translator-image-upload-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.4);
+}
+
+.translator-image-upload-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.translator-image-upload-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.translator-image-upload-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+}
+
 .translator-textarea {
   width: 100%;
   padding: 1.25rem;
@@ -215,6 +264,12 @@
   color: #1e293b;
   transition: all 0.2s ease;
   min-height: 150px;
+}
+
+.translator-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f8fafc;
 }
 
 .translator-textarea:focus {
@@ -260,6 +315,53 @@
 
 .translator-clear-btn .material-symbols-outlined {
   font-size: 18px;
+}
+
+/* TTS Speak Button */
+.translator-speak-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #eff6ff;
+  border: 1px solid #3b82f6;
+  border-radius: 50%;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.translator-speak-btn:hover {
+  background: #3b82f6;
+  color: white;
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.translator-speak-btn.speaking {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+  animation: pulse-speak 1.5s ease-in-out infinite;
+}
+
+.translator-speak-btn--output {
+  right: 0.75rem;
+}
+
+@keyframes pulse-speak {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.translator-speak-btn .material-symbols-outlined {
+  font-size: 20px;
 }
 
 /* 번역 버튼 그룹 */
@@ -370,6 +472,14 @@
   .translator-save-btn {
     padding: 1rem;
   }
+  
+  .translator-image-upload-text {
+    display: none;
+  }
+  
+  .translator-image-upload-btn {
+    padding: 0.625rem;
+  }
 }
 
 /* 매우 작은 화면 (550px 이하) */
@@ -442,10 +552,18 @@
   color: #94a3b8;
 }
 
+.dark .translator-image-upload-hint {
+  color: #94a3b8;
+}
+
 .dark .translator-textarea {
   background: #1e293b;
   border-color: #334155;
   color: #e2e8f0;
+}
+
+.dark .translator-textarea:disabled {
+  background: #0f172a;
 }
 
 .dark .translator-textarea:focus {
@@ -466,6 +584,22 @@
 .dark .translator-clear-btn:hover {
   background: #475569;
   color: #e2e8f0;
+}
+
+.dark .translator-speak-btn {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.dark .translator-speak-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.dark .translator-speak-btn.speaking {
+  background: #ef4444;
+  border-color: #ef4444;
 }
 
 

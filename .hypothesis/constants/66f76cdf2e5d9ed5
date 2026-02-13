@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\errors\router.py
+# hypothesis_version: 6.150.0
+
+[100, 201, 400, 500, '/admin/errors', '/admin/errors/test', '/api', '/errors', 'Failed to get errors', 'GET', 'NO_TRACE', 'POST', 'Validation error', 'backend', 'data', 'end_date', 'endpoint', 'errors', 'errors_bp', 'frontend', 'page', 'page_size', 'stackTrace', 'start_date', 'test', 'total', 'trace_id', 'url', 'userAgent', 'userContext', 'where_from']

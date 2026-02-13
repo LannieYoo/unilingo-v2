@@ -42,6 +42,8 @@ from .auth import (
     is_admin,
 )
 
+from .admin import approval_bp
+
 __all__ = [
     'init_cors',
     'init_request_logger',
@@ -64,6 +66,7 @@ __all__ = [
     'health_bp',
     'auth_bp',
     'admin_bp',
+    'approval_bp',
     'login_required',
     'get_current_user',
     'get_optional_user',

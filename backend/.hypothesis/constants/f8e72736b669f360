@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\auth\__init__.py
+# hypothesis_version: 6.150.0
+
+['ADMIN_USER', 'AuthError', 'AuthService', 'DGoogleTokens', 'DGoogleUserInfo', 'DLanguagePreferences', 'DLoginLog', 'DLoginLogCreate', 'DSttLog', 'DSttLogCreate', 'DSttLogSummary', 'DToken', 'DTokenPayload', 'DUser', 'DUserCreate', 'DatabaseError', 'DictionaryLogModel', 'EAuthProvider', 'ETokenType', 'GoogleAuthRequest', 'GoogleOAuthClient', 'GoogleOAuthError', 'InvalidTokenError', 'JWTHelper', 'LoginLogModel', 'LoginLogRepository', 'LoginResponse', 'SttLogCreateRequest', 'SttLogModel', 'SttLogRepository', 'TokenError', 'TokenExpiredError', 'TokenRefreshRequest', 'TokenResponse', 'TranslationLogModel', 'UserModel', 'UserNotFoundError', 'UserRepository', 'UserResponse', 'admin_required', 'admin_router', 'get_auth_service', 'get_current_user', 'get_optional_user', 'is_admin', 'login_required', 'router', 'token_required']

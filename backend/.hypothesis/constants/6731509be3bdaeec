@@ -1,0 +1,4 @@
+# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\stt\router.py
+# hypothesis_version: 6.150.0
+
+[b'RIFF', b'WAVE', 100, 200, 400, 500, 503, 1024, 16000, '/api/stt', '/process-missing', '/status', '/transcribe', 'GET', 'INTERNAL_ERROR', 'No file selected', 'POST', 'PROCESSING_ERROR', 'SERVICE_UNAVAILABLE', 'STATUS_CHECK_ERROR', 'STT_COMPUTE_TYPE', 'STT_DEVICE', 'STT_ENABLED', 'STT_MODEL', 'Status check failed', 'VALIDATION_ERROR', 'audio', 'auto', 'available', 'code', 'cpu', 'dependencies', 'error', 'int8', 'language', 'medium', 'message', 'rb', 'required', 'service_available', 'stt', 'trace_id', 'unknown']

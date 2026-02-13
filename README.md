@@ -30,12 +30,20 @@ A comprehensive multilingual platform featuring real-time speech recognition, tr
   - Autocomplete suggestions
   - Search history tracking for authenticated users
   - Inline dictionary tooltip in STT view
+- **Error Tracking**: Comprehensive error monitoring system
+
+  - Automatic error capture with trace ID correlation
+  - Frontend and backend error tracking
+  - Admin dashboard for error monitoring
+  - Detailed error context (stack traces, user info, request data)
+  - Test error generation for system validation
 
 ### User Management
 
 - **Authentication**: Google OAuth 2.0 integration
 
-  - Secure JWT-based session management
+  - Secure JWT-based session management with single session enforcement
+  - Automatic logout on new device login (prevents concurrent sessions)
   - User profile management
   - Login history tracking
   - Language preference settings (native & target language)
@@ -49,11 +57,15 @@ A comprehensive multilingual platform featuring real-time speech recognition, tr
   - Free tier: 10,000 characters/month
   - Real-time character counter
   - Usage reset on monthly basis
-- **Admin Panel**: User management and analytics
+- **Admin Panel**: Comprehensive user management and system monitoring
 
-  - User list with search and filtering
-  - Usage statistics and logs
-  - Login history monitoring
+  - User list with pagination (10-100 items per page)
+  - User activation/deactivation controls
+  - Login history monitoring with pagination
+  - STT usage statistics with pagination
+  - System health check dashboard
+  - Error monitoring with trace ID correlation
+  - Real-time health status for database, APIs, and cache
 
 ## Tech Stack
 
@@ -112,6 +124,7 @@ UniLingo/
 │   │           ├── cache/       # Caching layer
 │   │           ├── database/    # Database connection
 │   │           ├── dictionary/  # Dictionary API
+│   │           ├── errors/      # Error tracking & monitoring
 │   │           ├── exception/   # Error handling
 │   │           ├── health/      # Health check
 │   │           ├── middleware/  # Request/Response middleware
@@ -125,6 +138,7 @@ UniLingo/
 │   ├── specs/                   # Feature specifications
 │   │   ├── backend-api-integration/
 │   │   ├── dictionary-history-auth/
+│   │   ├── error-tracking/
 │   │   ├── google-auth-stt-limit/
 │   │   ├── hybrid-stt-english-high/
 │   │   ├── inline-dictionary-tooltip/
@@ -301,10 +315,22 @@ run_all.bat
 
 ### System
 
-| Endpoint             | Method | Description          |
-| -------------------- | ------ | -------------------- |
-| `/api/health`      | GET    | Health check         |
-| `/api/admin/users` | GET    | Admin: Get user list |
+| Endpoint             | Method | Description                    |
+| -------------------- | ------ | ------------------------------ |
+| `/api/health`      | GET    | System health check            |
+| `/api/admin/users` | GET    | Admin: Get user list (paginated) |
+| `/api/admin/login-logs` | GET | Admin: Get login logs (paginated) |
+| `/api/admin/stt-logs` | GET | Admin: Get STT logs (paginated) |
+| `/api/admin/stt-logs/summary` | GET | Admin: Get STT usage summary (paginated) |
+
+### Error Tracking
+
+| Endpoint                       | Method | Description                |
+| ------------------------------ | ------ | -------------------------- |
+| `/api/errors`                | POST   | Report frontend error      |
+| `/api/admin/errors`          | GET    | Get all error events       |
+| `/api/admin/errors/:traceId` | GET    | Get error by trace ID      |
+| `/api/admin/errors/test`     | POST   | Generate test error        |
 
 ## Configuration
 
@@ -351,6 +377,13 @@ English (US, UK, India, Australia), Korean, Chinese, Japanese, Spanish, French, 
 5. **Speed Control**: Adjust playback speed (0.5x - 2.5x) for better comprehension
 6. **Usage Tracking**: Monitor your learning progress with detailed logs
 
+## Security Features
+
+1. **Single Session Enforcement**: Only one active session per user - logging in from a new device automatically invalidates previous sessions
+2. **JWT Token Versioning**: Token version tracking prevents unauthorized access from old sessions
+3. **Automatic Session Expiration**: Sessions expire when user logs in from another device with clear error messaging
+4. **Admin Protection**: Admin accounts have same security controls as regular users
+
 ## Development Guidelines
 
 See `.kiro/steering/` for detailed development standards:
@@ -367,11 +400,68 @@ See `.kiro/steering/` for detailed development standards:
 ## Database Schema
 
 See `doc/database-schema.md` for complete database documentation including:
-- Users table with Google OAuth integration
+- Users table with Google OAuth integration and token versioning for session management
 - Login logs for security tracking
 - STT logs for usage analytics
 - Translation logs with favorite bookmarks
 - Dictionary logs for search history
+- Error events table with trace ID correlation for debugging
+
+All admin endpoints support pagination with customizable page sizes (10, 15, 20, 30, 50, 100 items per page).
+
+## Error Tracking System
+
+The application includes a comprehensive error tracking system that correlates frontend and backend errors using trace IDs:
+
+### Features
+- **Automatic Error Capture**: All API errors are automatically captured with context
+- **Trace ID Correlation**: Each request gets a unique trace ID that links frontend and backend errors
+- **Admin Dashboard**: View and filter errors at `/admin` (Error Monitoring tab)
+- **Detailed Context**: Stack traces, user info, request data, and environment details
+- **Test Error Generation**: Built-in test error button for system validation
+- **Pagination Support**: Browse errors with customizable page sizes
+
+### Architecture
+- **Frontend**: Global error handler captures unhandled errors and API failures
+- **Backend**: Trace middleware generates/preserves trace IDs across all requests
+- **Database**: `error_events` table stores all error data with indexes for fast querying
+- **Logging**: Custom logger includes trace IDs in all log entries
+
+### Usage
+1. All API calls automatically include trace IDs in headers
+2. Errors are captured and sent to `/api/errors` endpoint
+3. Admins can view errors at `/admin` with filtering by severity, source, and date
+4. Click on any error to see full details including stack trace and request context
+
+For detailed implementation, see `.kiro/specs/error-tracking/` directory.
+
+## Health Check System
+
+The application includes a comprehensive health check system for monitoring system status:
+
+### Features
+- **Database Health**: PostgreSQL connection and query performance
+- **External API Health**: Translation and Dictionary API availability
+- **Cache Health**: Redis/in-memory cache status with fallback support
+- **Response Time Tracking**: Latency monitoring for all components
+- **Admin Dashboard**: Real-time health status at `/admin` (Health Check tab)
+
+### Health Check Response
+```json
+{
+  "status": "ok|degraded|down",
+  "time": "2024-01-01T00:00:00Z",
+  "checks": {
+    "db": { "ok": true, "latency_ms": 15 },
+    "translation_api": { "ok": true, "latency_ms": 120 },
+    "dictionary_api": { "ok": true, "latency_ms": 95 },
+    "cache": { "ok": true, "latency_ms": 5 }
+  },
+  "trace_id": "uuid"
+}
+```
+
+For detailed implementation, see `.kiro/specs/health-check-enhancement/` directory.
 
 ## License
 

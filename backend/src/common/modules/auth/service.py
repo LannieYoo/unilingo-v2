@@ -31,13 +31,22 @@ class UserModel(Base):
     name = Column(String(100), nullable=False)
     avatar_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    user_level = Column(String(20), default='guest', nullable=False, index=True)  # guest, pro, pro_plus, admin
+    is_approved = Column(Boolean, default=False, nullable=False, index=True)
     token_version = Column(Integer, default=1, nullable=False)
     native_language = Column(String(10), nullable=True, default='en')
     target_language = Column(String(10), nullable=True, default='ko')
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
-    __table_args__ = (Index("idx_users_google_id", "google_id"), Index("idx_users_email", "email"),)
+    approved_at = Column(DateTime, nullable=True)
+    approved_by = Column(BigInteger, ForeignKey("users.id"), nullable=True)
+    __table_args__ = (
+        Index("idx_users_google_id", "google_id"), 
+        Index("idx_users_email", "email"),
+        Index("idx_users_user_level", "user_level"),
+        Index("idx_users_is_approved", "is_approved"),
+    )
     dictionary_logs = relationship("DictionaryLogModel", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -94,7 +103,24 @@ class UserRepository:
         self._db = db
     
     def _to_domain(self, model: UserModel) -> DUser:
-        return DUser(id=model.id, google_id=model.google_id, email=model.email, name=model.name, avatar_url=model.avatar_url, is_active=model.is_active, created_at=model.created_at, updated_at=model.updated_at, last_login_at=model.last_login_at, token_version=model.token_version or 1, native_language=model.native_language or 'en', target_language=model.target_language or 'ko')
+        return DUser(
+            id=model.id, 
+            google_id=model.google_id, 
+            email=model.email, 
+            name=model.name, 
+            avatar_url=model.avatar_url, 
+            is_active=model.is_active, 
+            user_level=model.user_level or 'guest',
+            is_approved=model.is_approved or False,
+            created_at=model.created_at, 
+            updated_at=model.updated_at, 
+            last_login_at=model.last_login_at, 
+            approved_at=model.approved_at,
+            approved_by=model.approved_by,
+            token_version=model.token_version or 1, 
+            native_language=model.native_language or 'en', 
+            target_language=model.target_language or 'ko'
+        )
     
     def get_by_id(self, user_id: int) -> Optional[DUser]:
         model = self._db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -109,7 +135,19 @@ class UserRepository:
         return self._to_domain(model) if model else None
     
     def create(self, user_data: DUserCreate) -> DUser:
-        model = UserModel(google_id=user_data.google_id, email=user_data.email, name=user_data.name, avatar_url=user_data.avatar_url, token_version=1)
+        # Check if user is admin
+        is_admin = ADMIN_USER and user_data.email == ADMIN_USER
+        
+        # Admin users get admin level (approved), others get pro level (unapproved)
+        model = UserModel(
+            google_id=user_data.google_id, 
+            email=user_data.email, 
+            name=user_data.name, 
+            avatar_url=user_data.avatar_url, 
+            token_version=1,
+            user_level='admin' if is_admin else 'pro',
+            is_approved=True if is_admin else False
+        )
         self._db.add(model)
         self._db.commit()
         self._db.refresh(model)
@@ -127,13 +165,33 @@ class UserRepository:
         self._db.refresh(model)
         return self._to_domain(model)
     
-    def get_all(self, page: int = 1, limit: int = 20) -> list[DUser]:
+    def get_all(self, page: int = 1, limit: int = 20, search: str = None) -> list[DUser]:
         offset = (page - 1) * limit
-        models = self._db.query(UserModel).order_by(UserModel.created_at.desc()).offset(offset).limit(limit).all()
+        query = self._db.query(UserModel)
+        
+        # Add search filter if provided
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (UserModel.email.ilike(search_pattern)) | 
+                (UserModel.name.ilike(search_pattern))
+            )
+        
+        models = query.order_by(UserModel.created_at.desc()).offset(offset).limit(limit).all()
         return [self._to_domain(m) for m in models]
     
-    def count(self) -> int:
-        return self._db.query(UserModel).count()
+    def count(self, search: str = None) -> int:
+        query = self._db.query(UserModel)
+        
+        # Add search filter if provided
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (UserModel.email.ilike(search_pattern)) | 
+                (UserModel.name.ilike(search_pattern))
+            )
+        
+        return query.count()
     
     def update_active(self, user_id: int, is_active: bool) -> Optional[DUser]:
         model = self._db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -157,6 +215,40 @@ class UserRepository:
         self._db.commit()
         self._db.refresh(model)
         return self._to_domain(model)
+    
+    def update_user_level(self, user_id: int, user_level: str, approved_by: int = None) -> Optional[DUser]:
+        """Update user level and approval status"""
+        model = self._db.query(UserModel).filter(UserModel.id == user_id).first()
+        if not model:
+            return None
+        
+        # Validate user_level
+        valid_levels = ['guest', 'pro', 'pro_plus', 'admin']
+        if user_level not in valid_levels:
+            raise ValueError(f"Invalid user_level: {user_level}. Must be one of {valid_levels}")
+        
+        model.user_level = user_level
+        model.updated_at = datetime.utcnow()
+        
+        # Admin users are always auto-approved
+        if user_level == 'admin':
+            model.is_approved = True
+            model.approved_at = datetime.utcnow()
+            model.approved_by = approved_by
+        # If upgrading from guest to any other level, mark as approved
+        elif user_level != 'guest' and not model.is_approved:
+            model.is_approved = True
+            model.approved_at = datetime.utcnow()
+            model.approved_by = approved_by
+        
+        self._db.commit()
+        self._db.refresh(model)
+        return self._to_domain(model)
+        model.target_language = target_language
+        model.updated_at = datetime.utcnow()
+        self._db.commit()
+        self._db.refresh(model)
+        return self._to_domain(model)
 
 class LoginLogRepository:
     def __init__(self, db: Session):
@@ -169,13 +261,39 @@ class LoginLogRepository:
         self._db.refresh(log)
         return DLoginLog(id=log.id, user_id=log.user_id, ip_address=log.ip_address, user_agent=log.user_agent, login_at=log.login_at)
     
-    def get_by_user_id(self, user_id: int, limit: int = 10) -> List[DLoginLog]:
-        logs = self._db.query(LoginLogModel).filter(LoginLogModel.user_id == user_id).order_by(LoginLogModel.login_at.desc()).limit(limit).all()
+    def get_by_user_id(self, user_id: int, limit: int = 10, offset: int = 0) -> List[DLoginLog]:
+        logs = self._db.query(LoginLogModel).filter(LoginLogModel.user_id == user_id).order_by(LoginLogModel.login_at.desc()).offset(offset).limit(limit).all()
         return [DLoginLog(id=l.id, user_id=l.user_id, ip_address=l.ip_address, user_agent=l.user_agent, login_at=l.login_at) for l in logs]
     
-    def get_recent(self, limit: int = 100) -> List[DLoginLog]:
-        logs = self._db.query(LoginLogModel).order_by(LoginLogModel.login_at.desc()).limit(limit).all()
+    def get_recent(self, limit: int = 100, offset: int = 0, search: str = None) -> List[DLoginLog]:
+        query = self._db.query(LoginLogModel)
+        
+        # Add search filter if provided - search by user email or name
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.join(UserModel, LoginLogModel.user_id == UserModel.id).filter(
+                (UserModel.email.ilike(search_pattern)) | 
+                (UserModel.name.ilike(search_pattern))
+            )
+        
+        logs = query.order_by(LoginLogModel.login_at.desc()).offset(offset).limit(limit).all()
         return [DLoginLog(id=l.id, user_id=l.user_id, ip_address=l.ip_address, user_agent=l.user_agent, login_at=l.login_at) for l in logs]
+    
+    def count_all(self, search: str = None) -> int:
+        query = self._db.query(LoginLogModel)
+        
+        # Add search filter if provided
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.join(UserModel, LoginLogModel.user_id == UserModel.id).filter(
+                (UserModel.email.ilike(search_pattern)) | 
+                (UserModel.name.ilike(search_pattern))
+            )
+        
+        return query.count()
+    
+    def count_by_user_id(self, user_id: int) -> int:
+        return self._db.query(LoginLogModel).filter(LoginLogModel.user_id == user_id).count()
 
 
 class SttLogRepository:
@@ -192,17 +310,51 @@ class SttLogRepository:
         self._db.refresh(model)
         return self._to_domain(model)
     
-    def get_by_user_id(self, user_id: int, limit: int = 100) -> list[DSttLog]:
-        models = self._db.query(SttLogModel).filter(SttLogModel.user_id == user_id).order_by(SttLogModel.created_at.desc()).limit(limit).all()
+    def get_by_user_id(self, user_id: int, limit: int = 100, offset: int = 0) -> list[DSttLog]:
+        models = self._db.query(SttLogModel).filter(SttLogModel.user_id == user_id).order_by(SttLogModel.created_at.desc()).offset(offset).limit(limit).all()
         return [self._to_domain(m) for m in models]
     
-    def get_recent(self, limit: int = 100) -> list[DSttLog]:
-        models = self._db.query(SttLogModel).order_by(SttLogModel.created_at.desc()).limit(limit).all()
+    def get_recent(self, limit: int = 100, offset: int = 0) -> list[DSttLog]:
+        models = self._db.query(SttLogModel).order_by(SttLogModel.created_at.desc()).offset(offset).limit(limit).all()
         return [self._to_domain(m) for m in models]
     
-    def get_all_users_summary(self) -> list[dict]:
-        results = self._db.query(SttLogModel.user_id, func.sum(SttLogModel.duration_seconds).label('total_duration'), func.sum(SttLogModel.word_count).label('total_words'), func.count(SttLogModel.id).label('session_count')).group_by(SttLogModel.user_id).all()
+    def count_all(self) -> int:
+        return self._db.query(SttLogModel).count()
+    
+    def count_by_user_id(self, user_id: int) -> int:
+        return self._db.query(SttLogModel).filter(SttLogModel.user_id == user_id).count()
+    
+    def get_all_users_summary(self, limit: int = 100, offset: int = 0, search: str = None) -> list[dict]:
+        query = self._db.query(
+            SttLogModel.user_id, 
+            func.sum(SttLogModel.duration_seconds).label('total_duration'), 
+            func.sum(SttLogModel.word_count).label('total_words'), 
+            func.count(SttLogModel.id).label('session_count')
+        ).group_by(SttLogModel.user_id)
+        
+        # Add search filter if provided - search by user email or name
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.join(UserModel, SttLogModel.user_id == UserModel.id).filter(
+                (UserModel.email.ilike(search_pattern)) | 
+                (UserModel.name.ilike(search_pattern))
+            )
+        
+        results = query.offset(offset).limit(limit).all()
         return [{'user_id': r.user_id, 'total_duration_seconds': r.total_duration or 0, 'total_word_count': r.total_words or 0, 'session_count': r.session_count or 0} for r in results]
+    
+    def count_users_with_logs(self, search: str = None) -> int:
+        query = self._db.query(func.count(func.distinct(SttLogModel.user_id)))
+        
+        # Add search filter if provided
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.join(UserModel, SttLogModel.user_id == UserModel.id).filter(
+                (UserModel.email.ilike(search_pattern)) | 
+                (UserModel.name.ilike(search_pattern))
+            )
+        
+        return query.scalar()
 
 class TranslationLogRepository:
     def __init__(self, db: Session):
@@ -291,21 +443,39 @@ class JWTHelper:
         self._access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
         self._refresh_token_expire_days = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
     
-    def create_access_token(self, user_id: int, email: str, token_version: int = 1) -> str:
+    def create_access_token(self, user_id: int, email: str, token_version: int = 1, user_level: str = 'guest', is_approved: bool = False) -> str:
         now = datetime.utcnow()
         expire = now + timedelta(minutes=self._access_token_expire_minutes)
-        payload = {"sub": str(user_id), "email": email, "exp": expire, "iat": now, "token_type": ETokenType.ACCESS.value, "token_version": token_version}
+        payload = {
+            "sub": str(user_id), 
+            "email": email, 
+            "exp": expire, 
+            "iat": now, 
+            "token_type": ETokenType.ACCESS.value, 
+            "token_version": token_version,
+            "user_level": user_level,
+            "is_approved": is_approved
+        }
         return jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
     
-    def create_refresh_token(self, user_id: int, email: str, token_version: int = 1) -> str:
+    def create_refresh_token(self, user_id: int, email: str, token_version: int = 1, user_level: str = 'guest', is_approved: bool = False) -> str:
         now = datetime.utcnow()
         expire = now + timedelta(days=self._refresh_token_expire_days)
-        payload = {"sub": str(user_id), "email": email, "exp": expire, "iat": now, "token_type": ETokenType.REFRESH.value, "token_version": token_version}
+        payload = {
+            "sub": str(user_id), 
+            "email": email, 
+            "exp": expire, 
+            "iat": now, 
+            "token_type": ETokenType.REFRESH.value, 
+            "token_version": token_version,
+            "user_level": user_level,
+            "is_approved": is_approved
+        }
         return jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
     
-    def create_tokens(self, user_id: int, email: str, token_version: int = 1) -> DToken:
-        access_token = self.create_access_token(user_id, email, token_version)
-        refresh_token = self.create_refresh_token(user_id, email, token_version)
+    def create_tokens(self, user_id: int, email: str, token_version: int = 1, user_level: str = 'guest', is_approved: bool = False) -> DToken:
+        access_token = self.create_access_token(user_id, email, token_version, user_level, is_approved)
+        refresh_token = self.create_refresh_token(user_id, email, token_version, user_level, is_approved)
         return DToken(access_token=access_token, refresh_token=refresh_token, token_type="bearer", expires_in=self._access_token_expire_minutes * 60)
     
     def decode_token(self, token: str) -> Optional[DTokenPayload]:
@@ -400,7 +570,8 @@ class AuthService:
             if user:
                 if not user.is_active and not is_admin:
                     raise GoogleOAuthError("Your account has been deactivated.")
-                user = self._user_repo.update_login(user.id, increment_token_version=not is_admin)
+                # Increment token_version for all users to invalidate previous sessions
+                user = self._user_repo.update_login(user.id, increment_token_version=True)
             else:
                 user_data = DUserCreate(google_id=google_user.google_id, email=google_user.email, name=google_user.name, avatar_url=google_user.picture)
                 user = self._user_repo.create(user_data)
@@ -420,7 +591,7 @@ class AuthService:
             logger.warning(f"Failed to log login: {e}")
     
     def create_tokens(self, user: DUser) -> DToken:
-        return self._jwt_helper.create_tokens(user.id, user.email, user.token_version)
+        return self._jwt_helper.create_tokens(user.id, user.email, user.token_version, user.user_level, user.is_approved)
     
     def verify_token(self, token: str) -> Optional[DTokenPayload]:
         return self._jwt_helper.verify_access_token(token)
@@ -430,7 +601,8 @@ class AuthService:
         user = self._user_repo.get_by_id(payload.user_id)
         if not user or not user.is_active:
             return None
-        if not self._is_admin(user.email) and payload.token_version != user.token_version:
+        # Check token_version for all users to enforce single session
+        if payload.token_version != user.token_version:
             return None
         return self.create_tokens(user)
     

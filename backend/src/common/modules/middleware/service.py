@@ -231,6 +231,30 @@ def get_trace_id() -> str:
 def init_error_handler(app: Flask):
     """에러 핸들러 미들웨어 초기화"""
     
+    from src.common.errors import AuthenticationError, AuthorizationError
+    
+    @app.errorhandler(AuthenticationError)
+    def handle_authentication_error(error):
+        trace_id = get_trace_id()
+        return jsonify({
+            'error': {
+                'code': 'AUTHENTICATION_ERROR',
+                'message': str(error),
+                'trace_id': trace_id
+            }
+        }), 401
+    
+    @app.errorhandler(AuthorizationError)
+    def handle_authorization_error(error):
+        trace_id = get_trace_id()
+        return jsonify({
+            'error': {
+                'code': 'AUTHORIZATION_ERROR',
+                'message': str(error),
+                'trace_id': trace_id
+            }
+        }), 403
+    
     @app.errorhandler(400)
     def handle_bad_request(error):
         trace_id = get_trace_id()

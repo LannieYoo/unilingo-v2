@@ -148,7 +148,7 @@ export const useAuthStore = create(
        * Get current user info.
        */
       fetchUser: async () => {
-        const { tokens } = get();
+        const { tokens, user: currentUser } = get();
         if (!tokens?.access_token) {
           // 토큰이 없으면 로그아웃 상태로 설정
           set({
@@ -164,6 +164,16 @@ export const useAuthStore = create(
         set({ isLoading: true });
         try {
           const user = await authService.getMe(tokens.access_token);
+          
+          // Check if user data has new fields (user_level, is_approved)
+          // If current user doesn't have these fields but new data does, it means schema was updated
+          const hasNewFields = user.user_level !== undefined && user.is_approved !== undefined;
+          const currentUserMissingFields = currentUser && (currentUser.user_level === undefined || currentUser.is_approved === undefined);
+          
+          if (hasNewFields && currentUserMissingFields) {
+            console.log('User schema updated, refreshing user data...');
+          }
+          
           const isAdmin = user && ADMIN_USER && user.email === ADMIN_USER;
           set({ user, isAuthenticated: true, isAdmin, isLoading: false });
           return user;

@@ -10,6 +10,7 @@ import { useDictionary } from '../_04_hooks'
 import { useAuthStore } from '../../auth'
 import { DIRECTIONS } from '../_08_constants'
 import { playPronunciation } from '../_07_utils'
+import { UsageIndicator } from '../../../common/components/UsageIndicator'
 import '../_10_styles/dictionary.css'
 
 export function DictionaryView() {
@@ -368,6 +369,11 @@ export function DictionaryView() {
           )}
         </div>
       </PageBox>
+
+      {/* Dictionary Usage Indicator */}
+      <div className="mt-4">
+        <UsageIndicator usageType="dictionary" label="Dictionary Searches" />
+      </div>
 
       {/* 검색 히스토리 - 로그인한 사용자만 표시 */}
       {isAuthenticated && searchHistory.length > 0 && (

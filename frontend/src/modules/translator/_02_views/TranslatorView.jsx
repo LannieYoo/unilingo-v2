@@ -3,12 +3,15 @@
  * 번역 페이지 뷰
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
-import { useTranslator } from '../_04_hooks'
+import { useTranslator, useOCR, useTTS } from '../_04_hooks'
 import { SOURCE_LANGUAGES, TARGET_LANGUAGES, LANG_MAP } from '../_08_constants'
-import { useAuthStore, authService } from '../../auth'
+import { getVoiceCode } from '../../../config/languages'
+import { useAuthStore, authService, MAX_CHARS_GUEST, LoginModal } from '../../auth'
+import { useUsage } from '../../../common/hooks/useUsage'
+import { UsageIndicator } from '../../../common/components/UsageIndicator'
 import '../_10_styles/translator.css'
 
 export function TranslatorView() {
@@ -26,6 +29,10 @@ export function TranslatorView() {
 
   const { isAuthenticated, tokens } = useAuthStore()
   const navigate = useNavigate()
+  const { trackUsage, isLimitExceeded: checkUsageLimit } = useUsage()
+  const { extractText, isProcessing: isOCRProcessing, progress: ocrProgress, error: ocrError } = useOCR()
+  const { speak, stop, isSpeaking, currentLang, isSupported: isTTSSupported } = useTTS()
+  const fileInputRef = useRef(null)
   const [recentHistory, setRecentHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, text }
@@ -33,6 +40,11 @@ export function TranslatorView() {
   const [togglingFavoriteId, setTogglingFavoriteId] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSavedText, setLastSavedText] = useState('')
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [guestCharCount, setGuestCharCount] = useState(0)
+
+  // Check if user has exceeded their usage limit
+  const isLimitExceeded = isAuthenticated && checkUsageLimit()
 
   // Load recent history on mount
   useEffect(() => {
@@ -164,6 +176,157 @@ export function TranslatorView() {
     setTargetLang(temp)
   }
 
+  // Track guest user character count
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setGuestCharCount(inputText.length)
+    }
+  }, [inputText, isAuthenticated])
+
+  // Check if guest user exceeded limit
+  const isGuestLimitExceeded = !isAuthenticated && guestCharCount >= MAX_CHARS_GUEST
+
+  const handleTranslate = async () => {
+    // Check guest limit before translation
+    if (!isAuthenticated && inputText.length > MAX_CHARS_GUEST) {
+      setShowLoginModal(true)
+      return
+    }
+
+    await translate()
+    
+    // Track usage after translation for authenticated users
+    if (outputText && isAuthenticated) {
+      const charCount = inputText.length
+      await trackUsage(charCount, 'translator')
+    }
+  }
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image size must be less than 10MB')
+      return
+    }
+
+    try {
+      // Determine OCR language based on source language
+      let ocrLang = 'eng'
+      if (sourceLang === 'ko') ocrLang = 'kor'
+      else if (sourceLang === 'zh') ocrLang = 'chi_sim'
+      else if (sourceLang === 'ja') ocrLang = 'jpn'
+      else if (sourceLang === 'es') ocrLang = 'spa'
+      else if (sourceLang === 'fr') ocrLang = 'fra'
+      else if (sourceLang === 'de') ocrLang = 'deu'
+      else if (sourceLang === 'ar') ocrLang = 'ara'
+      else if (sourceLang === 'hi') ocrLang = 'hin'
+      
+      // Always include English for better accuracy
+      if (ocrLang !== 'eng') {
+        ocrLang = `${ocrLang}+eng`
+      }
+
+      const text = await extractText(file, ocrLang)
+      
+      if (text) {
+        setInputText(text)
+      } else {
+        alert('No text found in the image')
+      }
+    } catch (err) {
+      console.error('OCR failed:', err)
+      alert('Failed to extract text from image. Please try another image.')
+    } finally {
+      // Clear file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleSpeakSource = () => {
+    if (!inputText?.trim()) return
+    
+    const ttsLang = getVoiceCode(sourceLang)
+    
+    if (isSpeaking && currentLang === ttsLang) {
+      stop()
+    } else {
+      speak(inputText, ttsLang)
+    }
+  }
+
+  const handleSpeakTarget = () => {
+    if (!outputText?.trim()) return
+    
+    const ttsLang = getVoiceCode(targetLang)
+    
+    if (isSpeaking && currentLang === ttsLang) {
+      stop()
+    } else {
+      speak(outputText, ttsLang)
+    }
+  }
+
+  const handlePaste = async (event) => {
+    const items = event.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      
+      if (item.type.startsWith('image/')) {
+        event.preventDefault()
+        
+        const file = item.getAsFile()
+        if (!file) continue
+
+        try {
+          // Determine OCR language based on source language
+          let ocrLang = 'eng'
+          if (sourceLang === 'ko') ocrLang = 'kor'
+          else if (sourceLang === 'zh') ocrLang = 'chi_sim'
+          else if (sourceLang === 'ja') ocrLang = 'jpn'
+          else if (sourceLang === 'es') ocrLang = 'spa'
+          else if (sourceLang === 'fr') ocrLang = 'fra'
+          else if (sourceLang === 'de') ocrLang = 'deu'
+          else if (sourceLang === 'ar') ocrLang = 'ara'
+          else if (sourceLang === 'hi') ocrLang = 'hin'
+          
+          if (ocrLang !== 'eng') {
+            ocrLang = `${ocrLang}+eng`
+          }
+
+          const text = await extractText(file, ocrLang)
+          
+          if (text) {
+            setInputText(text)
+          } else {
+            alert('No text found in the image')
+          }
+        } catch (err) {
+          console.error('OCR failed:', err)
+          alert('Failed to extract text from image. Please try another image.')
+        }
+        
+        break
+      }
+    }
+  }
+
   return (
     <PageLayout title="Translator">
       <PageBox>
@@ -206,32 +369,104 @@ export function TranslatorView() {
 
         {/* 입력 */}
         <div className="translator-section translator-input-wrapper">
+          {/* Image Upload Button */}
+          <div className="translator-image-upload-container">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+            <button
+              onClick={handleUploadClick}
+              disabled={isOCRProcessing}
+              className="translator-image-upload-btn"
+              title="Upload image to extract text (not saved on server)"
+            >
+              <span className="material-symbols-outlined">image</span>
+              <span className="translator-image-upload-text">
+                {isOCRProcessing ? `Processing... ${ocrProgress}%` : 'Upload Image'}
+              </span>
+            </button>
+            <span className="translator-image-upload-hint">
+              📷 Image is processed locally and not saved • Paste image with Ctrl+V
+            </span>
+          </div>
+          
           <textarea
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Enter text to translate... (Auto-translates as you type)"
+            onChange={(e) => {
+              const newText = e.target.value
+              // Limit guest users to MAX_CHARS_GUEST
+              if (!isAuthenticated && newText.length > MAX_CHARS_GUEST) {
+                setInputText(newText.slice(0, MAX_CHARS_GUEST))
+                setShowLoginModal(true)
+              } else {
+                setInputText(newText)
+              }
+            }}
+            onPaste={handlePaste}
+            placeholder="Enter text to translate... (Auto-translates as you type) or paste image (Ctrl+V)"
             className="translator-textarea"
             rows={8}
+            disabled={isOCRProcessing}
           />
           {inputText && (
-            <button
-              onClick={() => setInputText('')}
-              className="translator-clear-btn"
-              title="Clear text"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  stop()
+                  setInputText('')
+                }}
+                className="translator-clear-btn"
+                title="Clear text"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+              {isTTSSupported && (
+                <button
+                  onClick={handleSpeakSource}
+                  className={`translator-speak-btn ${isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'speaking' : ''}`}
+                  title={isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'Stop' : 'Listen'}
+                >
+                  <span className="material-symbols-outlined">
+                    {isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'stop_circle' : 'volume_up'}
+                  </span>
+                </button>
+              )}
+            </>
+          )}
+          {/* Guest character counter */}
+          {!isAuthenticated && (
+            <div className="translator-char-counter" style={{
+              position: 'absolute',
+              bottom: '8px',
+              right: '8px',
+              fontSize: '12px',
+              color: guestCharCount >= MAX_CHARS_GUEST * 0.9 ? '#ef4444' : '#6b7280',
+              backgroundColor: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              border: '1px solid #e5e7eb'
+            }}>
+              {guestCharCount} / {MAX_CHARS_GUEST}
+            </div>
           )}
         </div>
 
         {/* 번역 버튼 */}
         <div className="translator-btn-group">
           <button
-            onClick={() => translate()}
-            disabled={isTranslating || !inputText?.trim()}
+            onClick={handleTranslate}
+            disabled={isTranslating || !inputText?.trim() || (isAuthenticated && isLimitExceeded) || isGuestLimitExceeded}
             className="translator-btn"
+            title={isLimitExceeded ? 'Usage limit exceeded' : isGuestLimitExceeded ? 'Guest limit reached - Please login' : ''}
           >
-            {isTranslating ? 'Translating...' : 'Translate'}
+            {isTranslating ? 'Translating...' : 
+             isLimitExceeded ? 'Limit Exceeded' : 
+             isGuestLimitExceeded ? 'Login Required' : 
+             'Translate'}
           </button>
           
           {/* Save to History 버튼 */}
@@ -267,7 +502,7 @@ export function TranslatorView() {
         </div>
 
         {/* 출력 */}
-        <div className="translator-section">
+        <div className="translator-section translator-output-wrapper">
           <textarea
             value={outputText}
             readOnly
@@ -275,6 +510,22 @@ export function TranslatorView() {
             className="translator-textarea translator-textarea--output"
             rows={8}
           />
+          {outputText && isTTSSupported && (
+            <button
+              onClick={handleSpeakTarget}
+              className={`translator-speak-btn translator-speak-btn--output ${isSpeaking && currentLang === getVoiceCode(targetLang) ? 'speaking' : ''}`}
+              title={isSpeaking && currentLang === getVoiceCode(targetLang) ? 'Stop' : 'Listen'}
+            >
+              <span className="material-symbols-outlined">
+                {isSpeaking && currentLang === getVoiceCode(targetLang) ? 'stop_circle' : 'volume_up'}
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Translation Usage Indicator */}
+        <div className="mt-4">
+          <UsageIndicator usageType="translator" label="Translator" />
         </div>
 
         {/* 최근 번역 히스토리 */}
@@ -369,6 +620,9 @@ export function TranslatorView() {
             </div>
           </div>
         )}
+
+        {/* Login Modal for Guest Users */}
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
       </PageBox>
     </PageLayout>
   )
