@@ -58,13 +58,6 @@ export function useTTS() {
         return
       }
 
-      // Create new utterance
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = lang
-      utterance.rate = 0.9
-      utterance.pitch = 1
-      utterance.volume = 1
-
       const langPrefix = lang.split('-')[0] // e.g., 'ko' from 'ko-KR'
       
       // Find voice that matches the language (prefer exact match, then prefix match, then any variant)
@@ -77,14 +70,47 @@ export function useTTS() {
         matchingVoice = voices.find(voice => voice.lang.startsWith('zh'))
       }
       
-      if (matchingVoice) {
-        utterance.voice = matchingVoice
-        console.log('✓ Using voice:', matchingVoice.name, '(', matchingVoice.lang, ') for requested lang:', lang)
-      } else {
-        console.warn('✗ No matching voice found for:', lang, '- browser will use default voice')
+      // Check if voice is available
+      if (!matchingVoice) {
+        console.warn('✗ No matching voice found for:', lang)
         console.log('Available languages:', [...new Set(voices.map(v => v.lang))].sort())
-        // Don't set voice - let browser choose default
+        
+        // Show user-friendly warning
+        const langNames = {
+          'zh': 'Chinese',
+          'ko': 'Korean',
+          'ja': 'Japanese',
+          'es': 'Spanish',
+          'fr': 'French',
+          'de': 'German',
+          'ar': 'Arabic',
+          'hi': 'Hindi',
+          'en': 'English'
+        }
+        const langName = langNames[langPrefix] || lang
+        
+        alert(
+          `⚠️ ${langName} voice is not available on your system.\n\n` +
+          `To enable ${langName} text-to-speech:\n` +
+          `1. Open Windows Settings\n` +
+          `2. Go to Time & Language > Language & Region\n` +
+          `3. Add ${langName} language\n` +
+          `4. Download the speech pack\n` +
+          `5. Restart your browser\n\n` +
+          `Available voices: ${[...new Set(voices.map(v => v.lang.split('-')[0]))].join(', ')}`
+        )
+        return
       }
+
+      // Create new utterance
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = lang
+      utterance.rate = 0.9
+      utterance.pitch = 1
+      utterance.volume = 1
+      utterance.voice = matchingVoice
+      
+      console.log('✓ Using voice:', matchingVoice.name, '(', matchingVoice.lang, ') for requested lang:', lang)
 
       utterance.onstart = () => {
         console.log('TTS started speaking in', lang)
@@ -102,6 +128,13 @@ export function useTTS() {
         console.error('TTS Error:', event.error, 'for language:', lang)
         setIsSpeaking(false)
         setCurrentLang(null)
+        
+        // Show error to user
+        if (event.error === 'not-allowed' || event.error === 'canceled') {
+          // User canceled or browser blocked - don't show error
+          return
+        }
+        alert(`Failed to play audio: ${event.error}`)
       }
 
       utteranceRef.current = utterance
