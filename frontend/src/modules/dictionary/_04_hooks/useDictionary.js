@@ -22,6 +22,9 @@ export function useDictionary() {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
   const [searchHistory, setSearchHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
+  const [currentLogId, setCurrentLogId] = useState(null)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false)
 
   const abortControllerRef = useRef(null)
   const currentSearchTermRef = useRef('')
@@ -48,32 +51,83 @@ export function useDictionary() {
     }
   }, [preferencesLoaded, nativeLanguage])
 
-  // 페이지 로드 시 데이터베이스에서 검색 히스토리 불러오기
+  // 페이지 로드 시 데이터베이스에서 즐겨찾기만 불러오기
   useEffect(() => {
-    const loadSearchHistory = async () => {
+    const loadFavorites = async () => {
+      console.log('[Dictionary] Loading favorites, user:', user, 'token:', !!tokens?.access_token)
       if (user && tokens?.access_token) {
         try {
-          const data = await authService.getRecentDictionaryLogs(tokens.access_token, 20)
+          const data = await authService.getDictionaryLogs(tokens.access_token, 50)
+          console.log('[Dictionary] Loaded logs:', data)
           if (data.logs && data.logs.length > 0) {
-            const historyItems = data.logs.map(log => ({
-              id: log.id,
-              word: log.search_word,
-              results: log.search_results ? JSON.parse(log.search_results) : [],
-              fromLang: log.source_lang,
-              toLang: log.target_lang,
-              timestamp: new Date(log.created_at).getTime()
-            })).reverse() // 최신순으로 정렬 (API에서 최신순으로 오므로 reverse)
+            // 즐겨찾기만 필터링
+            const favoriteItems = data.logs
+              .filter(log => {
+                console.log('[Dictionary] Log:', log.search_word, 'is_favorite:', log.is_favorite)
+                return log.is_favorite
+              })
+              .map(log => {
+                // search_results에서 번역 추출
+                let simpleTranslation = null
+                try {
+                  const results = typeof log.search_results === 'string' 
+                    ? JSON.parse(log.search_results) 
+                    : log.search_results
+                  
+                  if (results && results.length > 0) {
+                    const firstResult = results[0]
+                    
+                    // 1. simpleTranslation이 있고 원본 단어와 다르면 사용
+                    if (firstResult.simpleTranslation && 
+                        firstResult.simpleTranslation !== firstResult.term &&
+                        firstResult.simpleTranslation !== firstResult.word) {
+                      simpleTranslation = firstResult.simpleTranslation
+                    }
+                    // 2. meanings의 첫 번째 정의의 translation 사용
+                    else if (firstResult.meanings && firstResult.meanings.length > 0) {
+                      const firstMeaning = firstResult.meanings[0]
+                      if (firstMeaning.definitions && firstMeaning.definitions.length > 0) {
+                        const firstDef = firstMeaning.definitions[0]
+                        if (firstDef.translation) {
+                          simpleTranslation = firstDef.translation
+                        }
+                      }
+                    }
+                  }
+                } catch (e) {
+                  console.error('[Dictionary] Failed to parse search_results:', e)
+                }
+                
+                return {
+                  id: log.id,
+                  word: log.search_word,
+                  results: log.search_results ? JSON.parse(log.search_results) : [],
+                  fromLang: log.source_lang,
+                  toLang: log.target_lang,
+                  isFavorite: true,
+                  resultSummary: simpleTranslation,
+                  timestamp: new Date(log.created_at).getTime()
+                }
+              })
+              .reverse()
             
-            setSearchHistory(historyItems)
-            setHistoryIndex(historyItems.length - 1)
+            console.log('[Dictionary] Favorite items:', favoriteItems)
+            setSearchHistory(favoriteItems)
+            if (favoriteItems.length > 0) {
+              setHistoryIndex(favoriteItems.length - 1)
+            }
           }
         } catch (error) {
-          console.error('Failed to load dictionary history:', error)
+          console.error('Failed to load dictionary favorites:', error)
+        } finally {
+          setFavoritesLoaded(true)
         }
+      } else {
+        setFavoritesLoaded(true)
       }
     }
 
-    loadSearchHistory()
+    loadFavorites()
   }, [user, tokens?.access_token])
 
   // 언어 감지
@@ -287,59 +341,31 @@ export function useDictionary() {
     }
   }, [targetLang, isSearching])
 
-  // 히스토리에 추가 (데이터베이스에도 저장)
-  const addToHistory = useCallback(async (searchWord, searchResults, fromLang, toLang) => {
-    const historyItem = {
-      word: searchWord,
-      results: searchResults,
-      fromLang,
-      toLang,
-      timestamp: Date.now()
-    }
-    
-    // 로그인한 사용자인 경우 데이터베이스에 저장하고 ID 받아오기
-    if (user && tokens?.access_token) {
-      try {
-        const response = await authService.createDictionaryLog(tokens.access_token, {
-          search_word: searchWord,
-          source_lang: fromLang,
-          target_lang: toLang,
-          search_results: searchResults
-        })
-        
-        // 데이터베이스에서 받은 ID를 히스토리 아이템에 추가
-        if (response.log && response.log.id) {
-          historyItem.id = response.log.id
-        }
-      } catch (error) {
-        console.error('Failed to save dictionary log:', error)
-      }
-    }
-    
-    // 로컬 히스토리 업데이트 (중복 단어 제거 후 새로 추가)
-    setSearchHistory(prev => {
-      // 동일한 단어가 있으면 제거
-      const filteredHistory = prev.filter(item => item.word !== searchWord)
-      
-      // 새 항목 추가
-      filteredHistory.push(historyItem)
-      
-      // 최대 50개 유지
-      if (filteredHistory.length > 50) {
-        filteredHistory.shift()
-      }
-      
-      setHistoryIndex(filteredHistory.length - 1)
-      return filteredHistory
-    })
-  }, [user, tokens])
-
   // 검색 수행
   const performSearch = useCallback(async (fromLang, toLang, searchWord, signal = null, historyWord = null) => {
     const wordToSearch = searchWord
-    const wordForHistory = historyWord || searchWord
     
     console.log('[Dictionary Hook] performSearch called:', { fromLang, toLang, searchWord, historyWord })
+    console.log('[Dictionary Hook] Current searchHistory:', searchHistory)
+    
+    // 현재 검색어가 즐겨찾기에 있는지 확인
+    const existingFavorite = searchHistory.find(item => {
+      const match = item.word.toLowerCase() === searchWord.toLowerCase() && item.isFavorite
+      console.log('[Dictionary Hook] Checking:', item.word, 'vs', searchWord, 'isFavorite:', item.isFavorite, 'match:', match)
+      return match
+    })
+    
+    console.log('[Dictionary Hook] Existing favorite found:', existingFavorite)
+    
+    if (existingFavorite) {
+      console.log('[Dictionary Hook] Setting favorite state:', existingFavorite.id, true)
+      setCurrentLogId(existingFavorite.id)
+      setIsFavorite(true)
+    } else {
+      console.log('[Dictionary Hook] No favorite found, resetting state')
+      setCurrentLogId(null)
+      setIsFavorite(false)
+    }
     
     if (signal?.aborted) throw new DOMException('Search cancelled', 'AbortError')
     if (wordToSearch !== currentSearchTermRef.current) throw new DOMException('Search cancelled', 'AbortError')
@@ -354,7 +380,6 @@ export function useDictionary() {
         console.log('[Dictionary Hook] No data or no term, showing error')
         const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 검색 결과를 찾을 수 없습니다.`, isPhrase: true }]
         setResults(result)
-        addToHistory(wordForHistory, result, fromLang, toLang)
         return
       }
       
@@ -363,6 +388,8 @@ export function useDictionary() {
       const result = [{
         term: dictData.term,
         word: dictData.term,
+        simpleTranslation: dictData.simple_translation || null,
+        englishWord: dictData.english_word || null,
         pronunciation: dictData.pronunciation && (dictData.pronunciation.ipa || dictData.pronunciation.phonetic) 
           ? { 
               ipa: dictData.pronunciation.ipa,
@@ -388,7 +415,6 @@ export function useDictionary() {
       
       console.log('[Dictionary Hook] Transformed result:', result)
       setResults(result)
-      addToHistory(wordForHistory, result, fromLang, toLang)
       
       // Track usage - count as 1 search
       const searchCount = 1
@@ -403,9 +429,8 @@ export function useDictionary() {
       console.error('Search error:', error)
       const errorResult = [{ word: wordToSearch, translation: 'Error: ' + error.message }]
       setResults(errorResult)
-      addToHistory(wordForHistory, errorResult, fromLang, toLang)
     }
-  }, [addToHistory, trackUsage])
+  }, [trackUsage, searchHistory])
 
   // 검색 실행
   const handleSearch = useCallback(async () => {
@@ -472,7 +497,7 @@ export function useDictionary() {
   }, [performSearch])
 
   // 단어로 검색
-  const searchWithWord = useCallback(async (word, historyWord = null) => {
+  const searchWithWord = useCallback(async (word, historyWord = null, suggestionTranslation = null) => {
     if (!word.trim()) {
       setResults([])
       return
@@ -499,6 +524,11 @@ export function useDictionary() {
     
     setResults([])
     setIsSearching(true)
+    
+    // suggestionTranslation을 임시 저장
+    if (suggestionTranslation) {
+      window.__lastSuggestionTranslation = suggestionTranslation
+    }
     
     try {
       const detectedLang = detectLanguage(word)
@@ -542,14 +572,16 @@ export function useDictionary() {
 
   // 자동완성 선택
   const selectSuggestion = useCallback((suggestion) => {
-    let displayWord, searchWord
+    let displayWord, searchWord, suggestionTranslation
     
     if (!suggestion.isNonEnglish && suggestion.sourceTranslation) {
       displayWord = suggestion.sourceTranslation
       searchWord = suggestion.word
+      suggestionTranslation = suggestion.translation
     } else {
       displayWord = suggestion.word
       searchWord = suggestion.word
+      suggestionTranslation = suggestion.translation
     }
     
     setSearchTerm(displayWord)
@@ -557,7 +589,8 @@ export function useDictionary() {
     setSuggestions([])
     setSelectedSuggestionIndex(-1)
     
-    searchWithWord(searchWord, displayWord)
+    // suggestionTranslation을 함께 전달
+    searchWithWord(searchWord, displayWord, suggestionTranslation)
   }, [searchWithWord])
 
   // 히스토리 네비게이션
@@ -570,6 +603,8 @@ export function useDictionary() {
       setTargetLang(historyItem.toLang)
       setResults(historyItem.results)
       setDetectedLanguage(historyItem.fromLang)
+      setCurrentLogId(historyItem.id || null)
+      setIsFavorite(historyItem.isFavorite || false)
     }
   }, [historyIndex, searchHistory])
 
@@ -582,6 +617,8 @@ export function useDictionary() {
       setTargetLang(historyItem.toLang)
       setResults(historyItem.results)
       setDetectedLanguage(historyItem.fromLang)
+      setCurrentLogId(historyItem.id || null)
+      setIsFavorite(historyItem.isFavorite || false)
     }
   }, [historyIndex, searchHistory])
 
@@ -608,13 +645,12 @@ export function useDictionary() {
       return
     }
     
-    // 로그인한 사용자이고 아이템에 ID가 있는 경우 데이터베이스에서 삭제
-    if (user && tokens?.access_token && itemToDelete.id) {
+    // 로그인한 사용자이고 아이템에 ID가 있는 경우에만 데이터베이스에서 삭제
+    if (user && tokens?.access_token && itemToDelete.id && itemToDelete.isFavorite) {
       try {
         await authService.deleteDictionaryLog(tokens.access_token, itemToDelete.id)
       } catch (error) {
         console.error('Failed to delete dictionary log:', error)
-        // 데이터베이스 삭제 실패해도 로컬에서는 삭제 진행
       }
     }
     
@@ -629,6 +665,101 @@ export function useDictionary() {
       setHistoryIndex(Math.max(-1, historyIndex - 1))
     }
   }, [historyIndex, searchHistory, user, tokens])
+
+  // 즐겨찾기 토글 (DB에 저장)
+  const toggleFavorite = useCallback(async () => {
+    if (!user || !tokens?.access_token) return null
+    
+    try {
+      // 현재 검색 결과 가져오기
+      if (!searchTerm || results.length === 0) return null
+      
+      const fromLang = detectedLanguage || 'en'
+      const toLang = targetLang
+      
+      // 이미 저장된 로그가 있으면 토글
+      if (currentLogId) {
+        const response = await authService.toggleDictionaryFavorite(tokens.access_token, currentLogId)
+        const newFavoriteState = response.log.is_favorite
+        setIsFavorite(newFavoriteState)
+        
+        // 로컬 히스토리 업데이트
+        if (newFavoriteState) {
+          // 즐겨찾기 추가 - 히스토리에 추가
+          setSearchHistory(prev => {
+            const exists = prev.find(item => item.id === currentLogId)
+            if (exists) {
+              return prev.map(item => 
+                item.id === currentLogId ? { ...item, isFavorite: true } : item
+              )
+            } else {
+              return [...prev, {
+                id: currentLogId,
+                word: searchTerm,
+                results: results,
+                fromLang: fromLang,
+                toLang: toLang,
+                isFavorite: true,
+                timestamp: Date.now()
+              }]
+            }
+          })
+        } else {
+          // 즐겨찾기 제거 - 히스토리에서 삭제
+          setSearchHistory(prev => prev.filter(item => item.id !== currentLogId))
+          setCurrentLogId(null)
+        }
+        
+        return newFavoriteState
+      } else {
+        // 새로 저장
+        // Extract simple_translation from results or use suggestion translation
+        const resultSummary = window.__lastSuggestionTranslation || 
+          (results && results.length > 0 && results[0].simpleTranslation 
+            ? results[0].simpleTranslation 
+            : null)
+        
+        // Clear the temporary translation
+        delete window.__lastSuggestionTranslation
+        
+        const response = await authService.createDictionaryLog(tokens.access_token, {
+          search_word: searchTerm,
+          source_lang: fromLang,
+          target_lang: toLang,
+          search_results: results,
+          result_summary: resultSummary
+        })
+        
+        if (response.log && response.log.id) {
+          const logId = response.log.id
+          setCurrentLogId(logId)
+          
+          // 즐겨찾기 토글
+          const toggleResponse = await authService.toggleDictionaryFavorite(tokens.access_token, logId)
+          const newFavoriteState = toggleResponse.log.is_favorite
+          setIsFavorite(newFavoriteState)
+          
+          // 로컬 히스토리에 추가
+          if (newFavoriteState) {
+            setSearchHistory(prev => [...prev, {
+              id: logId,
+              word: searchTerm,
+              results: results,
+              fromLang: fromLang,
+              toLang: toLang,
+              isFavorite: true,
+              timestamp: Date.now()
+            }])
+          }
+          
+          return newFavoriteState
+        }
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error)
+      return null
+    }
+  }, [user, tokens, currentLogId, searchTerm, results, detectedLanguage, targetLang])
 
   return {
     searchTerm,
@@ -645,6 +776,11 @@ export function useDictionary() {
     searchHistory,
     historyIndex,
     detectedLanguage,
+    currentLogId,
+    isFavorite,
+    setIsFavorite,
+    favoritesLoaded,
+    toggleFavorite,
     handleSearch,
     handleInputChange,
     selectSuggestion,

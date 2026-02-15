@@ -152,6 +152,37 @@ def check_usage_tracking() -> CheckResult:
         return CheckResult(ok=False, latency_ms=latency_ms, error=str(e))
 
 
+def check_deepl_usage() -> CheckResult:
+    """DeepL API 사용량 확인 (사전 전용)"""
+    from src.common.modules.deepl import get_deepl_service
+    
+    start_time = time.time()
+    try:
+        deepl = get_deepl_service()
+        
+        if not deepl.is_available():
+            return CheckResult(ok=True, latency_ms=0, info="DeepL not configured (optional)")
+        
+        usage = deepl.get_usage()
+        latency_ms = int((time.time() - start_time) * 1000)
+        
+        if not usage:
+            return CheckResult(ok=False, latency_ms=latency_ms, error="Failed to get usage")
+        
+        # 사용량 정보 추가
+        info = f"Used: {usage['character_count']:,} / {usage['character_limit']:,} chars (Remaining: {usage['remaining']:,})"
+        
+        # 90% 이상 사용 시 경고
+        usage_percent = (usage['character_count'] / usage['character_limit']) * 100
+        if usage_percent >= 90:
+            return CheckResult(ok=True, latency_ms=latency_ms, info=info, warning=f"Usage at {usage_percent:.1f}%")
+        
+        return CheckResult(ok=True, latency_ms=latency_ms, info=info)
+    except Exception as e:
+        latency_ms = int((time.time() - start_time) * 1000)
+        return CheckResult(ok=False, latency_ms=latency_ms, error=str(e))
+
+
 def determine_overall_status(checks: Dict[str, CheckResult]) -> str:
     """전체 상태 판단"""
     if not checks.get('db', {}).get('ok', False):
@@ -173,7 +204,8 @@ def perform_health_check() -> HealthCheckResponse:
         'translation_api': safe_check(check_translation_api, 'translation_api'),
         'dictionary_api': safe_check(check_dictionary_api, 'dictionary_api'),
         'cache': safe_check(check_cache, 'cache'),
-        'usage_tracking': safe_check(check_usage_tracking, 'usage_tracking')
+        'usage_tracking': safe_check(check_usage_tracking, 'usage_tracking'),
+        'deepl_usage': safe_check(check_deepl_usage, 'deepl_usage')
     }
     
     status = determine_overall_status(checks)

@@ -160,23 +160,23 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
               </button>
             )}
 
-            {/* Dictionary History */}
+            {/* Favorite Words */}
             {isAuthenticated ? (
               <Link
                 to="/dictionary/history"
                 onClick={onMenuClick}
                 className="flex items-center gap-2 px-2 py-2 text-sm text-text-light dark:text-text-dark hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors"
               >
-                <span className="material-symbols-outlined text-lg">book</span>
-                Dictionary History
+                <span className="material-symbols-outlined text-lg">star</span>
+                Favorite Words
               </Link>
             ) : (
               <button
-                onClick={() => handleProtectedMenuClick('Dictionary History')}
+                onClick={() => handleProtectedMenuClick('Favorite Words')}
                 className="flex items-center gap-2 w-full px-2 py-2 text-sm text-text-light dark:text-text-dark hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors"
               >
-                <span className="material-symbols-outlined text-lg">book</span>
-                Dictionary History
+                <span className="material-symbols-outlined text-lg">star</span>
+                Favorite Words
               </button>
             )}
 
@@ -348,26 +348,26 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
                   </button>
                 )}
 
-                {/* Dictionary History */}
+                {/* Favorite Words */}
                 {isAuthenticated ? (
                   <Link
                     to="/dictionary/history"
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-text-light dark:text-text-dark hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-lg">book</span>
-                    Dictionary History
+                    <span className="material-symbols-outlined text-lg">star</span>
+                    Favorite Words
                   </Link>
                 ) : (
                   <button
                     onClick={() => {
                       setIsDropdownOpen(false);
-                      handleProtectedMenuClick('Dictionary History');
+                      handleProtectedMenuClick('Favorite Words');
                     }}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-text-light dark:text-text-dark hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-lg">book</span>
-                    Dictionary History
+                    <span className="material-symbols-outlined text-lg">star</span>
+                    Favorite Words
                   </button>
                 )}
 

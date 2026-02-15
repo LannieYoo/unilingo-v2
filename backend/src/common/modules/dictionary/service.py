@@ -8,9 +8,13 @@ import logging
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..cache import get_cache_service
 from ..translation import get_translation_service
+from ..naver_dict import get_naver_dict_service
+from ..deepl import get_deepl_service
+from ..wordnet import get_wordnet_service
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +27,10 @@ class DictionaryService:
         self.cache_ttl = cache_ttl  # 7 days
         self.cache = get_cache_service() if cache_enabled else None
         self.translation_service = get_translation_service()
-        self.timeout = 5
+        self.naver_papago = get_naver_dict_service()
+        self.deepl = get_deepl_service()
+        self.wordnet = get_wordnet_service()
+        self.timeout = 10  # Increased timeout for multiple API calls
     
     def detect_language(self, text: str) -> Optional[str]:
         """언어 감지"""
@@ -38,58 +45,99 @@ class DictionaryService:
         return None
     
     def search(self, word: str, target_lang: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
-        """단어 검색 - Free Dictionary API 사용"""
+        """단어 검색 - WordNet 사용 (병렬 처리 최적화)"""
         try:
             detected_lang = self.detect_language(word)
-            
-            # 캐시 임시 비활성화 (에러 방지)
-            # cached_result = self._get_from_db_cache(detected_lang or 'en', word)
-            # if cached_result:
-            #     cached_result['cached'] = True
-            #     cached_result['trace_id'] = trace_id
-            #     return cached_result
-            
-            # API 호출
+
             result = {
                 'term': word,
                 'lang': detected_lang or 'en',
-                'pronunciation': {
-                    'ipa': None,
-                    'phonetic': None,
-                    'audio_url': None
-                },
+                'simple_translation': None,
+                'pronunciation': {'ipa': None, 'phonetic': None, 'audio_url': None},
                 'meanings': [],
-                'source': 'free_dictionary_api',
+                'synonyms': [],
+                'antonyms': [],
+                'source': 'wordnet',
                 'cached': False,
                 'trace_id': trace_id
             }
-            
-            # Dictionary API 호출
+
             if detected_lang == 'en':
-                dict_data = self._fetch_free_dictionary_api(word)
-                if dict_data:
-                    result['pronunciation'] = self._extract_pronunciation_v2(dict_data)
-                    result['meanings'] = self._extract_meanings_v2(dict_data, target_lang)
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    futures = {
+                        'wordnet': executor.submit(self.wordnet.search_word, word, target_lang),
+                        'pronunciation': executor.submit(self._fetch_free_dictionary_api, word),
+                        'synonyms': executor.submit(self.wordnet.get_synonyms, word),
+                        'antonyms': executor.submit(self.wordnet.get_antonyms, word)
+                    }
+
+                    wordnet_result = futures['wordnet'].result()
+                    pronunciation_data = futures['pronunciation'].result()
+                    result['synonyms'] = futures['synonyms'].result()[:10]
+                    result['antonyms'] = futures['antonyms'].result()[:10]
+
+                    if wordnet_result:
+                        result['meanings'] = self._translate_meanings_fast(
+                            wordnet_result.get('meanings', []), target_lang
+                        )
+
+                    if pronunciation_data:
+                        result['pronunciation'] = self._extract_pronunciation_v2(pronunciation_data[0])
+
+                if target_lang != 'en':
+                    try:
+                        if self.deepl.is_available() and self.deepl.has_quota():
+                            result['simple_translation'] = self.deepl.translate(word, 'en', target_lang)
+                    except Exception:
+                        pass
+                    
+                    if not result['simple_translation']:
+                        try:
+                            trans_result = self.translation_service.translate(word, 'en', target_lang)
+                            result['simple_translation'] = trans_result.get('translated_text')
+                        except Exception:
+                            pass
+
             elif detected_lang in ['ko', 'zh']:
                 try:
                     translation_result = self.translation_service.translate(word, detected_lang, 'en', trace_id)
                     english_word = translation_result.get('translated_text')
                     if english_word:
-                        dict_data = self._fetch_free_dictionary_api(english_word)
-                        if dict_data:
-                            result['term'] = english_word
-                            result['pronunciation'] = self._extract_pronunciation_v2(dict_data)
-                            result['meanings'] = self._extract_meanings_v2(dict_data, target_lang)
+                        return self.search(english_word, target_lang, trace_id)
                 except Exception as e:
                     logger.error(f"Translation error: {e}")
-            
-            # 캐시 저장 임시 비활성화
-            # self._save_to_db_cache(result['lang'], word, result)
-            
+
             return result
         except Exception as e:
             logger.error(f"Search error: {e}", exc_info=True)
             raise
+
+    
+    def _translate_word(self, word: str, source_lang: str, target_lang: str) -> Optional[str]:
+        """단어 번역 (DeepL > LibreTranslate > Google)"""
+        try:
+            if self.deepl.is_available() and self.deepl.has_quota():
+                translation = self.deepl.translate(word, source_lang, target_lang)
+                if translation:
+                    return translation
+        except Exception as e:
+            logger.warning(f"DeepL failed: {e}")
+        
+        try:
+            if self.naver_papago.is_available():
+                translation = self.naver_papago.translate(word, source_lang, target_lang)
+                if translation:
+                    return translation
+        except Exception as e:
+            logger.warning(f"LibreTranslate failed: {e}")
+        
+        try:
+            result = self.translation_service.translate(word, source_lang, target_lang)
+            return result.get('translated_text')
+        except Exception as e:
+            logger.error(f"All translation failed: {e}")
+        
+        return None
     
     def _get_from_db_cache(self, lang: str, term: str) -> Optional[Dict[str, Any]]:
         """DB 캐시에서 조회"""
@@ -144,14 +192,15 @@ class DictionaryService:
         except Exception as e:
             logger.error(f"DB cache write error: {e}")
     
-    def _fetch_free_dictionary_api(self, word: str) -> Optional[Dict]:
-        """Free Dictionary API 호출"""
+    def _fetch_free_dictionary_api(self, word: str) -> Optional[List[Dict]]:
+        """Free Dictionary API 호출 - 모든 항목 반환"""
         try:
             url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
             response = requests.get(url, timeout=self.timeout)
             if response.status_code == 200:
                 data = response.json()
-                return data[0] if isinstance(data, list) and len(data) > 0 else data
+                # 배열 전체를 반환 (여러 품사가 별도 객체로 올 수 있음)
+                return data if isinstance(data, list) else [data]
         except Exception as e:
             logger.error(f"Dictionary API error: {e}")
         return None
@@ -194,7 +243,7 @@ class DictionaryService:
             if 'definitions' not in meaning or not meaning['definitions']:
                 continue
             
-            # 최대 2개 정의만 추출 (속도 개선)
+            # 각 품사별로 최대 2개 정의 추출
             for definition in meaning['definitions'][:2]:
                 if not definition.get('definition'):
                     continue
@@ -207,14 +256,35 @@ class DictionaryService:
                     examples.append(definition['example'])
                 
                 # 번역 (target_lang이 en이 아닐 때만)
+                # 우선순위: DeepL > LibreTranslate > Google Translate
                 translation = None
                 if target_lang != 'en':
+                    # 1. DeepL 시도 (최고 품질, 사전 전용)
                     try:
-                        trans_result = self.translation_service.translate(def_text, 'en', target_lang)
-                        translation = trans_result.get('translated_text')
+                        if self.deepl.is_available() and self.deepl.has_quota():
+                            deepl_trans = self.deepl.translate(def_text, 'en', target_lang)
+                            if deepl_trans:
+                                translation = deepl_trans
                     except Exception as e:
-                        logger.error(f"Translation error: {e}")
-                        translation = None
+                        logger.warning(f"DeepL translation failed: {e}")
+                    
+                    # 2. LibreTranslate 시도
+                    if not translation:
+                        try:
+                            if self.naver_papago.is_available():
+                                libre_trans = self.naver_papago.translate(def_text, 'en', target_lang)
+                                if libre_trans:
+                                    translation = libre_trans
+                        except Exception as e:
+                            logger.warning(f"LibreTranslate failed: {e}")
+                    
+                    # 3. Google Translate 폴백
+                    if not translation:
+                        try:
+                            trans_result = self.translation_service.translate(def_text, 'en', target_lang)
+                            translation = trans_result.get('translated_text')
+                        except Exception as e:
+                            logger.error(f"All translation methods failed: {e}")
                 
                 definitions.append({
                     'definition': def_text,
@@ -229,6 +299,161 @@ class DictionaryService:
                 })
         
         return meanings
+    
+    def _translate_wordnet_meanings(self, meanings: List[Dict], target_lang: str) -> List[Dict]:
+        """WordNet meanings 번역"""
+        translated_meanings = []
+        
+        for meaning in meanings:
+            part_of_speech = meaning.get('part_of_speech', 'unknown')
+            definitions = meaning.get('definitions', [])
+            
+            translated_definitions = []
+            for def_item in definitions:
+                def_text = def_item.get('definition', '')
+                examples = def_item.get('examples', [])
+                synonyms = def_item.get('synonyms', [])
+                
+                # 번역 (target_lang이 en이 아닐 때만)
+                translation = None
+                if target_lang != 'en' and def_text:
+                    # 1. DeepL 시도
+                    try:
+                        if self.deepl.is_available() and self.deepl.has_quota():
+                            deepl_trans = self.deepl.translate(def_text, 'en', target_lang)
+                            if deepl_trans:
+                                translation = deepl_trans
+                    except Exception as e:
+                        logger.warning(f"DeepL translation failed: {e}")
+                    
+                    # 2. LibreTranslate 시도
+                    if not translation:
+                        try:
+                            if self.naver_papago.is_available():
+                                libre_trans = self.naver_papago.translate(def_text, 'en', target_lang)
+                                if libre_trans:
+                                    translation = libre_trans
+                        except Exception as e:
+                            logger.warning(f"LibreTranslate failed: {e}")
+                    
+                    # 3. Google Translate 폴백
+                    if not translation:
+                        try:
+                            trans_result = self.translation_service.translate(def_text, 'en', target_lang)
+                            translation = trans_result.get('translated_text')
+                        except Exception as e:
+                            logger.error(f"All translation methods failed: {e}")
+                
+                translated_definitions.append({
+                    'definition': def_text,
+                    'translation': translation,
+                    'examples': examples,
+                    'synonyms': synonyms
+                })
+            
+            if translated_definitions:
+                translated_meanings.append({
+                    'part_of_speech': part_of_speech,
+                    'definitions': translated_definitions
+                })
+        
+        return translated_meanings
+    
+    def _translate_meanings_fast(self, meanings: List[Dict], target_lang: str) -> List[Dict]:
+        """WordNet meanings 빠른 번역 (DeepL만, 첫 3개 정의만)"""
+        if target_lang == 'en':
+            return meanings[:3]  # 영어는 번역 불필요, 최대 3개 품사
+        
+        translated_meanings = []
+        for meaning in meanings[:3]:  # 최대 3개 품사만
+            part_of_speech = meaning.get('part_of_speech', 'unknown')
+            definitions = meaning.get('definitions', [])[:3]  # 최대 3개 정의로 증가
+            
+            translated_definitions = []
+            for def_item in definitions:
+                def_text = def_item.get('definition', '')
+                examples = def_item.get('examples', [])[:2]
+                synonyms = def_item.get('synonyms', [])[:5]
+                
+                translation = None
+                if def_text and self.deepl.is_available():
+                    try:
+                        translation = self.deepl.translate(def_text, 'en', target_lang)
+                    except Exception:
+                        pass
+                
+                translated_definitions.append({
+                    'definition': def_text,
+                    'translation': translation,
+                    'examples': examples,
+                    'synonyms': synonyms
+                })
+            
+            if translated_definitions:
+                translated_meanings.append({
+                    'part_of_speech': part_of_speech,
+                    'definitions': translated_definitions
+                })
+        
+        return translated_meanings
+    
+    def _translate_wordnet_meanings_optimized(self, meanings: List[Dict], target_lang: str, max_definitions: int = 2) -> List[Dict]:
+        """WordNet meanings 번역 (최적화: 병렬 처리 + 정의 개수 제한)"""
+        if target_lang == 'en':
+            return meanings
+        
+        translated_meanings = []
+        
+        # 번역할 텍스트 수집
+        texts_to_translate = []
+        for meaning in meanings:
+            definitions = meaning.get('definitions', [])[:max_definitions]
+            for def_item in definitions:
+                def_text = def_item.get('definition', '')
+                if def_text:
+                    texts_to_translate.append(def_text)
+        
+        # 병렬 번역
+        translations = {}
+        if texts_to_translate:
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_text = {
+                    executor.submit(self._translate_word, text, 'en', target_lang): text
+                    for text in texts_to_translate
+                }
+                for future in as_completed(future_to_text):
+                    text = future_to_text[future]
+                    try:
+                        translations[text] = future.result()
+                    except Exception as e:
+                        logger.error(f"Translation failed for '{text}': {e}")
+                        translations[text] = None
+        
+        # 결과 조합
+        for meaning in meanings:
+            part_of_speech = meaning.get('part_of_speech', 'unknown')
+            definitions = meaning.get('definitions', [])[:max_definitions]
+            
+            translated_definitions = []
+            for def_item in definitions:
+                def_text = def_item.get('definition', '')
+                examples = def_item.get('examples', [])[:2]  # 예문도 최대 2개
+                synonyms = def_item.get('synonyms', [])[:5]  # 동의어 최대 5개
+                
+                translated_definitions.append({
+                    'definition': def_text,
+                    'translation': translations.get(def_text),
+                    'examples': examples,
+                    'synonyms': synonyms
+                })
+            
+            if translated_definitions:
+                translated_meanings.append({
+                    'part_of_speech': part_of_speech,
+                    'definitions': translated_definitions
+                })
+        
+        return translated_meanings
     
     def autocomplete(self, query: str, language: Optional[str], target_lang: str, trace_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """자동완성 제안"""
@@ -346,7 +571,7 @@ class DictionaryService:
             pass
         return suggestions
     
-    def save(self, word: str, source_lang: str, target_lang: str, search_results: Optional[str], source: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
+    def save(self, word: str, source_lang: str, target_lang: str, search_results: Optional[str], source: str, result_summary: Optional[str] = None, trace_id: Optional[str] = None) -> Dict[str, Any]:
         """사전 검색 결과 저장"""
         from flask import g, request
         from ...supabase import get_supabase, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -372,6 +597,7 @@ class DictionaryService:
                 'source_lang': source_lang,
                 'target_lang': target_lang,
                 'search_results': search_results,
+                'result_summary': result_summary,
                 'source': source,
                 'ip_address': ip_address
             }).execute()

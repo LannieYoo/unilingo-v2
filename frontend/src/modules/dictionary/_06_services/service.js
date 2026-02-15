@@ -3,7 +3,25 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001'
-const TIMEOUT = 5000
+const TIMEOUT = 15000  // Increased timeout for multiple API calls (DeepL + LibreTranslate + Google)
+
+/**
+ * snake_case를 camelCase로 변환 (재귀적으로 모든 중첩 객체 처리)
+ */
+function keysToCamel(obj) {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj !== 'object') return obj
+  if (Array.isArray(obj)) return obj.map(item => keysToCamel(item))
+  
+  const result = {}
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+      result[camelKey] = keysToCamel(obj[key])
+    }
+  }
+  return result
+}
 
 /**
  * 백엔드 Dictionary API로 단어 검색 (게스트 사용 가능)
@@ -36,6 +54,7 @@ export async function searchDictionary(word, targetLang) {
     
     const data = await response.json()
     console.log('[Dictionary Service] Response data:', data)
+    // keysToCamel 제거 - 백엔드 응답을 그대로 사용
     return data
   } catch (error) {
     // Network error - backend server might be down

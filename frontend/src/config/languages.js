@@ -41,72 +41,72 @@ export const LANGUAGES = [
     code: 'zh',
     name: 'Chinese (Simplified)',
     voice: 'zh-CN',
-    translateCode: 'zh-CN',
+    translateCode: 'zh',
     sttCode: 'zh-cn'
   },
-  {
-    code: 'ja',
-    name: 'Japanese',
-    voice: 'ja-JP',
-    translateCode: 'ja',
-    sttCode: 'ja-jp'
-  },
-  {
-    code: 'es',
-    name: 'Spanish',
-    voice: 'es-ES',
-    translateCode: 'es',
-    sttCode: 'es-es'
-  },
-  {
-    code: 'fr',
-    name: 'French',
-    voice: 'fr-FR',
-    translateCode: 'fr',
-    sttCode: 'fr-fr'
-  },
-  {
-    code: 'de',
-    name: 'German',
-    voice: 'de-DE',
-    translateCode: 'de',
-    sttCode: 'de-de'
-  },
-  {
-    code: 'ar',
-    name: 'Arabic',
-    voice: 'ar-SA',
-    translateCode: 'ar',
-    sttCode: 'ar-sa'
-  },
-  {
-    code: 'hi',
-    name: 'Hindi',
-    voice: 'hi-IN',
-    translateCode: 'hi',
-    sttCode: 'hi-in'
-  },
-  {
-    code: 'pt',
-    name: 'Portuguese',
-    voice: 'pt-PT',
-    translateCode: 'pt',
-    sttCode: 'pt-pt'
-  },
-  {
-    code: 'ru',
-    name: 'Russian',
-    voice: 'ru-RU',
-    translateCode: 'ru',
-    sttCode: 'ru-ru'
-  },
-  {
-    code: 'it',
-    name: 'Italian',
-    voice: 'it-IT',
-    translateCode: 'it',
-    sttCode: 'it-it'
-  }
+  // {
+  //   code: 'ja',
+  //   name: 'Japanese',
+  //   voice: 'ja-JP',
+  //   translateCode: 'ja',
+  //   sttCode: 'ja-jp'
+  // },
+  // {
+  //   code: 'es',
+  //   name: 'Spanish',
+  //   voice: 'es-ES',
+  //   translateCode: 'es',
+  //   sttCode: 'es-es'
+  // },
+  // {
+  //   code: 'fr',
+  //   name: 'French',
+  //   voice: 'fr-FR',
+  //   translateCode: 'fr',
+  //   sttCode: 'fr-fr'
+  // },
+  // {
+  //   code: 'de',
+  //   name: 'German',
+  //   voice: 'de-DE',
+  //   translateCode: 'de',
+  //   sttCode: 'de-de'
+  // },
+  // {
+  //   code: 'ar',
+  //   name: 'Arabic',
+  //   voice: 'ar-SA',
+  //   translateCode: 'ar',
+  //   sttCode: 'ar-sa'
+  // },
+  // {
+  //   code: 'hi',
+  //   name: 'Hindi',
+  //   voice: 'hi-IN',
+  //   translateCode: 'hi',
+  //   sttCode: 'hi-in'
+  // },
+  // {
+  //   code: 'pt',
+  //   name: 'Portuguese',
+  //   voice: 'pt-PT',
+  //   translateCode: 'pt',
+  //   sttCode: 'pt-pt'
+  // },
+  // {
+  //   code: 'ru',
+  //   name: 'Russian',
+  //   voice: 'ru-RU',
+  //   translateCode: 'ru',
+  //   sttCode: 'ru-ru'
+  // },
+  // {
+  //   code: 'it',
+  //   name: 'Italian',
+  //   voice: 'it-IT',
+  //   translateCode: 'it',
+  //   sttCode: 'it-it'
+  // }
 ]
 
 // 언어 코드로 언어 정보 찾기

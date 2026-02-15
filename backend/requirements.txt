@@ -68,6 +68,9 @@ llvmlite==0.45.1
 numpy==1.26.4
 pandas==2.3.3
 
+# NLP & Dictionary
+nltk==3.9.1
+
 # Testing
 pytest==8.3.4
 hypothesis==6.130.0

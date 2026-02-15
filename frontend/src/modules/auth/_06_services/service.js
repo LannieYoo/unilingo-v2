@@ -272,6 +272,18 @@ export const authService = {
   },
 
   /**
+   * Toggle dictionary log favorite status.
+   */
+  async toggleDictionaryFavorite(accessToken, logId) {
+    const response = await api.put(`${ADMIN_ENDPOINTS.DICTIONARY_LOGS}/${logId}/favorite`, {}, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
    * Get favorite translation logs for current user.
    */
   async getFavoriteTranslationLogs(accessToken, limit = 100) {

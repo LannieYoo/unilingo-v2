@@ -12,6 +12,7 @@ import { getVoiceCode } from '../../../config/languages'
 import { useAuthStore, authService, MAX_CHARS_GUEST, LoginModal } from '../../auth'
 import { useUsage } from '../../../common/hooks/useUsage'
 import { UsageIndicator } from '../../../common/components/UsageIndicator'
+import { TopLoadingBar } from '../../../common/components/TopLoadingBar'
 import '../_10_styles/translator.css'
 
 export function TranslatorView() {
@@ -329,6 +330,7 @@ export function TranslatorView() {
 
   return (
     <PageLayout title="Translator">
+      <TopLoadingBar isLoading={isTranslating || isOCRProcessing} />
       <PageBox>
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">

@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { fetchDictionary, translateText } from '../../dictionary/_06_services/service'
-import { useAuthStore } from '../../auth'
+import { useAuthStore, authService } from '../../auth'
 
 export function useInlineDictionary(targetLang) {
   const [selectedWord, setSelectedWord] = useState(null)
@@ -58,6 +58,21 @@ export function useInlineDictionary(targetLang) {
     setTranslation(null)
     setIsFavorited(false)
 
+    // 즐겨찾기 여부 확인 (로그인한 경우)
+    if (tokens?.access_token) {
+      try {
+        const data = await authService.getDictionaryLogs(tokens.access_token, 100)
+        const existingFavorite = data.logs?.find(log => 
+          log.search_word.toLowerCase() === word.toLowerCase() && log.is_favorite
+        )
+        if (existingFavorite) {
+          setIsFavorited(true)
+        }
+      } catch (error) {
+        console.error('Failed to check favorite status:', error)
+      }
+    }
+
     // 새 요청 시작
     abortControllerRef.current = new AbortController()
 
@@ -102,7 +117,7 @@ export function useInlineDictionary(targetLang) {
     } finally {
       setIsLoading(false)
     }
-  }, [selectedWord, targetLang])
+  }, [selectedWord, targetLang, tokens])
 
   // 즐겨찾기 토글
   const toggleFavorite = useCallback(async () => {
@@ -114,29 +129,28 @@ export function useInlineDictionary(targetLang) {
     }
     
     try {
-      const response = await fetch('/api/dictionary/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokens.access_token}`
-        },
-        body: JSON.stringify({
-          word: selectedWord,
-          source_lang: 'en',
-          target_lang: targetLang,
-          search_results: JSON.stringify({
-            translation,
-            meanings: dictionaryData.meanings
-          }),
-          source: 'stt'
-        })
+      // Dictionary와 동일한 방식으로 저장
+      const searchResults = [{
+        term: selectedWord,
+        word: selectedWord,
+        translation: translation,
+        meanings: dictionaryData.meanings || []
+      }]
+      
+      // 로그 생성
+      const response = await authService.createDictionaryLog(tokens.access_token, {
+        search_word: selectedWord,
+        source_lang: 'en',
+        target_lang: targetLang,
+        search_results: searchResults
       })
       
-      if (response.ok) {
-        setIsFavorited(true)
-      } else {
-        const errorData = await response.json()
-        console.error('Failed to save favorite:', errorData)
+      if (response.log && response.log.id) {
+        // 즐겨찾기 토글
+        const toggleResponse = await authService.toggleDictionaryFavorite(tokens.access_token, response.log.id)
+        if (toggleResponse.log.is_favorite) {
+          setIsFavorited(true)
+        }
       }
     } catch (error) {
       console.error('Error saving favorite:', error)

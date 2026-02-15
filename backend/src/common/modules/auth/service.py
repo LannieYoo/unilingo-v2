@@ -94,7 +94,9 @@ class DictionaryLogModel(Base):
     source_lang = Column(String(10), nullable=False)
     target_lang = Column(String(10), nullable=False)
     search_results = Column(Text, nullable=True)
+    result_summary = Column(String(500), nullable=True)
     ip_address = Column(String(45), nullable=True)
+    is_favorite = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     user = relationship("UserModel", back_populates="dictionary_logs")
 
@@ -421,16 +423,25 @@ class DictionaryLogRepository:
     def find_by_word_and_user(self, user_id: int, search_word: str) -> Optional[DictionaryLogModel]:
         return self.db_session.query(DictionaryLogModel).filter(DictionaryLogModel.user_id == user_id, DictionaryLogModel.search_word == search_word).first()
     
-    def upsert_log(self, user_id: int, search_word: str, source_lang: str, target_lang: str, search_results: Optional[Dict[str, Any]] = None, ip_address: Optional[str] = None) -> DictionaryLogModel:
+    def upsert_log(self, user_id: int, search_word: str, source_lang: str, target_lang: str, search_results: Optional[Dict[str, Any]] = None, result_summary: Optional[str] = None, ip_address: Optional[str] = None) -> DictionaryLogModel:
         existing_log = self.find_by_word_and_user(user_id, search_word)
         if existing_log:
             self.db_session.delete(existing_log)
             self.db_session.flush()
-        log = DictionaryLogModel(user_id=user_id, search_word=search_word, source_lang=source_lang, target_lang=target_lang, search_results=json.dumps(search_results, ensure_ascii=False) if search_results else None, ip_address=ip_address)
+        log = DictionaryLogModel(user_id=user_id, search_word=search_word, source_lang=source_lang, target_lang=target_lang, search_results=json.dumps(search_results, ensure_ascii=False) if search_results else None, result_summary=result_summary, ip_address=ip_address)
         self.db_session.add(log)
         self.db_session.commit()
         self.db_session.refresh(log)
         return log
+    
+    def toggle_favorite(self, log_id: int, user_id: int) -> Optional[DictionaryLogModel]:
+        log = self.db_session.query(DictionaryLogModel).filter(DictionaryLogModel.id == log_id, DictionaryLogModel.user_id == user_id).first()
+        if log:
+            log.is_favorite = not log.is_favorite
+            self.db_session.commit()
+            self.db_session.refresh(log)
+            return log
+        return None
 
 
 def get_dictionary_log_repository(db_session: Session) -> DictionaryLogRepository:

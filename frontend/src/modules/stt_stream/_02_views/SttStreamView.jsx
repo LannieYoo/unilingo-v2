@@ -31,6 +31,7 @@ import {
 
 import { useUsage } from '../../../common/hooks/useUsage'
 import { UsageIndicator } from '../../../common/components/UsageIndicator'
+import { TopLoadingBar } from '../../../common/components/TopLoadingBar'
 
 export function SttStreamView() {
   const {
@@ -318,6 +319,7 @@ export function SttStreamView() {
 
   return (
     <PageLayout title="Speech to Text" fullHeight>
+      <TopLoadingBar isLoading={isLoading || isTranslating || isRetranslating || isDictionaryLoading} />
       <PageBox noPadding flex>
         {!isAuthenticated && (
           <div className="stt-auth-bar">
