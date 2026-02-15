@@ -14,7 +14,7 @@ import { DictionaryView, DictionaryHistoryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
 
 // Auth module
-import { useAuthStore, useAuth, SessionExpiredModal, SettingsView } from './modules/auth'
+import { useAuthStore, useAuth, SessionExpiredModal, SettingsView, TokenRefreshManager } from './modules/auth'
 
 // Usage Context
 import { UsageProvider } from './common/contexts/UsageContext'
@@ -143,6 +143,7 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <UsageProvider>
+        <TokenRefreshManager />
         <AppContent />
         <SessionExpiredModal />
       </UsageProvider>
