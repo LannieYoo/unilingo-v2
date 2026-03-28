@@ -16,14 +16,14 @@ nginx -g "daemon on;"
 echo "Nginx started on port $PORT"
 
 # Start Flask backend with gunicorn
-# Using 1 worker + preload to minimize memory usage (Free tier = 512MB)
+# 1 worker, no threads, minimal memory for Free tier (512MB)
 cd /app
 exec gunicorn \
     --bind 127.0.0.1:8001 \
     --workers 1 \
-    --threads 2 \
     --timeout 120 \
-    --preload \
+    --max-requests 50 \
+    --max-requests-jitter 10 \
     --access-logfile - \
     --error-logfile - \
     "backend.app:create_app('production')"

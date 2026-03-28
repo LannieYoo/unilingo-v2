@@ -4,18 +4,25 @@
 
 import logging
 from typing import Dict, Any, List, Optional
-import nltk
-from nltk.corpus import wordnet as wn
-
 logger = logging.getLogger(__name__)
 
-# WordNet 데이터 다운로드 (최초 1회만 실행)
-try:
-    wn.synsets('test')
-except LookupError:
-    logger.info("Downloading WordNet data...")
-    nltk.download('wordnet', quiet=True)
-    nltk.download('omw-1.4', quiet=True)
+_nltk_initialized = False
+
+def _ensure_nltk():
+    """Lazy-load NLTK WordNet data"""
+    global _nltk_initialized
+    if _nltk_initialized:
+        return
+    try:
+        import nltk
+        from nltk.corpus import wordnet as wn
+        wn.synsets('test')
+    except LookupError:
+        import nltk
+        logger.info("Downloading WordNet data...")
+        nltk.download('wordnet', quiet=True)
+        nltk.download('omw-1.4', quiet=True)
+    _nltk_initialized = True
 
 
 class WordNetService:
@@ -33,6 +40,8 @@ class WordNetService:
             사전 검색 결과
         """
         try:
+            _ensure_nltk()
+            from nltk.corpus import wordnet as wn
             word = word.lower().strip()
             synsets = wn.synsets(word)
             
@@ -96,6 +105,8 @@ class WordNetService:
     def get_synonyms(self, word: str) -> List[str]:
         """단어의 동의어 목록 반환"""
         try:
+            _ensure_nltk()
+            from nltk.corpus import wordnet as wn
             synonyms = set()
             for synset in wn.synsets(word):
                 for lemma in synset.lemmas():
@@ -110,6 +121,8 @@ class WordNetService:
     def get_antonyms(self, word: str) -> List[str]:
         """단어의 반의어 목록 반환"""
         try:
+            _ensure_nltk()
+            from nltk.corpus import wordnet as wn
             antonyms = set()
             for synset in wn.synsets(word):
                 for lemma in synset.lemmas():
