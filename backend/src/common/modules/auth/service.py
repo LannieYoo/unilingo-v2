@@ -401,8 +401,11 @@ class DictionaryLogRepository:
     def __init__(self, db_session: Session):
         self.db_session = db_session
     
-    def get_user_logs(self, user_id: int, limit: int = 50, offset: int = 0) -> List[DictionaryLogModel]:
-        return self.db_session.query(DictionaryLogModel).filter(DictionaryLogModel.user_id == user_id).order_by(desc(DictionaryLogModel.created_at)).limit(limit).offset(offset).all()
+    def get_user_logs(self, user_id: int, limit: int = 50, offset: int = 0, favorites_only: bool = False) -> List[DictionaryLogModel]:
+        query = self.db_session.query(DictionaryLogModel).filter(DictionaryLogModel.user_id == user_id)
+        if favorites_only:
+            query = query.filter(DictionaryLogModel.is_favorite == True)
+        return query.order_by(desc(DictionaryLogModel.created_at)).limit(limit).offset(offset).all()
     
     def get_recent_logs(self, user_id: int, limit: int = 10) -> List[DictionaryLogModel]:
         return self.db_session.query(DictionaryLogModel).filter(DictionaryLogModel.user_id == user_id).order_by(desc(DictionaryLogModel.created_at)).limit(limit).all()

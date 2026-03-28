@@ -787,6 +787,8 @@ def get_dictionary_logs():
         return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Authentication required', 'trace_id': trace_id}}), 401
     try:
         limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        favorites_only = request.args.get('favorites_only', 'false', type=str).lower() == 'true'
         db = next(get_db())
         try:
             dictionary_log_repo = get_dictionary_log_repository(db)
@@ -794,7 +796,7 @@ def get_dictionary_logs():
             user = user_repo.get_by_email(current_user.get('email'))
             if not user:
                 return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found', 'trace_id': trace_id}}), 404
-            logs = dictionary_log_repo.get_user_logs(user.id, limit=limit)
+            logs = dictionary_log_repo.get_user_logs(user.id, limit=limit, offset=offset, favorites_only=favorites_only)
             result = [{'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'is_favorite': log.is_favorite, 'search_results': log.search_results, 'result_summary': log.result_summary, 'created_at': log.created_at.isoformat() if log.created_at else None} for log in logs]
             return jsonify({'logs': result, 'trace_id': trace_id}), 200
         finally:

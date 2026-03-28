@@ -122,7 +122,12 @@ export const getTranslateCode = (code) => {
 
 // 음성 합성용 언어 코드 가져오기
 export const getVoiceCode = (code) => {
-  const lang = getLanguageByCode(code)
+  // First try to find by code
+  let lang = getLanguageByCode(code)
+  // If not found, try to find by translateCode (for translator module compatibility)
+  if (!lang) {
+    lang = LANGUAGES.find(l => l.translateCode === code)
+  }
   return lang?.voice || 'en-US'
 }
 

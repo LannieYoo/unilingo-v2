@@ -45,9 +45,33 @@ export function getLanguageName(lang) {
  */
 export function playPronunciation(text, lang = 'en-GB') {
   if ('speechSynthesis' in window) {
+    // Get available voices
+    const voices = window.speechSynthesis.getVoices()
+    
+    const langPrefix = lang.split('-')[0] // e.g., 'en' from 'en-GB'
+    
+    // Find voice that matches the language (prefer exact match, then prefix match)
+    let matchingVoice = voices.find(voice => voice.lang === lang)
+    if (!matchingVoice) {
+      matchingVoice = voices.find(voice => voice.lang.startsWith(langPrefix))
+    }
+    // For Chinese, try other variants
+    if (!matchingVoice && langPrefix === 'zh') {
+      matchingVoice = voices.find(voice => voice.lang.startsWith('zh'))
+    }
+    
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = lang
     utterance.rate = 0.8
+    
+    // Set specific voice if found
+    if (matchingVoice) {
+      utterance.voice = matchingVoice
+      console.log('✓ Using voice:', matchingVoice.name, '(', matchingVoice.lang, ') for requested lang:', lang)
+    } else {
+      console.warn('✗ No matching voice found for:', lang)
+    }
+    
     window.speechSynthesis.speak(utterance)
   }
 }

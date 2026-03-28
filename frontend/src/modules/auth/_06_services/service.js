@@ -325,9 +325,11 @@ export const authService = {
   /**
    * Get all dictionary search logs for current user.
    */
-  async getDictionaryLogs(accessToken, limit = 50) {
+  async getDictionaryLogs(accessToken, limit = 50, offset = 0, favoritesOnly = false) {
+    const params = { limit, offset };
+    if (favoritesOnly) params.favorites_only = 'true';
     const response = await api.get(ADMIN_ENDPOINTS.DICTIONARY_LOGS, {
-      params: { limit },
+      params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
