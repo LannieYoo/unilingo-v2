@@ -9,7 +9,7 @@ import { useGlossary } from '../../../shared/modules/glossary'
 import { useUsage } from '../../../common/contexts/UsageContext'
 import { useAuthStore } from '../../auth/_05_stores/authStore'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001'
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 // Supported languages
 export const TRANSLATION_LANGUAGES = [

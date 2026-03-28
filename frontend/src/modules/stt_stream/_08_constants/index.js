@@ -68,7 +68,7 @@ export const MAX_LOGS = 100
 export const SAMPLE_RATE = 16000
 
 // Backend URL for hybrid STT
-export const BACKEND_STT_URL = import.meta.env.VITE_BACKEND_STT_URL || 'http://localhost:8001/api/stt/process-missing'
+export const BACKEND_STT_URL = import.meta.env.VITE_BACKEND_STT_URL || '/api/stt/process-missing'
 
 export default {
   LANGUAGE_OPTIONS,
