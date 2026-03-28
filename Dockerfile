@@ -15,6 +15,7 @@ RUN npm ci --production=false
 COPY frontend/ ./
 
 # Build args for frontend env vars (VITE_ prefix required at build time)
+# Render passes env vars as build args automatically when names match
 ARG VITE_API_URL
 ARG VITE_GOOGLE_CLIENT_ID
 ARG VITE_ADMIN_USER
@@ -35,7 +36,7 @@ FROM python:3.11-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
+    nginx gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -50,7 +51,10 @@ COPY backend/ ./backend/
 # Copy built frontend to nginx html directory
 COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 
-# Nginx configuration: serve frontend + proxy /api to Flask
+# Nginx template (PORT will be substituted at runtime)
+COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Also keep static config for local Docker usage
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 
 # Copy startup script
