@@ -1,18 +1,23 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: unilingo-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: unilingo
+  unilingo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_GOOGLE_CLIENT_ID: "${VITE_GOOGLE_CLIENT_ID:-${GOOGLE_CLIENT_ID}}"
+        VITE_ADMIN_USER: "${ADMIN_USER}"
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "8080:80"
+    env_file:
+      - .env
+    environment:
+      # Flask
+      - FLASK_ENV=production
+      - FLASK_PORT=8001
+      - FLASK_HOST=0.0.0.0
+      - SECRET_KEY=${SECRET_KEY:-unilingo_docker_secret_key_2024}
+      - CORS_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
     restart: unless-stopped
-
-volumes:
-  postgres_data:

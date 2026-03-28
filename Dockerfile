@@ -1,87 +1,62 @@
-# Multi-stage build for Portal Translator
-# Stage 1: Build frontend
+# ============================================================
+# Stage 1: Build Frontend (Vite + React)
+# ============================================================
 FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Copy package files
+# Copy package files first (for layer caching)
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --production=false
 
 # Copy frontend source
 COPY frontend/ ./
 
+# Build args for frontend env vars (VITE_ prefix required at build time)
+ARG VITE_API_URL
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_ADMIN_USER
+
+# Create .env for Vite build
+RUN echo "VITE_API_URL=${VITE_API_URL}" > .env && \
+    echo "VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}" >> .env && \
+    echo "VITE_ADMIN_USER=${VITE_ADMIN_USER}" >> .env
+
 # Build frontend
 RUN npm run build
 
-# Stage 2: Python backend with frontend
+
+# ============================================================
+# Stage 2: Production (Python + Nginx)
+# ============================================================
 FROM python:3.11-slim
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
-    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy Python requirements
-COPY scripts/requirements_whisper.txt ./
+# Copy Python requirements and install
+COPY backend/requirements-deploy.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements_whisper.txt
+# Copy backend source
+COPY backend/ ./backend/
 
-# Copy backend scripts
-COPY scripts/ ./scripts/
-
-# Copy built frontend from builder
+# Copy built frontend to nginx html directory
 COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 
-# Create nginx configuration
-RUN echo 'server { \
-    listen 80; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    \
-    # Serve frontend \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    \
-    # Proxy API requests to Flask backend \
-    location /api/ { \
-        proxy_pass http://127.0.0.1:8001; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-    } \
-}' > /etc/nginx/sites-available/default
+# Nginx configuration: serve frontend + proxy /api to Flask
+COPY docker/nginx.conf /etc/nginx/sites-available/default
 
-# Create supervisor configuration
-RUN echo '[supervisord] \
-nodaemon=true \
-\
-[program:nginx] \
-command=nginx -g "daemon off;" \
-autostart=true \
-autorestart=true \
-\
-[program:flask] \
-command=python /app/scripts/whisper_server.py --host 0.0.0.0 --port 8001 \
-directory=/app \
-autostart=true \
-autorestart=true \
-stdout_logfile=/var/log/flask.log \
-stderr_logfile=/var/log/flask_error.log' > /etc/supervisor/conf.d/supervisord.conf
+# Copy startup script
+COPY docker/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
-# Expose port
 EXPOSE 80
 
-# Start supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
+CMD ["/app/start.sh"]

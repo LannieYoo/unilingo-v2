@@ -4,7 +4,7 @@ npm-debug.log
 .gitignore
 README.md
 
-# Environment files
+# Environment files (will pass via docker-compose)
 .env
 .env.*
 .env.local
@@ -13,11 +13,6 @@ frontend/.env
 frontend/.env.*
 backend/.env
 backend/.env.*
-
-# Config files (sensitive)
-backend/config.py
-backend/src/common/config.py
-**/config.local.py
 
 dist
 build
@@ -35,8 +30,18 @@ env
 ENV
 .venv
 doc/*.docx
-doc/*.md
 doc/_master_meta_prompt.md
 doc/MASTER_META_PROMPT.md
 run_all.bat
-
+.agent
+.agents
+.kiro
+.hypothesis
+.pytest_cache
+backend/.hypothesis
+backend/.pytest_cache
+backend/__pycache__
+backend/models
+backend/logs
+image
+logs

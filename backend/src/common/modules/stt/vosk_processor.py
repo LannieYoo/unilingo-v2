@@ -10,7 +10,13 @@ import wave
 import logging
 from pathlib import Path
 from typing import Optional
-from vosk import Model, KaldiRecognizer
+try:
+    from vosk import Model, KaldiRecognizer
+    VOSK_AVAILABLE = True
+except ImportError:
+    VOSK_AVAILABLE = False
+    Model = None
+    KaldiRecognizer = None
 
 
 logger = logging.getLogger(__name__)
@@ -159,6 +165,9 @@ def get_vosk_processor() -> VoskProcessor:
     Returns:
         VoskProcessor 인스턴스
     """
+    if not VOSK_AVAILABLE:
+        raise RuntimeError("Vosk is not installed. Install with: pip install vosk")
+    
     global _vosk_processor_instance
     
     if _vosk_processor_instance is None:
