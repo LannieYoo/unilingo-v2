@@ -22,9 +22,7 @@ frontend/.env.*
 backend/.env
 backend/.env.*
 
-# Config files (sensitive)
-backend/config.py
-backend/src/common/config.py
+# Config files (sensitive - local overrides only)
 **/config.local.py
 
 # IDE
