@@ -34,6 +34,7 @@ export function TranslatorView() {
   const { extractText, isProcessing: isOCRProcessing, progress: ocrProgress, error: ocrError } = useOCR()
   const { speak, stop, isSpeaking, currentLang, isSupported: isTTSSupported } = useTTS()
   const fileInputRef = useRef(null)
+  const recognitionRef = useRef(null)
   const [recentHistory, setRecentHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, text }
@@ -43,6 +44,82 @@ export function TranslatorView() {
   const [lastSavedText, setLastSavedText] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [guestCharCount, setGuestCharCount] = useState(0)
+  const [isListening, setIsListening] = useState(false)
+
+  // Web Speech API language mapping
+  const getSpeechLang = (lang) => {
+    const map = {
+      'en': 'en-US', 'en-us': 'en-US', 'en-gb': 'en-GB',
+      'ko': 'ko-KR', 'zh': 'zh-CN', 'zh-tw': 'zh-TW',
+      'ja': 'ja-JP', 'es': 'es-ES', 'fr': 'fr-FR',
+      'de': 'de-DE', 'ar': 'ar-SA', 'hi': 'hi-IN',
+      'pt': 'pt-BR', 'ru': 'ru-RU', 'it': 'it-IT',
+    }
+    return map[lang] || map[lang?.split('-')[0]] || 'en-US'
+  }
+
+  const isSpeechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+  const handleVoiceInput = () => {
+    if (!isSpeechSupported) {
+      alert('Your browser does not support speech recognition.')
+      return
+    }
+
+    if (isListening) {
+      // Stop listening
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+    recognitionRef.current = recognition
+
+    recognition.lang = getSpeechLang(sourceLang)
+    recognition.interimResults = true
+    recognition.continuous = true
+    recognition.maxAlternatives = 1
+
+    let finalTranscript = inputText
+
+    recognition.onstart = () => setIsListening(true)
+
+    recognition.onresult = (event) => {
+      let interim = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += (finalTranscript ? ' ' : '') + transcript
+        } else {
+          interim += transcript
+        }
+      }
+      setInputText(finalTranscript + (interim ? ' ' + interim : ''))
+    }
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error)
+      setIsListening(false)
+      if (event.error === 'not-allowed') {
+        alert('Microphone access denied. Please allow microphone access in your browser settings.')
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+      recognitionRef.current = null
+    }
+
+    recognition.start()
+  }
+
+  // Cleanup recognition on unmount
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop()
+    }
+  }, [])
 
   // Check if user has exceeded their usage limit
   const isLimitExceeded = isAuthenticated && checkUsageLimit()
@@ -336,15 +413,39 @@ export function TranslatorView() {
         <div className="translator-lang-selectors">
           <div className="translator-lang-group">
             <label>Source Language</label>
-            <select
-              value={sourceLang}
-              onChange={(e) => setSourceLang(e.target.value)}
-              className="translator-lang-select"
-            >
-              {SOURCE_LANGUAGES.map(lang => (
-                <option key={lang.code} value={lang.code}>{lang.name}</option>
-              ))}
-            </select>
+            <div className="translator-source-row">
+              <select
+                value={sourceLang}
+                onChange={(e) => setSourceLang(e.target.value)}
+                className="translator-lang-select"
+              >
+                {SOURCE_LANGUAGES.map(lang => (
+                  <option key={lang.code} value={lang.code}>{lang.name}</option>
+                ))}
+              </select>
+              {/* Mobile compact buttons */}
+              <div className="translator-mobile-actions">
+                <button
+                  onClick={handleUploadClick}
+                  disabled={isOCRProcessing}
+                  className="translator-mobile-action-btn"
+                  title="Upload image"
+                >
+                  <span className="material-symbols-outlined">image</span>
+                </button>
+                {isSpeechSupported && (
+                  <button
+                    onClick={handleVoiceInput}
+                    className={`translator-mobile-action-btn ${isListening ? 'listening' : ''}`}
+                    title={isListening ? 'Stop listening' : 'Voice input'}
+                  >
+                    <span className="material-symbols-outlined">
+                      {isListening ? 'mic_off' : 'mic'}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
           
           <button 
@@ -391,8 +492,22 @@ export function TranslatorView() {
                 {isOCRProcessing ? `Processing... ${ocrProgress}%` : 'Upload Image'}
               </span>
             </button>
+            {isSpeechSupported && (
+              <button
+                onClick={handleVoiceInput}
+                className={`translator-voice-btn ${isListening ? 'listening' : ''}`}
+                title={isListening ? 'Stop listening' : 'Voice input'}
+              >
+                <span className="material-symbols-outlined">
+                  {isListening ? 'mic_off' : 'mic'}
+                </span>
+                <span className="translator-voice-btn-text">
+                  {isListening ? 'Listening...' : 'Voice Input'}
+                </span>
+              </button>
+            )}
             <span className="translator-image-upload-hint">
-              📷 Image is processed locally and not saved • Paste image with Ctrl+V
+              📷 Image is processed locally • 🎤 Voice input supported
             </span>
           </div>
           

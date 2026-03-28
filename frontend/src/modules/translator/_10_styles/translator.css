@@ -251,6 +251,57 @@
   font-style: italic;
 }
 
+/* Voice Input Button */
+.translator-voice-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.translator-voice-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+}
+
+.translator-voice-btn.listening {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  animation: pulse-voice 1.5s ease-in-out infinite;
+}
+
+.translator-voice-btn.listening:hover {
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.translator-voice-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+@keyframes pulse-voice {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); }
+}
+
+@media (max-width: 768px) {
+  .translator-voice-btn-text {
+    display: none;
+  }
+  
+  .translator-voice-btn {
+    padding: 0.625rem;
+  }
+}
+
 .translator-textarea {
   width: 100%;
   padding: 1.25rem;
@@ -487,19 +538,77 @@
   .translator-lang-selectors {
     flex-direction: column;
     gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
   .translator-arrow {
-    display: none; /* 화살표 숨기기 */
+    display: none;
   }
   
   .translator-swap-btn {
-    display: none; /* 스왑 버튼 숨기기 */
+    display: none;
   }
   
   .translator-lang-group {
     min-width: 100%;
+  }
+
+  /* Source row: select + compact buttons */
+  .translator-source-row {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .translator-source-row .translator-lang-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Show mobile compact action buttons */
+  .translator-mobile-actions {
+    display: flex !important;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .translator-mobile-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .translator-mobile-action-btn:hover,
+  .translator-mobile-action-btn:active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #3b82f6;
+  }
+
+  .translator-mobile-action-btn.listening {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #ef4444;
+    animation: pulse-voice 1.5s ease-in-out infinite;
+  }
+
+  .translator-mobile-action-btn .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  /* Hide desktop upload/voice container on mobile */
+  .translator-image-upload-container {
+    display: none;
   }
 
   /* 데스크톱용 Target Language 숨기기 */
@@ -510,40 +619,49 @@
   /* 모바일용 Target Language 표시 */
   .translator-target-lang-mobile {
     display: block !important;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
   }
 
   .translator-target-lang-mobile label {
-    display: block;
-    margin-bottom: 0.375rem;
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: #475569;
+    display: none;
+  }
+
+  /* Source Language 라벨도 숨기기 */
+  .translator-lang-group > label {
+    display: none;
   }
 
   /* 섹션 간격 줄이기 */
   .translator-section {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
   /* 번역 버튼 여백 줄이기 */
   .translator-btn-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
   }
   
   .translator-btn {
-    padding: 0.875rem 1.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
 
-  /* textarea 높이 줄이기 */
+  /* textarea 높이 크게 줄이기 */
   .translator-textarea {
-    min-height: 120px;
-    padding: 1rem;
+    min-height: 80px;
+    max-height: 120px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
   }
 }
 
 /* 모바일용 Target Language 기본 숨김 */
 .translator-target-lang-mobile {
+  display: none;
+}
+
+/* 모바일 액션 버튼 기본 숨김 (데스크톱에서) */
+.translator-mobile-actions {
   display: none;
 }
 
