@@ -7,7 +7,7 @@ const REFRESH_BEFORE_EXPIRY = 10 * 60 * 1000; // Refresh 10 minutes before expir
 const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // Consider inactive after 30 minutes
 
 export function TokenRefreshManager() {
-  const { tokens, isAuthenticated, refreshToken } = useAuthStore();
+  const { tokens, isAuthenticated, refreshToken, handleTokenExpired } = useAuthStore();
   const lastActivityRef = useRef(Date.now());
   const checkIntervalRef = useRef(null);
 
@@ -41,11 +41,6 @@ export function TokenRefreshManager() {
       const lastActivity = lastActivityRef.current;
       const timeSinceActivity = now - lastActivity;
 
-      // Skip if user is inactive
-      if (timeSinceActivity > ACTIVITY_TIMEOUT) {
-        return;
-      }
-
       // Decode token to get expiry time
       try {
         const tokenParts = tokens.access_token.split('.');
@@ -54,6 +49,23 @@ export function TokenRefreshManager() {
         const payload = JSON.parse(atob(tokenParts[1]));
         const expiryTime = payload.exp * 1000; // Convert to milliseconds
         const timeUntilExpiry = expiryTime - now;
+
+        // Token already expired
+        if (timeUntilExpiry <= 0) {
+          console.log('[TokenRefresh] Token expired, attempting refresh...');
+          try {
+            await refreshToken();
+          } catch (e) {
+            console.log('[TokenRefresh] Refresh failed, logging out');
+            handleTokenExpired();
+          }
+          return;
+        }
+
+        // Skip proactive refresh if user is inactive
+        if (timeSinceActivity > ACTIVITY_TIMEOUT) {
+          return;
+        }
 
         // Refresh if token expires soon
         if (timeUntilExpiry < REFRESH_BEFORE_EXPIRY && timeUntilExpiry > 0) {
@@ -76,7 +88,7 @@ export function TokenRefreshManager() {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, [isAuthenticated, tokens, refreshToken]);
+  }, [isAuthenticated, tokens, refreshToken, handleTokenExpired]);
 
   return null; // This component doesn't render anything
 }

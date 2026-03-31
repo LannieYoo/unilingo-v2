@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { searchDictionary, fetchAutocompleteSuggestions } from '../_06_services'
 import { detectLanguage } from '../_07_utils'
 import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
 import { useAuthStore, useLanguagePreferences } from '../../auth'
@@ -341,28 +340,37 @@ export function useDictionary() {
     }
   }, [targetLang, isSearching])
 
-  // 검색 수행
+  // Google Translate 헬퍼
+  const googleTranslate = useCallback(async (text, sl, tl, signal) => {
+    try {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`
+      const res = await fetch(url, { signal })
+      if (res.ok) {
+        const data = await res.json()
+        return data?.[0]?.[0]?.[0] || null
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') console.error('Google Translate error:', e)
+    }
+    return null
+  }, [])
+
+  // 검색 수행 - Free Dictionary API + Google Translate (자동완성과 동일한 소스)
   const performSearch = useCallback(async (fromLang, toLang, searchWord, signal = null, historyWord = null) => {
     const wordToSearch = searchWord
     
     console.log('[Dictionary Hook] performSearch called:', { fromLang, toLang, searchWord, historyWord })
-    console.log('[Dictionary Hook] Current searchHistory:', searchHistory)
     
     // 현재 검색어가 즐겨찾기에 있는지 확인
     const existingFavorite = searchHistory.find(item => {
       const match = item.word.toLowerCase() === searchWord.toLowerCase() && item.isFavorite
-      console.log('[Dictionary Hook] Checking:', item.word, 'vs', searchWord, 'isFavorite:', item.isFavorite, 'match:', match)
       return match
     })
     
-    console.log('[Dictionary Hook] Existing favorite found:', existingFavorite)
-    
     if (existingFavorite) {
-      console.log('[Dictionary Hook] Setting favorite state:', existingFavorite.id, true)
       setCurrentLogId(existingFavorite.id)
       setIsFavorite(true)
     } else {
-      console.log('[Dictionary Hook] No favorite found, resetting state')
       setCurrentLogId(null)
       setIsFavorite(false)
     }
@@ -371,66 +379,148 @@ export function useDictionary() {
     if (wordToSearch !== currentSearchTermRef.current) throw new DOMException('Search cancelled', 'AbortError')
 
     try {
-      // 백엔드 API 호출 (언어 자동 감지 및 캐시 처리)
-      console.log('[Dictionary Hook] Calling searchDictionary:', wordToSearch, toLang)
-      const dictData = await searchDictionary(wordToSearch, toLang)
-      console.log('[Dictionary Hook] searchDictionary returned:', dictData)
-      
-      if (!dictData || !dictData.term) {
-        console.log('[Dictionary Hook] No data or no term, showing error')
+      // 비영어 입력인 경우 Google Translate로 영어 변환
+      let englishWord = wordToSearch
+      let originalWord = null
+      if (fromLang === 'ko' || fromLang === 'zh') {
+        const translated = await googleTranslate(wordToSearch, fromLang, 'en', signal)
+        if (translated && translated.toLowerCase() !== wordToSearch.toLowerCase()) {
+          englishWord = translated.toLowerCase().trim()
+          originalWord = wordToSearch
+        }
+      }
+
+      console.log('[Dictionary Hook] Looking up:', englishWord)
+
+      // Free Dictionary API 호출 (자동완성과 같은 빠른 소스)
+      const dictResponse = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(englishWord)}`,
+        { signal }
+      )
+
+      if (!dictResponse.ok) {
         const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 검색 결과를 찾을 수 없습니다.`, isPhrase: true }]
         setResults(result)
         return
       }
-      
-      // 새 API 응답 구조에 맞게 변환
-      console.log('[Dictionary Hook] Transforming data...')
-      const result = [{
-        term: dictData.term,
-        word: dictData.term,
-        simpleTranslation: dictData.simple_translation || null,
-        englishWord: dictData.english_word || null,
-        pronunciation: dictData.pronunciation && (dictData.pronunciation.ipa || dictData.pronunciation.phonetic) 
-          ? { 
-              ipa: dictData.pronunciation.ipa,
-              phonetic: dictData.pronunciation.phonetic,
-              audioUrl: dictData.pronunciation.audio_url
-            }
-          : null,
-        meanings: dictData.meanings && dictData.meanings.length > 0
-          ? dictData.meanings.map((meaning) => ({
-              part_of_speech: meaning.part_of_speech,
-              partOfSpeech: meaning.part_of_speech,
-              definitions: meaning.definitions.map((def) => ({
+
+      const dictDataArray = await dictResponse.json()
+      const dictData = Array.isArray(dictDataArray) ? dictDataArray[0] : dictDataArray
+
+      if (!dictData) {
+        const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 검색 결과를 찾을 수 없습니다.`, isPhrase: true }]
+        setResults(result)
+        return
+      }
+
+      // 발음 추출
+      let pronunciation = null
+      if (dictData.phonetics && dictData.phonetics.length > 0) {
+        let ipa = null
+        let audioUrl = null
+        for (const p of dictData.phonetics) {
+          if (p.text && !ipa) ipa = p.text
+          if (p.audio && !audioUrl) audioUrl = p.audio
+        }
+        if (ipa || audioUrl) {
+          pronunciation = { ipa, phonetic: ipa, audioUrl }
+        }
+      }
+
+      // 의미 추출 + 번역 (병렬 처리)
+      const meanings = []
+      const translationPromises = []
+
+      if (dictData.meanings) {
+        for (const meaning of dictData.meanings) {
+          const partOfSpeech = meaning.partOfSpeech || 'unknown'
+          const definitions = []
+
+          if (meaning.definitions) {
+            for (const def of meaning.definitions.slice(0, 3)) {
+              if (!def.definition) continue
+              const examples = def.example ? [def.example] : []
+              definitions.push({
                 definition: def.definition,
-                translation: def.translation,
-                examples: def.examples || []
-              }))
-            }))
-          : [],
-        synonyms: [],
-        antonyms: [],
-        cached: dictData.cached || false
+                translation: null,
+                examples
+              })
+
+              // 번역 프로미스 수집 (영어 → 타겟 언어)
+              if (toLang !== 'en') {
+                const defRef = definitions[definitions.length - 1]
+                translationPromises.push(
+                  googleTranslate(def.definition, 'en', toLang, signal).then(t => {
+                    defRef.translation = t
+                  })
+                )
+              }
+            }
+          }
+
+          if (definitions.length > 0) {
+            meanings.push({ part_of_speech: partOfSpeech, partOfSpeech, definitions })
+          }
+        }
+      }
+
+      // simple_translation 가져오기 (병렬)
+      let simpleTranslation = null
+      if (toLang !== 'en') {
+        translationPromises.push(
+          googleTranslate(englishWord, 'en', toLang, signal).then(t => {
+            simpleTranslation = t
+          })
+        )
+      }
+
+      // 동의어/반의어 추출
+      const synonyms = []
+      const antonyms = []
+      if (dictData.meanings) {
+        for (const meaning of dictData.meanings) {
+          if (meaning.synonyms) synonyms.push(...meaning.synonyms)
+          if (meaning.antonyms) antonyms.push(...meaning.antonyms)
+          if (meaning.definitions) {
+            for (const def of meaning.definitions) {
+              if (def.synonyms) synonyms.push(...def.synonyms)
+              if (def.antonyms) antonyms.push(...def.antonyms)
+            }
+          }
+        }
+      }
+
+      // 모든 번역 병렬 완료 대기
+      await Promise.all(translationPromises)
+
+      const result = [{
+        term: originalWord || englishWord,
+        word: originalWord || englishWord,
+        simpleTranslation,
+        englishWord: originalWord ? englishWord : null,
+        pronunciation,
+        meanings,
+        synonyms: [...new Set(synonyms)].slice(0, 10),
+        antonyms: [...new Set(antonyms)].slice(0, 10),
+        cached: false
       }]
       
-      console.log('[Dictionary Hook] Transformed result:', result)
+      console.log('[Dictionary Hook] Result:', result)
       setResults(result)
       
-      // Track usage - count as 1 search
-      const searchCount = 1
-      console.log('[Dictionary] Tracking usage:', searchCount, 'search')
+      // Track usage
       try {
-        await trackUsage(searchCount, 'dictionary')
-        console.log('[Dictionary] Usage tracked successfully')
+        await trackUsage(1, 'dictionary')
       } catch (err) {
         console.error('[Dictionary] Failed to track usage:', err)
       }
     } catch (error) {
+      if (error.name === 'AbortError') throw error
       console.error('Search error:', error)
       const errorResult = [{ word: wordToSearch, translation: 'Error: ' + error.message }]
       setResults(errorResult)
     }
-  }, [trackUsage, searchHistory])
+  }, [trackUsage, searchHistory, googleTranslate])
 
   // 검색 실행
   const handleSearch = useCallback(async () => {
