@@ -136,6 +136,135 @@
   cursor: not-allowed;
 }
 
+/* Voice Input Group */
+.dict-voice-group {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Voice Language Toggle */
+.dict-voice-lang-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.625rem;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  color: white;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+  min-width: 36px;
+}
+
+.dict-voice-lang-toggle:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+}
+
+.dict-voice-lang-toggle.active {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  cursor: pointer;
+  animation: dict-toggle-pulse 1s ease-in-out infinite;
+}
+
+@keyframes dict-toggle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Voice Input Button */
+.dict-voice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.875rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dict-voice-group:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+}
+
+.dict-voice-btn.listening {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.dict-voice-btn.listening + .dict-voice-lang-toggle,
+.dict-voice-group:has(.dict-voice-btn.listening) .dict-voice-lang-toggle {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.dict-voice-group:has(.dict-voice-btn.listening) {
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  animation: dict-pulse-voice 1.5s ease-in-out infinite;
+}
+
+.dict-voice-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+@keyframes dict-pulse-voice {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); }
+}
+
+/* Listening state for search input */
+.search-input--listening {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+  animation: dict-input-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dict-input-pulse {
+  0%, 100% { border-color: #ef4444; }
+  50% { border-color: #f87171; }
+}
+
+@media (max-width: 550px) {
+  .search-input-group {
+    flex-wrap: wrap;
+  }
+  
+  .search-input-wrapper {
+    order: 1;
+    flex: 1 1 100%;
+  }
+  
+  .dict-voice-group {
+    order: 2;
+  }
+  
+  .dict-voice-btn {
+    padding: 0.625rem;
+  }
+  
+  .direction-select {
+    order: 3;
+    min-width: unset;
+    flex: 1;
+  }
+  
+  .search-btn {
+    order: 4;
+    flex: 1;
+  }
+}
+
 /* 관련 단어 섹션 */
 .related-words-section-top {
   margin-top: 1rem;

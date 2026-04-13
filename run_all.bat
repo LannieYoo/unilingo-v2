@@ -57,16 +57,31 @@ REM Step 2: Port Cleanup
 REM ========================================
 echo [2/5] Cleaning up ports...
 
-REM Kill processes on port 3001 and 8001 in parallel
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3001 " ^| findstr "LISTENING"') do (
-    taskkill /F /PID %%a >nul 2>nul
-)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8001 " ^| findstr "LISTENING"') do (
-    taskkill /F /PID %%a >nul 2>nul
+REM Kill processes on port 3001, 5173, and 8001
+for %%p in (3001 5173 8001) do (
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%%p " ^| findstr "LISTENING" 2^>nul') do (
+        echo      Killing PID %%a on port %%p...
+        taskkill /F /PID %%a >nul 2>nul
+    )
 )
 
-REM Brief wait for port release
-timeout /t 1 /nobreak >nul
+REM Wait for port release (retry up to 5 seconds)
+set "PORT_CLEAR=0"
+for /L %%i in (1,1,5) do (
+    if !PORT_CLEAR! equ 0 (
+        timeout /t 1 /nobreak >nul
+        netstat -ano | findstr ":8001 " | findstr "LISTENING" >nul 2>nul
+        if !errorlevel! neq 0 (
+            netstat -ano | findstr ":3001 " | findstr "LISTENING" >nul 2>nul
+            if !errorlevel! neq 0 (
+                set "PORT_CLEAR=1"
+            )
+        )
+    )
+)
+if !PORT_CLEAR! equ 0 (
+    echo [WARN] Ports may not be fully released. Continuing anyway...
+)
 echo      Ports cleared
 
 REM ========================================

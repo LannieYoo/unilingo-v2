@@ -3,7 +3,7 @@
  * 사전 검색 페이지 뷰
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useDictionary } from '../_04_hooks'
@@ -52,6 +52,90 @@ export function DictionaryView() {
 
   const location = useLocation()
   const inputRef = useRef(null)
+  const recognitionRef = useRef(null)
+  const [isListening, setIsListening] = useState(false)
+  const [voiceLang, setVoiceLang] = useState('en-US')
+
+  const isSpeechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+  const VOICE_LANGS = [
+    { code: 'en-US', label: 'EN', name: 'English' },
+    { code: 'ko-KR', label: 'KO', name: 'Korean' },
+    { code: 'zh-CN', label: 'ZH', name: 'Chinese' },
+  ]
+
+  // Ref to always have the latest searchWithWord
+  const searchWithWordRef = useRef(searchWithWord)
+  useEffect(() => { searchWithWordRef.current = searchWithWord }, [searchWithWord])
+
+  const handleVoiceInput = useCallback(() => {
+    if (!isSpeechSupported) {
+      alert('Your browser does not support speech recognition.')
+      return
+    }
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+    recognitionRef.current = recognition
+
+    recognition.lang = voiceLang
+    recognition.interimResults = true
+    recognition.continuous = false
+    recognition.maxAlternatives = 1
+
+    let finalTranscript = ''
+
+    recognition.onstart = () => setIsListening(true)
+
+    recognition.onresult = (event) => {
+      let interim = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript
+        } else {
+          interim += event.results[i][0].transcript
+        }
+      }
+      setSearchTerm(finalTranscript || interim)
+    }
+
+    recognition.onerror = (event) => {
+      if (event.error === 'aborted') return
+      console.error('Speech recognition error:', event.error)
+      setIsListening(false)
+      if (event.error === 'not-allowed') {
+        alert('Microphone access denied. Please allow microphone access in your browser settings.')
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+      recognitionRef.current = null
+      if (finalTranscript.trim()) {
+        searchWithWordRef.current(finalTranscript.trim())
+      }
+    }
+
+    recognition.start()
+  }, [isSpeechSupported, isListening, voiceLang, setSearchTerm])
+
+  // Cycle voice language: EN → KO → ZH → EN
+  const cycleVoiceLang = useCallback(() => {
+    if (isListening) return
+    setVoiceLang(prev => {
+      const idx = VOICE_LANGS.findIndex(l => l.code === prev)
+      return VOICE_LANGS[(idx + 1) % VOICE_LANGS.length].code
+    })
+  }, [isListening])
+
+  // Cleanup recognition on unmount
+  useEffect(() => {
+    return () => { recognitionRef.current?.stop() }
+  }, [])
 
   // Handle location state for pre-filling search term and target language
   useEffect(() => {
@@ -165,8 +249,8 @@ export function DictionaryView() {
                     setShowSuggestions(true)
                   }
                 }}
-                placeholder="Enter a word to search..."
-                className="search-input"
+                placeholder={isListening ? 'Listening...' : 'Enter a word to search...'}
+                className={`search-input ${isListening ? 'search-input--listening' : ''}`}
                 autoComplete="off"
               />
               {showSuggestions && suggestions.length > 0 && (
@@ -203,6 +287,26 @@ export function DictionaryView() {
                 </div>
               )}
             </div>
+            {isSpeechSupported && (
+              <div className="dict-voice-group">
+                <button
+                  onClick={cycleVoiceLang}
+                  className={`dict-voice-lang-toggle ${isListening ? 'active' : ''}`}
+                  title={isListening ? `Listening in ${VOICE_LANGS.find(l => l.code === voiceLang)?.name}. Click to switch language.` : `Voice language: ${VOICE_LANGS.find(l => l.code === voiceLang)?.name}. Click to change.`}
+                >
+                  {VOICE_LANGS.find(l => l.code === voiceLang)?.label}
+                </button>
+                <button
+                  onClick={handleVoiceInput}
+                  className={`dict-voice-btn ${isListening ? 'listening' : ''}`}
+                  title={isListening ? 'Stop listening' : `Voice input (${VOICE_LANGS.find(l => l.code === voiceLang)?.name})`}
+                >
+                  <span className="material-symbols-outlined">
+                    {isListening ? 'mic_off' : 'mic'}
+                  </span>
+                </button>
+              </div>
+            )}
             <select
               value={targetLang}
               onChange={handleTargetLangChange}

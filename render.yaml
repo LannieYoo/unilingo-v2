@@ -1,0 +1,58 @@
+# UniLingo - Render 배포 설정 파일
+# 이 파일로 모든 서비스를 한 번에 생성할 수 있습니다
+
+services:
+  # 프론트엔드 정적 웹사이트 (Vite + React)
+  - type: web
+    name: unilingo-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://unilingo-backend.onrender.com
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false  # Dashboard에서 수동 설정
+
+  # 백엔드 웹 서비스 (Flask)
+  - type: web
+    name: unilingo-backend
+    env: python
+    plan: free
+    rootDir: ./
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 "backend.app:create_app('production')"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_HOST
+        value: 0.0.0.0
+      - key: CORS_ORIGINS
+        value: https://unilingo-frontend.onrender.com
+      - key: SECRET_KEY
+        sync: false  # Dashboard에서 수동 설정
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: ADMIN_USER
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_DB_URI
+        sync: false
+      - key: DEEPL_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.6"
