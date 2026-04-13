@@ -1,0 +1,15 @@
+.\unilingo_env\Scripts\Activate.ps1
+
+검색 버튼 클릭 (느림 ❌)
+검색 시 최소 4~6개 외부 API를 순차/병렬 호출하기 때문에 느립니다:
+
+WordNet (로컬 NLTK) → 영어 정의/예문 ✅ 빠름
+Free Dictionary API → 발음/IPA 가져오기
+DeepL → 정의 번역 (quota 제한 있음)
+LibreTranslate/Naver Papago → 폴백 번역
+Google Translate → 최종 폴백
+각 정의마다 번역 API를 반복 호출 → 이것이 가장 큰 병목
+병목 원인
+정의 3개 × 품사 3개 = 최대 9번의 번역 API 호출
+DeepL 실패 시 → Papago → Google까지 3단계 폴백
+외부 API 타임아웃 문제
