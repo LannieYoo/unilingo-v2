@@ -17,16 +17,16 @@ export default {
     extend: {
       colors: {
         "primary": "#F94B08", // RGB(249, 75, 8) - 주 메인 강조색
-        "background-light": "#D4E4F3",
-        "background-dark": "#0b1120",
+        "background-light": "#f8fafc",
+        "background-dark": "#0a1628",
         "card-light": "#ffffff",
-        "card-dark": "#1e293b",
+        "card-dark": "#0f1f3a",
         "text-light": "#0f172a",
         "text-dark": "#e2e8f0",
         "text-muted-light": "#64748b",
-        "text-muted-dark": "#94a3b8",
+        "text-muted-dark": "#8b9dc3",
         "border-light": "#e2e8f0",
-        "border-dark": "#334155"
+        "border-dark": "#1a2d4d"
       },
       fontFamily: {
         "display": ["Inter", "sans-serif"]

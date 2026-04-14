@@ -33,7 +33,10 @@
   font-size: 2rem;
   margin-bottom: 0.75rem;
   text-align: center;
-  color: #3E424D;
+  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-weight: 800;
   letter-spacing: -0.5px;
   flex-shrink: 0;
@@ -80,17 +83,17 @@
 /* 페이지 박스 */
 .page-layout__box {
   background: #ffffff;
-  border: 2px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px -4px rgba(59, 130, 246, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: #1e293b;
 }
 
 .page-layout__box:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 32px -4px rgba(59, 130, 246, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  border-color: rgba(59, 130, 246, 0.25);
 }
 
 .page-layout__box--no-padding {
@@ -359,4 +362,100 @@
     margin-top: 0.5rem;
     padding-top: 0.5rem;
   }
+}
+
+/* ========================================
+   다크 모드 - PageLayout
+   ======================================== */
+.dark .page-layout__title {
+  background: linear-gradient(135deg, #e2e8f0 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .page-layout__subtitle {
+  color: #8b9dc3;
+}
+
+.dark .page-layout__box {
+  background: #0f1f3a;
+  border-color: #1a2d4d;
+  color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.dark .page-layout__box:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .page-layout__footer {
+  border-top-color: #1a2d4d;
+}
+
+.dark .page-select {
+  background: #0f1f3a;
+  border-color: #1a2d4d;
+  color: #e2e8f0;
+}
+
+.dark .page-select:hover {
+  border-color: #2a3d5d;
+}
+
+.dark .page-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.dark .page-textarea {
+  background: #0f1f3a;
+  border-color: #1a2d4d;
+  color: #e2e8f0;
+}
+
+.dark .page-textarea::placeholder {
+  color: #4a6085;
+}
+
+.dark .page-textarea--readonly {
+  background: #0a1628;
+  border-color: #1a2d4d;
+}
+
+.dark .page-input {
+  background: #0f1f3a;
+  border-color: #1a2d4d;
+  color: #e2e8f0;
+}
+
+.dark .page-input::placeholder {
+  color: #4a6085;
+}
+
+.dark .page-btn--secondary {
+  background: #162a4a;
+  color: #8b9dc3;
+  border-color: #1a2d4d;
+}
+
+.dark .page-btn--secondary:hover:not(:disabled) {
+  background: #1a2d4d;
+  color: #e2e8f0;
+}
+
+.dark .page-label {
+  color: #8b9dc3;
+}
+
+.dark .page-note {
+  background: #0a1628;
+  color: #8b9dc3;
+}
+
+.dark .page-warning {
+  background: #451a03;
+  color: #fcd34d;
+  border-color: #92400e;
 }

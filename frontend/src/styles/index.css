@@ -14,10 +14,10 @@
   --text-color: #1F2937;
   --text-light: #6B7280;
   --text-muted: #6B7280;
-  --bg-color: #D4E4F3;
+  --bg-color: #f5f7fb;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #D4E4F3;
-  --bg-gradient: linear-gradient(135deg, #F9FAFB 0%, #ffffff 100%);
+  --bg-tertiary: #eef2f9;
+  --bg-gradient: linear-gradient(135deg, #f5f7fb 0%, #eef2f9 50%, #f0f4ff 100%);
   --bg-light: #ffffff;
   --border-color: #E5E7EB;
   --border-light: #E5E7EB;
@@ -34,6 +34,33 @@
   --border-radius: 12px;
   --border-radius-lg: 16px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark theme - deep navy blue */
+.dark {
+  --text-color: #e2e8f0;
+  --text-light: #8b9dc3;
+  --text-muted: #8b9dc3;
+  --bg-color: #0a1628;
+  --bg-secondary: #0f1f3a;
+  --bg-tertiary: #0a1628;
+  --bg-gradient: linear-gradient(135deg, #0a1628 0%, #0f1f3a 100%);
+  --bg-light: #0f1f3a;
+  --border-color: #1a2d4d;
+  --border-light: #1a2d4d;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+html.dark {
+  background-color: #0a1628;
+}
+
+html.dark body {
+  background-color: #0a1628;
+  color: #e2e8f0;
 }
 
 .material-symbols-outlined {
@@ -54,7 +81,44 @@
 }
 
 .bg-background-light {
-  background-color: rgb(212, 228, 243) !important;
+  background: linear-gradient(180deg, #e8eef6 0%, #dce5f2 50%, #d4deee 100%) !important;
+}
+
+.dark .bg-background-light {
+  background: #0a1628 !important;
+}
+
+/* Dark mode toggle */
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.dark-mode-toggle:hover {
+  border-color: #F94B08;
+  color: #F94B08;
+  transform: scale(1.05);
+}
+
+.dark .dark-mode-toggle {
+  border-color: #1a2d4d;
+  background: #0f1f3a;
+  color: #fbbf24;
+}
+
+.dark .dark-mode-toggle:hover {
+  border-color: #fbbf24;
+  background: #162a4a;
 }
 
 /* 강제로 primary 색상 적용 */

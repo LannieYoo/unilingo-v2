@@ -206,3 +206,37 @@
   }
 }
 
+/* Dark mode */
+.dark .header {
+  background: rgba(10, 22, 40, 0.95);
+  border-bottom-color: #1a2d4d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark .logo {
+  color: #e2e8f0;
+}
+
+.dark .logo-text {
+  color: #e2e8f0;
+}
+
+.dark .logo-icon-wrapper {
+  background: #0f1f3a;
+}
+
+.dark .nav-link {
+  color: #8b9dc3;
+}
+
+.dark .nav-link:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+@media (max-width: 1400px) {
+  .dark .nav {
+    background: rgba(10, 22, 40, 0.98);
+    border-bottom-color: #1a2d4d;
+  }
+}

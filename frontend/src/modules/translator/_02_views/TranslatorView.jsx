@@ -615,6 +615,51 @@ export function TranslatorView() {
             <span className="translator-image-upload-hint">
               📷 Image is processed locally • 🎤 Voice input supported
             </span>
+            {/* Right-aligned button group in toolbar */}
+            <div className="translator-toolbar-right">
+              <button
+                onClick={handleTranslate}
+                disabled={isTranslating || !inputText?.trim() || (isAuthenticated && isLimitExceeded) || isGuestLimitExceeded}
+                className="translator-btn translator-btn--toolbar"
+                title={isLimitExceeded ? 'Usage limit exceeded' : isGuestLimitExceeded ? 'Guest limit reached - Please login' : ''}
+              >
+                {isTranslating ? 'Translating...' : 
+                 isLimitExceeded ? 'Limit Exceeded' : 
+                 isGuestLimitExceeded ? 'Login Required' : 
+                 'Translate'}
+              </button>
+              <button
+                onClick={() => setConversationMode(prev => !prev)}
+                className={`translator-conv-btn ${conversationMode ? 'active' : ''}`}
+                title={conversationMode ? 'Exit conversation mode' : 'Flip output for the person across'}
+              >
+                <span className="material-symbols-outlined">
+                  {conversationMode ? 'screen_rotation_alt' : 'screen_rotation'}
+                </span>
+              </button>
+              <button
+                onClick={() => setFocusMode(prev => !prev)}
+                className={`translator-conv-btn translator-focus-btn ${focusMode ? 'active' : ''}`}
+                title={focusMode ? 'Exit focus mode' : 'Focus mode'}
+              >
+                <span className="material-symbols-outlined">
+                  {focusMode ? 'close_fullscreen' : 'open_in_full'}
+                </span>
+              </button>
+              {/* Save to History */}
+              {isAuthenticated && outputText && (
+                <button
+                  onClick={handleSaveToHistory}
+                  disabled={isSaving || !outputText?.trim() || outputText === lastSavedText}
+                  className="translator-save-btn"
+                  title={outputText === lastSavedText ? 'Already saved' : 'Save to History'}
+                >
+                  <span className="material-symbols-outlined">
+                    {outputText === lastSavedText ? 'bookmark' : 'bookmark_add'}
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
           
           <textarea
@@ -703,79 +748,57 @@ export function TranslatorView() {
           )}
         </div>
 
-        {/* 번역 버튼 */}
-        <div className="translator-btn-group">
-          {/* Focus mode: bring toolbar buttons to top bar */}
-          {focusMode && (
-            <>
-              <button
-                onClick={handleUploadClick}
-                disabled={isOCRProcessing}
-                className="translator-conv-btn"
-                title="Upload image"
-              >
-                <span className="material-symbols-outlined">image</span>
-              </button>
-              {isSpeechSupported && (
-                <button
-                  onClick={handleVoiceInput}
-                  className={`translator-conv-btn voice-focus-btn ${isListening ? 'active' : ''}`}
-                  title={isListening ? 'Stop listening' : 'Voice input'}
-                >
-                  <span className="material-symbols-outlined">
-                    {isListening ? 'mic_off' : 'mic'}
-                  </span>
-                </button>
-              )}
-            </>
-          )}
-          <button
-            onClick={handleTranslate}
-            disabled={isTranslating || !inputText?.trim() || (isAuthenticated && isLimitExceeded) || isGuestLimitExceeded}
-            className="translator-btn"
-            title={isLimitExceeded ? 'Usage limit exceeded' : isGuestLimitExceeded ? 'Guest limit reached - Please login' : ''}
-          >
-            {isTranslating ? 'Translating...' : 
-             isLimitExceeded ? 'Limit Exceeded' : 
-             isGuestLimitExceeded ? 'Login Required' : 
-             'Translate'}
-          </button>
-          <button
-            onClick={() => setConversationMode(prev => !prev)}
-            className={`translator-conv-btn ${conversationMode ? 'active' : ''}`}
-            title={conversationMode ? 'Exit conversation mode' : 'Flip output for the person across'}
-          >
-            <span className="material-symbols-outlined">
-              {conversationMode ? 'screen_rotation_alt' : 'screen_rotation'}
-            </span>
-          </button>
-          <button
-            onClick={() => setFocusMode(prev => !prev)}
-            className={`translator-conv-btn translator-focus-btn ${focusMode ? 'active' : ''}`}
-            title={focusMode ? 'Exit focus mode' : 'Focus mode'}
-          >
-            <span className="material-symbols-outlined">
-              {focusMode ? 'close_fullscreen' : 'open_in_full'}
-            </span>
-          </button>
-          
-          {/* Save to History 버튼 */}
-          {isAuthenticated && outputText && (
+        {/* Focus mode btn-group */}
+        {focusMode && (
+          <div className="translator-btn-group">
             <button
-              onClick={handleSaveToHistory}
-              disabled={isSaving || !outputText?.trim() || outputText === lastSavedText}
-              className="translator-save-btn"
-              title={outputText === lastSavedText ? 'Already saved' : 'Save to History'}
+              onClick={handleUploadClick}
+              disabled={isOCRProcessing}
+              className="translator-conv-btn"
+              title="Upload image"
+            >
+              <span className="material-symbols-outlined">image</span>
+            </button>
+            {isSpeechSupported && (
+              <button
+                onClick={handleVoiceInput}
+                className={`translator-conv-btn voice-focus-btn ${isListening ? 'active' : ''}`}
+                title={isListening ? 'Stop listening' : 'Voice input'}
+              >
+                <span className="material-symbols-outlined">
+                  {isListening ? 'mic_off' : 'mic'}
+                </span>
+              </button>
+            )}
+            <button
+              onClick={handleTranslate}
+              disabled={isTranslating || !inputText?.trim() || (isAuthenticated && isLimitExceeded) || isGuestLimitExceeded}
+              className="translator-btn"
+              title={isLimitExceeded ? 'Usage limit exceeded' : isGuestLimitExceeded ? 'Guest limit reached - Please login' : ''}
+            >
+              {isTranslating ? 'Translating...' : 
+               isLimitExceeded ? 'Limit Exceeded' : 
+               isGuestLimitExceeded ? 'Login Required' : 
+               'Translate'}
+            </button>
+            <button
+              onClick={() => setConversationMode(prev => !prev)}
+              className={`translator-conv-btn ${conversationMode ? 'active' : ''}`}
+              title={conversationMode ? 'Exit conversation mode' : 'Flip output'}
             >
               <span className="material-symbols-outlined">
-                {outputText === lastSavedText ? 'bookmark' : 'bookmark_add'}
-              </span>
-              <span className="translator-save-btn-text">
-                {isSaving ? 'Saving...' : outputText === lastSavedText ? 'Saved' : 'Save'}
+                {conversationMode ? 'screen_rotation_alt' : 'screen_rotation'}
               </span>
             </button>
-          )}
-        </div>
+            <button
+              onClick={() => setFocusMode(false)}
+              className="translator-conv-btn translator-focus-btn active"
+              title="Exit focus mode"
+            >
+              <span className="material-symbols-outlined">close_fullscreen</span>
+            </button>
+          </div>
+        )}
 
         {/* Target Language (모바일에서만 표시) */}
         <div className="translator-target-lang-mobile">

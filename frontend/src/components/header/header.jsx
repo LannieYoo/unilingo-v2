@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import LogoIcon from './LogoIcon'
 import { useAuthStore, GoogleLoginButton, UserProfile, SessionExpiredModal } from '../../modules/auth'
@@ -6,8 +6,21 @@ import { CompactUsageIndicator } from '../../common/components/CompactUsageIndic
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark'
+  })
   const location = useLocation()
   const { isAuthenticated, tokenExpired, clearSessionExpired } = useAuthStore()
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }, [isDark])
 
   const menuItems = [
     { path: '/', label: 'Translator', name: 'home' },
@@ -68,9 +81,18 @@ function Header() {
         <div style={{ minWidth: '120px', display: 'flex', justifyContent: 'flex-end' }}>
           {isAuthenticated && <CompactUsageIndicator />}
         </div>
-        
-        {/* Auth section */}
-        <div className="flex items-center ml-4 pl-4 border-l border-border-light dark:border-border-dark">
+
+        {/* Dark mode toggle + Auth section */}
+        <div className="flex items-center gap-3 ml-2 pl-3 border-l border-border-light dark:border-border-dark">
+          <button
+            onClick={() => setIsDark(prev => !prev)}
+            className="dark-mode-toggle"
+            title={isDark ? 'Light mode' : 'Dark mode'}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+              {isDark ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
           {isAuthenticated ? (
             <UserProfile compact />
           ) : (
@@ -79,13 +101,24 @@ function Header() {
         </div>
       </div>
       
-      <button 
-        className="lg:hidden flex items-center justify-center h-14 w-14 -mt-1 text-text-light dark:text-text-dark hover:text-primary transition-colors"
-        onClick={toggleMenu}
-        aria-label="Toggle menu"
-      >
-        <span className="material-symbols-outlined text-4xl font-bold">menu</span>
-      </button>
+      <div className="lg:hidden flex items-center gap-1">
+        <button
+          onClick={() => setIsDark(prev => !prev)}
+          className="dark-mode-toggle"
+          title={isDark ? 'Light mode' : 'Dark mode'}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+            {isDark ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
+        <button 
+          className="flex items-center justify-center h-14 w-14 -mt-1 text-text-light dark:text-text-dark hover:text-primary transition-colors"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+        >
+          <span className="material-symbols-outlined text-4xl font-bold">menu</span>
+        </button>
+      </div>
       
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg lg:hidden">

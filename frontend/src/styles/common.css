@@ -59,3 +59,19 @@
   }
 }
 
+/* 다크 모드 */
+.dark .page-box {
+  background: #0f1f3a;
+  border-color: rgba(26, 45, 77, 0.6);
+  color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.dark .page-box:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .page-subtitle {
+  color: #8b9dc3;
+}
