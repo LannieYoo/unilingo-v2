@@ -23,6 +23,7 @@ export function TranslatorView() {
     targetLang,
     isTranslating,
     setInputText,
+    setInputTextRaw,
     setSourceLang,
     setTargetLang,
     translate,
@@ -34,6 +35,8 @@ export function TranslatorView() {
   const { extractText, isProcessing: isOCRProcessing, progress: ocrProgress, error: ocrError } = useOCR()
   const { speak, stop, isSpeaking, currentLang, isSupported: isTTSSupported } = useTTS()
   const fileInputRef = useRef(null)
+  const inputTextareaRef = useRef(null)
+  const outputTextareaRef = useRef(null)
   const recognitionRef = useRef(null)
   const [recentHistory, setRecentHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -45,6 +48,8 @@ export function TranslatorView() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [guestCharCount, setGuestCharCount] = useState(0)
   const [isListening, setIsListening] = useState(false)
+  const [conversationMode, setConversationMode] = useState(false)
+  const [focusMode, setFocusMode] = useState(false)
 
   // Web Speech API language mapping
   const getSpeechLang = (lang) => {
@@ -67,7 +72,6 @@ export function TranslatorView() {
     }
 
     if (isListening) {
-      // Stop listening
       recognitionRef.current?.stop()
       return
     }
@@ -83,30 +87,73 @@ export function TranslatorView() {
 
     let finalTranscript = inputText
 
-    recognition.onstart = () => setIsListening(true)
+    // Auto-stop after 20s of silence
+    let idleTimer = null
+    const resetIdleTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => {
+        recognition.stop()
+      }, 20000)
+    }
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      resetIdleTimer()
+    }
+
+    // Post-process: add punctuation to recognized text
+    const addPunctuation = (text) => {
+      if (!text) return text
+      let t = text.trim()
+
+      // Korean: insert period + space between merged sentences
+      t = t.replace(/(니다|세요|어요|해요|에요|거야|잖아|네요|구나|할게|래요|한다|인데|거든|겠어|죠|지요|어라|구요|군요|듯요)(?=[가-힣])/g, '$1. ')
+
+      // Chinese: insert 。between merged sentences  
+      t = t.replace(/(了|的|吗|呢|吧|啊|哦|啦|呀|么)(?=[\u4e00-\u9fff])/g, '$1。')
+
+      // Capitalize first letter (for English)
+      t = t.charAt(0).toUpperCase() + t.slice(1)
+
+      // Add period if sentence doesn't end with punctuation
+      if (t && !/[.!?。！？，,;:]$/.test(t)) {
+        t += '.'
+      }
+      return t
+    }
 
     recognition.onresult = (event) => {
+      resetIdleTimer()  // Reset 20s timer on each input
       let interim = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          finalTranscript += (finalTranscript ? ' ' : '') + transcript
+          if (!transcript || !transcript.trim()) continue
+          const punctuated = addPunctuation(transcript)
+          if (punctuated && punctuated.trim()) {
+            finalTranscript += (finalTranscript ? '\n' : '') + punctuated
+          }
         } else {
-          interim += transcript
+          if (transcript && transcript.trim()) {
+            interim += transcript
+          }
         }
       }
-      setInputText(finalTranscript + (interim ? ' ' + interim : ''))
+      setInputTextRaw(finalTranscript + (interim && interim.trim() ? '\n' + interim : ''))
     }
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error)
+      if (idleTimer) clearTimeout(idleTimer)
       setIsListening(false)
+      recognitionRef.current = null
       if (event.error === 'not-allowed') {
         alert('Microphone access denied. Please allow microphone access in your browser settings.')
       }
     }
 
     recognition.onend = () => {
+      if (idleTimer) clearTimeout(idleTimer)
       setIsListening(false)
       recognitionRef.current = null
     }
@@ -120,6 +167,27 @@ export function TranslatorView() {
       recognitionRef.current?.stop()
     }
   }, [])
+
+  // Auto-scroll input textarea to bottom when text changes
+  useEffect(() => {
+    if (inputTextareaRef.current) {
+      inputTextareaRef.current.scrollTop = inputTextareaRef.current.scrollHeight
+    }
+  }, [inputText])
+
+  // Auto-scroll output textarea to bottom when text changes
+  useEffect(() => {
+    if (outputTextareaRef.current) {
+      outputTextareaRef.current.scrollTop = outputTextareaRef.current.scrollHeight
+    }
+  }, [outputText])
+
+  // Stop voice recognition when sourceLang changes
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+    }
+  }, [sourceLang])
 
   // Check if user has exceeded their usage limit
   const isLimitExceeded = isAuthenticated && checkUsageLimit()
@@ -171,7 +239,6 @@ export function TranslatorView() {
       await loadRecentHistory()
     } catch (err) {
       console.error('Failed to save translation:', err)
-      // 네트워크 에러 또는 서버 에러 시 사용자에게 알림
       if (err.response?.status === 500) {
         alert('Failed to save translation. Please check your internet connection and try again.')
       } else {
@@ -179,6 +246,33 @@ export function TranslatorView() {
       }
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  // Save individual sentence pair
+  const [savingSentenceIdx, setSavingSentenceIdx] = useState(null)
+  const [savedSentences, setSavedSentences] = useState(new Set())
+
+  const handleSaveSentence = async (srcLine, tgtLine, idx) => {
+    if (!isAuthenticated || !tokens?.access_token) return
+    if (!srcLine?.trim() || !tgtLine?.trim()) return
+
+    setSavingSentenceIdx(idx)
+    try {
+      await authService.createTranslationLog(tokens.access_token, {
+        source_text: srcLine.trim(),
+        translated_text: tgtLine.trim(),
+        source_lang: LANG_MAP[sourceLang] || 'en',
+        target_lang: LANG_MAP[targetLang] || 'ko',
+        provider: 'google',
+      })
+      setSavedSentences(prev => new Set([...prev, idx]))
+      await loadRecentHistory()
+    } catch (err) {
+      console.error('Failed to save sentence:', err)
+      alert('Failed to save. Please try again.')
+    } finally {
+      setSavingSentenceIdx(null)
     }
   }
 
@@ -405,10 +499,20 @@ export function TranslatorView() {
     }
   }
 
+  // Focus mode: hide navbar, fullscreen translator
+  useEffect(() => {
+    if (focusMode) {
+      document.body.classList.add('translator-focus-active')
+    } else {
+      document.body.classList.remove('translator-focus-active')
+    }
+    return () => document.body.classList.remove('translator-focus-active')
+  }, [focusMode])
+
   return (
     <PageLayout title="Translator">
       <TopLoadingBar isLoading={isTranslating || isOCRProcessing} />
-      <PageBox>
+      <PageBox className={focusMode ? 'translator-focus-mode' : ''}>
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">
           <div className="translator-lang-group">
@@ -416,7 +520,9 @@ export function TranslatorView() {
             <div className="translator-source-row">
               <select
                 value={sourceLang}
-                onChange={(e) => setSourceLang(e.target.value)}
+                onChange={(e) => {
+                  setSourceLang(e.target.value)
+                }}
                 className="translator-lang-select"
               >
                 {SOURCE_LANGUAGES.map(lang => (
@@ -512,6 +618,7 @@ export function TranslatorView() {
           </div>
           
           <textarea
+            ref={inputTextareaRef}
             value={inputText}
             onChange={(e) => {
               const newText = e.target.value
@@ -529,6 +636,30 @@ export function TranslatorView() {
             rows={8}
             disabled={isOCRProcessing}
           />
+          <div
+            className="translator-resize-handle"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              const textarea = inputTextareaRef.current
+              const startY = e.clientY
+              const startH = textarea.offsetHeight
+              const onMove = (ev) => { textarea.style.height = Math.max(60, startH + ev.clientY - startY) + 'px' }
+              const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp) }
+              document.addEventListener('mousemove', onMove)
+              document.addEventListener('mouseup', onUp)
+            }}
+            onTouchStart={(e) => {
+              const textarea = inputTextareaRef.current
+              const startY = e.touches[0].clientY
+              const startH = textarea.offsetHeight
+              const onMove = (ev) => { ev.preventDefault(); textarea.style.height = Math.max(60, startH + ev.touches[0].clientY - startY) + 'px' }
+              const onUp = () => { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp) }
+              document.addEventListener('touchmove', onMove, { passive: false })
+              document.addEventListener('touchend', onUp)
+            }}
+          >
+            <div className="translator-resize-handle-bar" />
+          </div>
           {inputText && (
             <>
               <button
@@ -574,6 +705,30 @@ export function TranslatorView() {
 
         {/* 번역 버튼 */}
         <div className="translator-btn-group">
+          {/* Focus mode: bring toolbar buttons to top bar */}
+          {focusMode && (
+            <>
+              <button
+                onClick={handleUploadClick}
+                disabled={isOCRProcessing}
+                className="translator-conv-btn"
+                title="Upload image"
+              >
+                <span className="material-symbols-outlined">image</span>
+              </button>
+              {isSpeechSupported && (
+                <button
+                  onClick={handleVoiceInput}
+                  className={`translator-conv-btn voice-focus-btn ${isListening ? 'active' : ''}`}
+                  title={isListening ? 'Stop listening' : 'Voice input'}
+                >
+                  <span className="material-symbols-outlined">
+                    {isListening ? 'mic_off' : 'mic'}
+                  </span>
+                </button>
+              )}
+            </>
+          )}
           <button
             onClick={handleTranslate}
             disabled={isTranslating || !inputText?.trim() || (isAuthenticated && isLimitExceeded) || isGuestLimitExceeded}
@@ -584,6 +739,24 @@ export function TranslatorView() {
              isLimitExceeded ? 'Limit Exceeded' : 
              isGuestLimitExceeded ? 'Login Required' : 
              'Translate'}
+          </button>
+          <button
+            onClick={() => setConversationMode(prev => !prev)}
+            className={`translator-conv-btn ${conversationMode ? 'active' : ''}`}
+            title={conversationMode ? 'Exit conversation mode' : 'Flip output for the person across'}
+          >
+            <span className="material-symbols-outlined">
+              {conversationMode ? 'screen_rotation_alt' : 'screen_rotation'}
+            </span>
+          </button>
+          <button
+            onClick={() => setFocusMode(prev => !prev)}
+            className={`translator-conv-btn translator-focus-btn ${focusMode ? 'active' : ''}`}
+            title={focusMode ? 'Exit focus mode' : 'Focus mode'}
+          >
+            <span className="material-symbols-outlined">
+              {focusMode ? 'close_fullscreen' : 'open_in_full'}
+            </span>
           </button>
           
           {/* Save to History 버튼 */}
@@ -618,15 +791,64 @@ export function TranslatorView() {
           </select>
         </div>
 
-        {/* 출력 */}
+        {/* 출력 - line-by-line with inline save */}
         <div className="translator-section translator-output-wrapper">
-          <textarea
-            value={outputText}
-            readOnly
-            placeholder="Translation result will appear here..."
-            className="translator-textarea translator-textarea--output"
-            rows={8}
-          />
+          <div
+            ref={outputTextareaRef}
+            className={`translator-textarea translator-textarea--output translator-output-lines ${conversationMode ? 'conversation-mode' : ''}`}
+          >
+            {outputText ? (() => {
+              const outLines = outputText.split('\n')
+              const inLines = inputText ? inputText.split('\n') : []
+              return outLines.map((line, i) => {
+                if (!line.trim()) return <div key={i} className="translator-output-empty-line">&nbsp;</div>
+                const srcLine = inLines[i] || ''
+                return (
+                  <div key={i} className="translator-output-line">
+                    <span className="translator-output-line-text">{line}</span>
+                    {isAuthenticated && srcLine.trim() && (
+                      <button
+                        className={`translator-line-save-btn ${savedSentences.has(i) ? 'saved' : ''}`}
+                        onClick={() => handleSaveSentence(srcLine, line, i)}
+                        disabled={savingSentenceIdx === i || savedSentences.has(i)}
+                        title={savedSentences.has(i) ? 'Saved' : 'Save this sentence'}
+                      >
+                        <span className="material-symbols-outlined">
+                          {savedSentences.has(i) ? 'bookmark' : 'bookmark_add'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )
+              })
+            })() : (
+              <span className="translator-output-placeholder">Translation result will appear here...</span>
+            )}
+          </div>
+          <div
+            className="translator-resize-handle"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              const el = outputTextareaRef.current
+              const startY = e.clientY
+              const startH = el.offsetHeight
+              const onMove = (ev) => { el.style.maxHeight = 'none'; el.style.height = Math.max(60, startH + ev.clientY - startY) + 'px' }
+              const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp) }
+              document.addEventListener('mousemove', onMove)
+              document.addEventListener('mouseup', onUp)
+            }}
+            onTouchStart={(e) => {
+              const el = outputTextareaRef.current
+              const startY = e.touches[0].clientY
+              const startH = el.offsetHeight
+              const onMove = (ev) => { ev.preventDefault(); el.style.maxHeight = 'none'; el.style.height = Math.max(60, startH + ev.touches[0].clientY - startY) + 'px' }
+              const onUp = () => { document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp) }
+              document.addEventListener('touchmove', onMove, { passive: false })
+              document.addEventListener('touchend', onUp)
+            }}
+          >
+            <div className="translator-resize-handle-bar" />
+          </div>
           {outputText && isTTSSupported && (
             <button
               onClick={handleSpeakTarget}

@@ -37,9 +37,13 @@ export function detectLanguage(text) {
 export function useTranslator() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en')
-  const [targetLang, setTargetLang] = useState('ko')
+  const [sourceLang, setSourceLang] = useState('ko')
+  const [targetLang, setTargetLang] = useState('en')
   const [isTranslating, setIsTranslating] = useState(false)
+  
+  // Frozen output: preserves existing translation when source language changes mid-session
+  const frozenOutputRef = useRef('')
+  const frozenInputLengthRef = useRef(0)
   
   const translateTimeoutRef = useRef(null)
   const abortControllerRef = useRef(null)
@@ -73,12 +77,15 @@ export function useTranslator() {
 
   // 입력 텍스트 변경 시 언어 자동 탐지
   useEffect(() => {
+    // Skip auto-detection if user manually changed language (stays sticky until input cleared)
     if (isManualLangChangeRef.current) {
-      isManualLangChangeRef.current = false
       return
     }
     
-    if (!inputText?.trim()) return
+    if (!inputText?.trim()) {
+      isManualLangChangeRef.current = false  // Reset when input is cleared
+      return
+    }
     
     const detectedLang = detectLanguage(inputText)
     if (!detectedLang) return
@@ -98,7 +105,23 @@ export function useTranslator() {
   const handleTranslate = useCallback(async (text = inputText) => {
     if (!text?.trim()) {
       setOutputText('')
+      frozenOutputRef.current = ''
+      frozenInputLengthRef.current = 0
       return
+    }
+
+    // If there's a frozen boundary, only translate the new portion
+    const frozenLen = frozenInputLengthRef.current
+    const frozenOut = frozenOutputRef.current
+    let textToTranslate = text
+    if (frozenLen > 0 && frozenOut) {
+      textToTranslate = text.slice(frozenLen).trim()
+      if (!textToTranslate) {
+        // No new text beyond frozen point, keep frozen output
+        setOutputText(frozenOut)
+        setIsTranslating(false)
+        return
+      }
     }
 
     if (abortControllerRef.current) {
@@ -110,16 +133,17 @@ export function useTranslator() {
     
     try {
       const sourceCode = LANG_MAP[sourceLang] || 'en'
+      // Use textToTranslate (may be partial if frozen)
       const targetCode = LANG_MAP[targetLang] || 'ko'
       
       if (sourceCode === targetCode) {
-        setOutputText(text)
+        setOutputText(frozenOut ? frozenOut + '\n' + textToTranslate : text)
         setIsTranslating(false)
         return
       }
 
       // 1. 번역 전 용어 보호
-      const { processedText, termMap } = preProcess(text, sourceCode, targetCode)
+      const { processedText, termMap } = preProcess(textToTranslate, sourceCode, targetCode)
       
       let translatedText = ''
       const timeout = 5000
@@ -181,7 +205,7 @@ export function useTranslator() {
         if (translatedText) {
           // 3. 번역 후 용어 복원
           const finalText = postProcess(translatedText, termMap)
-          setOutputText(finalText)
+          setOutputText(frozenOut ? frozenOut + '\n' + finalText : finalText)
           
           // Track usage - count characters in input text
           const charCount = text.length
@@ -212,6 +236,9 @@ export function useTranslator() {
 
     if (!inputText?.trim()) {
       setOutputText('')
+      frozenOutputRef.current = ''
+      frozenInputLengthRef.current = 0
+      isManualLangChangeRef.current = false  // Reset manual flag when input cleared
       return
     }
 
@@ -228,13 +255,37 @@ export function useTranslator() {
 
   const handleSourceLangChange = useCallback((lang) => {
     isManualLangChangeRef.current = true
+    // Freeze current output so it doesn't get re-translated
+    if (outputText.trim()) {
+      frozenOutputRef.current = outputText
+      frozenInputLengthRef.current = inputText.length
+    }
     setSourceLang(lang)
-  }, [])
+    // If source and target become the same, auto-adjust target
+    setTargetLang(prev => {
+      if (lang === prev) {
+        return lang === 'en' ? 'ko' : 'en'
+      }
+      return prev
+    })
+  }, [outputText, inputText])
 
   const handleTargetLangChange = useCallback((lang) => {
     isManualLangChangeRef.current = true
+    // Freeze current output so it doesn't get re-translated
+    if (outputText.trim()) {
+      frozenOutputRef.current = outputText
+      frozenInputLengthRef.current = inputText.length
+    }
     setTargetLang(lang)
-  }, [])
+    // If source and target become the same, auto-adjust source
+    setSourceLang(prev => {
+      if (lang === prev) {
+        return lang === 'en' ? 'ko' : 'en'
+      }
+      return prev
+    })
+  }, [outputText, inputText])
 
   const handleInputChange = useCallback((text) => {
     setInputText(text)
@@ -262,6 +313,7 @@ export function useTranslator() {
     isTranslating,
     domain,
     setInputText: handleInputChange,
+    setInputTextRaw: setInputText,  // Raw setter without language detection (for voice input)
     setSourceLang: handleSourceLangChange,
     setTargetLang: handleTargetLangChange,
     setDomain,
