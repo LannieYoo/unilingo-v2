@@ -1155,13 +1155,13 @@ body.translator-focus-active {
 }
 
 .dark .translator-textarea {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #151921;
+  border-color: #252a35;
   color: #e2e8f0;
 }
 
 .dark .translator-textarea:disabled {
-  background: #0a1628;
+  background: #10141a;
 }
 
 .dark .translator-textarea:focus {
@@ -1170,8 +1170,8 @@ body.translator-focus-active {
 }
 
 .dark .translator-textarea--output {
-  background: #0a1628;
-  border-color: #1a2d4d;
+  background: #131720;
+  border-color: #252a35;
 }
 
 .dark .translator-clear-btn {
@@ -1822,8 +1822,8 @@ body.translator-focus-active {
 
 /* ===== Dark Mode - Translator ===== */
 .dark .translator-textarea {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #151921;
+  border-color: #252a35;
   color: #e2e8f0;
 }
 
@@ -1846,8 +1846,8 @@ body.translator-focus-active {
 }
 
 .dark .translator-output-lines {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #131720;
+  border-color: #252a35;
 }
 
 .dark .translator-lang-selectors label {
@@ -1855,8 +1855,8 @@ body.translator-focus-active {
 }
 
 .dark .translator-lang-selectors select {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #151921;
+  border-color: #252a35;
   color: #e2e8f0;
 }
 
