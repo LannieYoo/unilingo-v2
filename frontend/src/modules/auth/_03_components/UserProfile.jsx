@@ -2,7 +2,7 @@
  * User Profile component - Shows logged in user info with dropdown menu.
  */
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../_04_hooks';
 import { useAuthStore } from '../_05_stores';
 import { LoginRequiredModal } from './LoginRequiredModal';
@@ -14,6 +14,7 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginFeatureName, setLoginFeatureName] = useState('');
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -36,10 +37,11 @@ export function UserProfile({ className = '', compact = false, mobile = false, o
     return null;
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
     onMenuClick();
-    logout();
+    await logout();
+    navigate('/');
   };
 
   const handleProtectedMenuClick = (featureName, path) => {

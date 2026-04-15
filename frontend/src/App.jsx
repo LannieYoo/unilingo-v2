@@ -84,7 +84,7 @@ function AuthCallback() {
             color: 'var(--text-primary, #1a1a1a)',
             marginBottom: '0.75rem',
           }}>
-            {isDeactivated ? '로그인 불가' : '로그인 실패'}
+            {isDeactivated ? 'Access Denied' : 'Login Failed'}
           </h2>
           
           {/* Message */}
@@ -95,7 +95,7 @@ function AuthCallback() {
             marginBottom: '1.5rem',
           }}>
             {isDeactivated 
-              ? '현재 계정이 비활성 상태입니다. 서비스 이용을 원하시면 관리자에게 문의해주세요.'
+              ? 'Your account is currently inactive. Please contact the administrator to request access.'
               : error
             }
           </p>
@@ -103,7 +103,7 @@ function AuthCallback() {
           {/* Admin Email Link */}
           {isDeactivated && (
             <a 
-              href={`mailto:${adminEmail}?subject=[UniLingo] 계정 활성화 요청&body=안녕하세요, UniLingo 계정 활성화를 요청합니다.%0A%0A이메일: %0A이름: `}
+              href={`mailto:${adminEmail}?subject=[UniLingo] Account Activation Request&body=Hello, I would like to request account activation for UniLingo.%0A%0AEmail: %0AName: `}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -121,7 +121,7 @@ function AuthCallback() {
               onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
               onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
             >
-              ✉️ 관리자에게 메일 보내기
+              ✉️ Contact Administrator
             </a>
           )}
           
@@ -155,7 +155,7 @@ function AuthCallback() {
             onMouseOver={(e) => e.target.style.backgroundColor = 'var(--bg-tertiary, #e5e7eb)'}
             onMouseOut={(e) => e.target.style.backgroundColor = 'var(--bg-secondary, #f3f4f6)'}
           >
-            홈으로 돌아가기
+            Go to Home
           </button>
         </div>
         
