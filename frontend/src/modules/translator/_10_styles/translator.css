@@ -1098,9 +1098,25 @@ body.translator-focus-active {
     font-size: 20px;
   }
 
-  /* Hide desktop upload/voice container on mobile */
-  .translator-image-upload-container {
+  /* Hide desktop upload/voice buttons on mobile, but keep toolbar-right visible */
+  .translator-image-upload-container > .translator-image-upload-btn,
+  .translator-image-upload-container > .translator-voice-btn,
+  .translator-image-upload-container > .translator-image-upload-hint {
     display: none;
+  }
+
+  .translator-image-upload-container {
+    justify-content: flex-end;
+  }
+
+  /* Increase input/output height on mobile */
+  .translator-textarea {
+    min-height: 25vh !important;
+  }
+
+  .translator-output-lines {
+    height: 25vh !important;
+    min-height: 25vh !important;
   }
 
   /* 데스크톱용 Target Language 숨기기 */
