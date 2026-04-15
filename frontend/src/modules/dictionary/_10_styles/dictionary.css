@@ -942,14 +942,37 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* 반응형 */
-@media (max-width: 550px) {
+/* 반응형 - <760px: 검색바 세로 배치, 입력란 100% */
+@media (max-width: 760px) {
   .search-input-group {
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* 입력란 한 줄 전체 차지 */
+  .search-input-wrapper {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  /* 음성 + 언어 + 검색 버튼은 두 번째 줄로 */
+  .dict-voice-group {
+    flex-shrink: 0;
   }
 
   .direction-select {
-    min-width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-btn {
+    flex-shrink: 0;
+    padding: 0.75rem 1.25rem;
   }
 
   .result-header {
@@ -973,7 +996,7 @@
   }
 }
 
-@media (min-width: 551px) and (max-width: 768px) {
+@media (min-width: 761px) and (max-width: 1024px) {
   .search-input-group {
     flex-direction: row;
     align-items: stretch;
@@ -1012,6 +1035,58 @@
 
   .search-btn {
     flex-shrink: 0;
+  }
+}
+
+/* ========================================
+   <760px - 시원한 레이아웃 (PageBox 투명시)
+   입력란 테두리 강화, 여백 최적화
+   ======================================== */
+@media (max-width: 760px) {
+  .search-input {
+    border: 2px solid #dde5f0;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .direction-select {
+    border: 2px solid #dde5f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .search-btn {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  }
+
+  .search-controls {
+    margin-bottom: 0.75rem;
+  }
+
+  .result-item {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .no-results {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .dark .search-input {
+    border-color: #2a3545;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .direction-select {
+    border-color: #2a3545;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .result-item {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   }
 }
 

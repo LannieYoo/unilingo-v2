@@ -340,17 +340,55 @@
   }
 }
 
-@media (max-width: 480px) {
+/* ========================================
+   매우 작은 화면 (<760px) - 시원한 레이아웃
+   박스-인-박스 제거, 엣지-투-엣지 디자인
+   ======================================== */
+@media (max-width: 760px) {
   .page-layout {
     padding: 0 0.5rem;
   }
-  
+
   .page-layout__title {
     font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-layout__subtitle {
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .page-layout__box {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0.5rem 0.25rem;
+    box-shadow: none;
+  }
+
+  .page-layout__box:hover {
+    box-shadow: none;
+    border-color: transparent;
+  }
+
+  .page-layout__footer {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-layout {
+    padding: 0 0.25rem;
+  }
+  
+  .page-layout__title {
+    font-size: 1.5rem;
   }
   
   .page-layout__box {
-    padding: 1rem;
+    padding: 0.25rem 0;
   }
   
   .page-btn {
@@ -458,4 +496,18 @@
   background: #451a03;
   color: #fcd34d;
   border-color: #92400e;
+}
+
+/* 다크 모드 + 작은 화면: 투명 박스 유지 */
+@media (max-width: 760px) {
+  .dark .page-layout__box {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .dark .page-layout__box:hover {
+    border-color: transparent;
+    box-shadow: none;
+  }
 }

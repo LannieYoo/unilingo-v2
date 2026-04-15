@@ -62,7 +62,7 @@ function Header() {
         </Link>
       </div>
       
-      <div className="hidden lg:flex flex-1 items-center justify-end gap-6">
+      <div className="hidden xl:flex flex-1 items-center justify-center gap-6">
         <nav className="flex items-center gap-6">
           {allMenuItems.map((item) => (
             <Link
@@ -108,7 +108,7 @@ function Header() {
         </div>
       </div>
       
-      <div className="lg:hidden flex items-center gap-1">
+      <div className="xl:hidden flex items-center gap-1">
         <button
           onClick={() => setIsDark(prev => !prev)}
           className="dark-mode-toggle"
@@ -131,12 +131,12 @@ function Header() {
         <>
           {/* Backdrop overlay */}
           <div
-            className="fixed inset-0 bg-black/20 z-[999] lg:hidden"
+            className="fixed inset-0 bg-black/20 z-[999] xl:hidden"
             onClick={closeMenu}
           />
           {/* Mobile menu dropdown - fixed to avoid overflow clipping */}
           <div
-            className="fixed left-0 right-0 z-[1000] bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg lg:hidden max-h-[80vh] overflow-y-auto"
+            className="fixed left-0 right-0 z-[1000] bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg xl:hidden max-h-[80vh] overflow-y-auto"
             style={{ top: headerRef.current ? headerRef.current.getBoundingClientRect().bottom + 'px' : '80px' }}
           >
             <div className="relative flex flex-col px-4 py-3">

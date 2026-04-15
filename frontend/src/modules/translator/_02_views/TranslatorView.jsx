@@ -679,7 +679,7 @@ export function TranslatorView() {
               onPaste={handlePaste}
               placeholder="Enter text to translate... (Auto-translates as you type) or paste image (Ctrl+V)"
               className="translator-textarea"
-              rows={8}
+              style={{ height: '25vh' }}
               disabled={isOCRProcessing}
             />
             {inputText && (
@@ -730,25 +730,8 @@ export function TranslatorView() {
               document.addEventListener('touchend', onUp)
             }}
           >
-            <div className="translator-resize-handle-bar" />
+          <div className="translator-resize-handle-bar" />
           </div>
-
-          {/* Guest character counter */}
-          {!isAuthenticated && (
-            <div className="translator-char-counter" style={{
-              position: 'absolute',
-              bottom: '8px',
-              right: '8px',
-              fontSize: '12px',
-              color: guestCharCount >= MAX_CHARS_GUEST * 0.9 ? '#ef4444' : '#6b7280',
-              backgroundColor: 'white',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              border: '1px solid #e5e7eb'
-            }}>
-              {guestCharCount} / {MAX_CHARS_GUEST}
-            </div>
-          )}
         </div>
 
         {/* Focus mode btn-group */}
@@ -887,6 +870,19 @@ export function TranslatorView() {
             </button>
           )}
         </div>
+
+        {/* Guest character counter - below output section */}
+        {!isAuthenticated && (
+          <div className="translator-char-counter" style={{
+            textAlign: 'right',
+            fontSize: '11px',
+            color: guestCharCount >= MAX_CHARS_GUEST * 0.9 ? '#ef4444' : '#a0aec0',
+            padding: '4px 4px 0',
+            fontWeight: '500'
+          }}>
+            {guestCharCount} / {MAX_CHARS_GUEST}
+          </div>
+        )}
 
         {/* Translation Usage Indicator */}
         <div className="mt-4">
