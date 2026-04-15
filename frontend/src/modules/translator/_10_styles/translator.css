@@ -536,7 +536,7 @@ body.translator-focus-active {
 
 @media (max-width: 768px) {
   .translator-textarea {
-    min-height: 80px;
+    min-height: 150px;
     padding: 0.875rem;
     padding-right: 2.5rem;
   }
@@ -570,6 +570,13 @@ body.translator-focus-active {
   height: 230px;
   min-height: 60px;
   padding-right: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .translator-output-lines {
+    height: 170px;
+    min-height: 120px;
+  }
 }
 
 .translator-output-line {
