@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import LogoIcon from './LogoIcon'
 import { useAuthStore, GoogleLoginButton, UserProfile, SessionExpiredModal } from '../../modules/auth'
@@ -52,63 +52,63 @@ function Header() {
         onClose={clearSessionExpired}
       />
       
-      <header ref={headerRef} className="relative flex items-center justify-between whitespace-nowrap py-6" style={{ minHeight: '80px' }}>
-      <div className="flex items-center gap-4">
+      <header ref={headerRef} className="relative flex items-center justify-between py-4 gap-2" style={{ minHeight: '70px' }}>
+      {/* Left: Logo */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         <Link to="/" className="flex items-center gap-2 text-text-light dark:text-text-dark" onClick={closeMenu}>
           <div className="w-6 h-6 text-primary flex items-center justify-center">
             <LogoIcon />
           </div>
-          <h2 className="text-xl font-bold">UniLingo</h2>
+          <h2 className="text-xl font-bold whitespace-nowrap">UniLingo</h2>
         </Link>
       </div>
       
-      <div className="hidden xl:flex flex-1 items-center justify-center gap-6">
-        <nav className="flex items-center gap-6">
-          {allMenuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`text-base ${
-                location.pathname === item.path
-                  ? item.name === 'admin'
-                    ? 'font-semibold text-orange-600'
-                    : 'font-semibold text-primary'
-                  : item.name === 'admin'
-                    ? 'font-medium text-orange-500 hover:text-orange-600 transition-colors'
-                    : 'font-medium text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark transition-colors'
-              }`}
-              onClick={closeMenu}
-            >
-              {item.label}
-            </Link>
+      {/* Center: Nav menu - truly centered */}
+      <div className="hidden lg:flex flex-1 items-center justify-center min-w-0">
+        <nav className="flex items-center flex-wrap justify-center">
+          {allMenuItems.map((item, idx) => (
+            <Fragment key={item.path}>
+              {idx > 0 && <span className="text-slate-400 dark:text-slate-500 mx-1.5 select-none">|</span>}
+              <Link
+                to={item.path}
+                className={`text-base whitespace-nowrap py-1 transition-all ${
+                  location.pathname === item.path
+                    ? item.name === 'admin'
+                      ? 'font-bold text-orange-600'
+                      : 'font-bold text-primary'
+                    : item.name === 'admin'
+                      ? 'font-medium text-orange-500 hover:text-orange-600'
+                      : 'font-medium text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
+                }`}
+                onClick={closeMenu}
+              >
+                {item.label}
+              </Link>
+            </Fragment>
           ))}
         </nav>
-        
-        {/* Usage Indicator - always reserve space */}
-        <div style={{ minWidth: '120px', display: 'flex', justifyContent: 'flex-end' }}>
-          {isAuthenticated && <CompactUsageIndicator />}
-        </div>
+      </div>
 
-        {/* Dark mode toggle + Auth section */}
-        <div className="flex items-center gap-3 ml-2 pl-3 border-l border-border-light dark:border-border-dark">
-          <button
-            onClick={() => setIsDark(prev => !prev)}
-            className="dark-mode-toggle"
-            title={isDark ? 'Light mode' : 'Dark mode'}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-              {isDark ? 'light_mode' : 'dark_mode'}
-            </span>
-          </button>
-          {isAuthenticated ? (
-            <UserProfile compact />
-          ) : (
-            <GoogleLoginButton />
-          )}
-        </div>
+      {/* Right: Usage + Dark mode + Auth */}
+      <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+        {isAuthenticated && <CompactUsageIndicator />}
+        <button
+          onClick={() => setIsDark(prev => !prev)}
+          className="dark-mode-toggle"
+          title={isDark ? 'Light mode' : 'Dark mode'}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+            {isDark ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
+        {isAuthenticated ? (
+          <UserProfile compact />
+        ) : (
+          <GoogleLoginButton />
+        )}
       </div>
       
-      <div className="xl:hidden flex items-center gap-1">
+      <div className="lg:hidden flex items-center gap-1">
         <button
           onClick={() => setIsDark(prev => !prev)}
           className="dark-mode-toggle"
@@ -131,12 +131,12 @@ function Header() {
         <>
           {/* Backdrop overlay */}
           <div
-            className="fixed inset-0 bg-black/20 z-[999] xl:hidden"
+            className="fixed inset-0 bg-black/20 z-[999] lg:hidden"
             onClick={closeMenu}
           />
           {/* Mobile menu dropdown - fixed to avoid overflow clipping */}
           <div
-            className="fixed left-0 right-0 z-[1000] bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg xl:hidden max-h-[80vh] overflow-y-auto"
+            className="fixed left-0 right-0 z-[1000] bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg lg:hidden max-h-[80vh] overflow-y-auto"
             style={{ top: headerRef.current ? headerRef.current.getBoundingClientRect().bottom + 'px' : '80px' }}
           >
             <div className="relative flex flex-col px-4 py-3">
