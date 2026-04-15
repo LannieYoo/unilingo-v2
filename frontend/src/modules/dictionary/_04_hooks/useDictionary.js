@@ -36,19 +36,19 @@ export function useDictionary() {
   const { trackUsage } = useUsage()
 
   // 공통 언어 설정 훅 사용
-  const { nativeLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
+  const { targetLanguage, isLoaded: preferencesLoaded } = useLanguagePreferences()
 
   // Load language preferences from settings
   useEffect(() => {
     if (!preferencesLoaded) return
     
-    // Settings의 native_language → Dictionary의 Target Language
-    const isSupported = DIRECTIONS.some(d => d.value === nativeLanguage)
+    // Settings의 target_language → Dictionary의 Target Language (학습 언어로 검색)
+    const isSupported = DIRECTIONS.some(d => d.value === targetLanguage)
     
     if (isSupported) {
-      setTargetLang(nativeLanguage)
+      setTargetLang(targetLanguage)
     }
-  }, [preferencesLoaded, nativeLanguage])
+  }, [preferencesLoaded, targetLanguage])
 
   // 페이지 로드 시 데이터베이스에서 즐겨찾기만 불러오기
   useEffect(() => {

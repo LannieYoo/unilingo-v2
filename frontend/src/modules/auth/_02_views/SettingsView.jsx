@@ -32,8 +32,8 @@ export function SettingsView() {
   const { isAuthenticated } = useAuth();
   const { tokens } = useAuthStore();
   
-  const [nativeLanguage, setNativeLanguage] = useState('en');
-  const [targetLanguage, setTargetLanguage] = useState('ko');
+  const [nativeLanguage, setNativeLanguage] = useState('ko');
+  const [targetLanguage, setTargetLanguage] = useState('en');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -53,8 +53,8 @@ export function SettingsView() {
       try {
         setIsLoading(true);
         const data = await authService.getLanguagePreferences(tokens.access_token);
-        setNativeLanguage(data.native_language || 'en');
-        setTargetLanguage(data.target_language || 'ko');
+        setNativeLanguage(data.native_language || 'ko');
+        setTargetLanguage(data.target_language || 'en');
       } catch (error) {
         console.error('Failed to load language preferences:', error);
         setMessage({ type: 'error', text: 'Failed to load settings' });

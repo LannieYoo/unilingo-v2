@@ -62,16 +62,16 @@ export function useTranslator() {
   useEffect(() => {
     if (!isLoaded) return
     
-    // Settings의 target_language → Translator의 Source Language
-    // Settings의 native_language → Translator의 Target Language
-    const isSourceSupported = SOURCE_LANGUAGES.some(l => l.code === targetLanguage)
-    const isTargetSupported = TARGET_LANGUAGES.some(l => l.code === nativeLanguage)
+    // Settings의 native_language → Translator의 Source Language (모국어로 입력)
+    // Settings의 target_language → Translator의 Target Language (번역 대상)
+    const isSourceSupported = SOURCE_LANGUAGES.some(l => l.code === nativeLanguage)
+    const isTargetSupported = TARGET_LANGUAGES.some(l => l.code === targetLanguage)
     
     if (isSourceSupported) {
-      setSourceLang(targetLanguage)
+      setSourceLang(nativeLanguage)
     }
     if (isTargetSupported) {
-      setTargetLang(nativeLanguage)
+      setTargetLang(targetLanguage)
     }
   }, [isLoaded, nativeLanguage, targetLanguage])
 
