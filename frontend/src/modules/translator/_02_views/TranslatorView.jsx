@@ -662,25 +662,52 @@ export function TranslatorView() {
             </div>
           </div>
           
-          <textarea
-            ref={inputTextareaRef}
-            value={inputText}
-            onChange={(e) => {
-              const newText = e.target.value
-              // Limit guest users to MAX_CHARS_GUEST
-              if (!isAuthenticated && newText.length > MAX_CHARS_GUEST) {
-                setInputText(newText.slice(0, MAX_CHARS_GUEST))
-                setShowLoginModal(true)
-              } else {
-                setInputText(newText)
-              }
-            }}
-            onPaste={handlePaste}
-            placeholder="Enter text to translate... (Auto-translates as you type) or paste image (Ctrl+V)"
-            className="translator-textarea"
-            rows={8}
-            disabled={isOCRProcessing}
-          />
+          <div className="translator-textarea-container">
+            <textarea
+              ref={inputTextareaRef}
+              value={inputText}
+              onChange={(e) => {
+                const newText = e.target.value
+                // Limit guest users to MAX_CHARS_GUEST
+                if (!isAuthenticated && newText.length > MAX_CHARS_GUEST) {
+                  setInputText(newText.slice(0, MAX_CHARS_GUEST))
+                  setShowLoginModal(true)
+                } else {
+                  setInputText(newText)
+                }
+              }}
+              onPaste={handlePaste}
+              placeholder="Enter text to translate... (Auto-translates as you type) or paste image (Ctrl+V)"
+              className="translator-textarea"
+              rows={8}
+              disabled={isOCRProcessing}
+            />
+            {inputText && (
+              <>
+                <button
+                  onClick={() => {
+                    stop()
+                    setInputText('')
+                  }}
+                  className="translator-clear-btn"
+                  title="Clear text"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+                {isTTSSupported && (
+                  <button
+                    onClick={handleSpeakSource}
+                    className={`translator-speak-btn ${isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'speaking' : ''}`}
+                    title={isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'Stop' : 'Listen'}
+                  >
+                    <span className="material-symbols-outlined">
+                      {isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'stop_circle' : 'volume_up'}
+                    </span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
           <div
             className="translator-resize-handle"
             onMouseDown={(e) => {
@@ -705,31 +732,7 @@ export function TranslatorView() {
           >
             <div className="translator-resize-handle-bar" />
           </div>
-          {inputText && (
-            <>
-              <button
-                onClick={() => {
-                  stop()
-                  setInputText('')
-                }}
-                className="translator-clear-btn"
-                title="Clear text"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-              {isTTSSupported && (
-                <button
-                  onClick={handleSpeakSource}
-                  className={`translator-speak-btn ${isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'speaking' : ''}`}
-                  title={isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'Stop' : 'Listen'}
-                >
-                  <span className="material-symbols-outlined">
-                    {isSpeaking && currentLang === getVoiceCode(sourceLang) ? 'stop_circle' : 'volume_up'}
-                  </span>
-                </button>
-              )}
-            </>
-          )}
+
           {/* Guest character counter */}
           {!isAuthenticated && (
             <div className="translator-char-counter" style={{

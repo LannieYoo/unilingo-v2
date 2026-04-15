@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import LogoIcon from './LogoIcon'
 import { useAuthStore, GoogleLoginButton, UserProfile, SessionExpiredModal } from '../../modules/auth'
 import { CompactUsageIndicator } from '../../common/components/CompactUsageIndicator'
 
 function Header() {
+  const headerRef = useRef(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark'
   })
   const location = useLocation()
-  const { isAuthenticated, tokenExpired, clearSessionExpired } = useAuthStore()
+  const { isAuthenticated, isAdmin, tokenExpired, clearSessionExpired } = useAuthStore()
 
   useEffect(() => {
     if (isDark) {
@@ -30,8 +31,10 @@ function Header() {
     { path: '/speech-to-recording', label: 'Recording', name: 'recording' },
   ]
 
-  // Menu items (Admin moved to user profile dropdown)
-  const allMenuItems = menuItems;
+  // Add Admin menu item for admin users
+  const allMenuItems = isAdmin
+    ? [...menuItems, { path: '/admin', label: '⚙️ Admin', name: 'admin' }]
+    : menuItems;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -49,7 +52,7 @@ function Header() {
         onClose={clearSessionExpired}
       />
       
-      <header className="relative flex items-center justify-between whitespace-nowrap py-6" style={{ minHeight: '80px' }}>
+      <header ref={headerRef} className="relative flex items-center justify-between whitespace-nowrap py-6" style={{ minHeight: '80px' }}>
       <div className="flex items-center gap-4">
         <Link to="/" className="flex items-center gap-2 text-text-light dark:text-text-dark" onClick={closeMenu}>
           <div className="w-6 h-6 text-primary flex items-center justify-center">
@@ -67,8 +70,12 @@ function Header() {
               to={item.path}
               className={`text-base ${
                 location.pathname === item.path
-                  ? 'font-semibold text-primary'
-                  : 'font-medium text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark transition-colors'
+                  ? item.name === 'admin'
+                    ? 'font-semibold text-orange-600'
+                    : 'font-semibold text-primary'
+                  : item.name === 'admin'
+                    ? 'font-medium text-orange-500 hover:text-orange-600 transition-colors'
+                    : 'font-medium text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark transition-colors'
               }`}
               onClick={closeMenu}
             >
@@ -121,51 +128,66 @@ function Header() {
       </div>
       
       {isMenuOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg lg:hidden">
-          <div className="relative flex flex-col px-4 py-3">
-            {/* Close button - absolute positioned */}
-            <button
-              onClick={closeMenu}
-              className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors z-10"
-              aria-label="Close menu"
-            >
-              <span className="material-symbols-outlined text-2xl text-text-muted-light dark:text-text-muted-dark">close</span>
-            </button>
-            
-            {allMenuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`text-base font-medium py-3 px-2 rounded-md transition-colors ${
-                  location.pathname === item.path
-                    ? 'text-primary bg-primary/10 dark:bg-primary/20'
-                    : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+        <>
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 bg-black/20 z-[999] lg:hidden"
+            onClick={closeMenu}
+          />
+          {/* Mobile menu dropdown - fixed to avoid overflow clipping */}
+          <div
+            className="fixed left-0 right-0 z-[1000] bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark shadow-lg lg:hidden max-h-[80vh] overflow-y-auto"
+            style={{ top: headerRef.current ? headerRef.current.getBoundingClientRect().bottom + 'px' : '80px' }}
+          >
+            <div className="relative flex flex-col px-4 py-3">
+              {/* Close button - absolute positioned */}
+              <button
                 onClick={closeMenu}
+                className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors z-10"
+                aria-label="Close menu"
               >
-                {item.label}
-              </Link>
-            ))}
-            
-            {/* Mobile usage indicator */}
-            {isAuthenticated && (
-              <div className="px-2 py-3">
-                <CompactUsageIndicator />
-              </div>
-            )}
-            
-            {/* Mobile auth section */}
-            <div className="mt-3 pt-3 border-t border-border-light dark:border-border-dark">
-              {isAuthenticated ? (
-                <UserProfile mobile onMenuClick={closeMenu} />
-              ) : (
-                <div className="px-2">
-                  <GoogleLoginButton />
+                <span className="material-symbols-outlined text-2xl text-text-muted-light dark:text-text-muted-dark">close</span>
+              </button>
+              
+              {allMenuItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`text-base font-medium py-3 px-2 rounded-md transition-colors ${
+                    location.pathname === item.path
+                      ? item.name === 'admin'
+                        ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20'
+                        : 'text-primary bg-primary/10 dark:bg-primary/20'
+                      : item.name === 'admin'
+                        ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                        : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                  onClick={closeMenu}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              
+              {/* Mobile usage indicator */}
+              {isAuthenticated && (
+                <div className="px-2 py-3">
+                  <CompactUsageIndicator />
                 </div>
               )}
+              
+              {/* Mobile auth section */}
+              <div className="mt-3 pt-3 border-t border-border-light dark:border-border-dark">
+                {isAuthenticated ? (
+                  <UserProfile mobile onMenuClick={closeMenu} />
+                ) : (
+                  <div className="px-2">
+                    <GoogleLoginButton />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </header>
     </>

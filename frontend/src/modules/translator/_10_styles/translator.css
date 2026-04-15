@@ -350,6 +350,11 @@ body.translator-focus-active {
   position: relative;
 }
 
+/* Textarea container for positioning clear/speak buttons inside */
+.translator-textarea-container {
+  position: relative;
+}
+
 /* Image Upload Container */
 .translator-image-upload-container {
   display: flex;
