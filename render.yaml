@@ -27,7 +27,7 @@ services:
     env: python
     plan: free
     rootDir: ./
-    buildCommand: pip install -r backend/requirements-deploy.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: python -m gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 "backend.app:create_app('production')"
     envVars:
       - key: FLASK_ENV
