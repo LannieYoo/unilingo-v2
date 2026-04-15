@@ -4,6 +4,7 @@ import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage, getLanguageB
 import './text-to-speech.css'
 import { useUsage } from '../../common/hooks/useUsage'
 import { UsageIndicator } from '../../common/components/UsageIndicator'
+import { useLanguagePreferences } from '../../modules/auth'
 
 function TextToSpeech() {
   const [text, setText] = useState('')
@@ -27,6 +28,23 @@ function TextToSpeech() {
   const isRepeatModeRef = useRef(false)
 
   const { trackUsage, isLimitExceeded } = useUsage()
+
+  // Settings 언어 설정 적용
+  const { nativeLanguage, targetLanguage: settingsTargetLang, isLoaded: preferencesLoaded } = useLanguagePreferences()
+
+  useEffect(() => {
+    if (!preferencesLoaded) return
+    
+    // Settings targetLanguage(학습 언어) → TTS Source (입력)
+    // Settings nativeLanguage(모국어) → TTS Target (출력)
+    const findTTSCode = (translateCode) => {
+      const lang = LANGUAGES.find(l => l.translateCode === translateCode)
+      return lang?.code || 'en-US'
+    }
+    
+    setSelectedLanguage(findTTSCode(settingsTargetLang))
+    setTargetLanguage(findTTSCode(nativeLanguage))
+  }, [preferencesLoaded, nativeLanguage, settingsTargetLang])
 
   // 번역 함수
   const translateText = async (text, sourceLang, targetLang) => {
