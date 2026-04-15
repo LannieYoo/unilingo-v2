@@ -32,29 +32,139 @@ function AuthCallback() {
   
   // Show error if any
   if (error) {
+    const isDeactivated = error.toLowerCase().includes('deactivat') || 
+                          error.toLowerCase().includes('inactive') ||
+                          error.toLowerCase().includes('불가');
+    const adminEmail = 'laniyoo613@gmail.com';
+    
     return (
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '50vh',
-        flexDirection: 'column',
-        gap: '1rem'
+        height: '100vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 9999,
       }}>
-        <p style={{ color: 'red' }}>Login failed: {error}</p>
-        <button 
-          onClick={() => window.location.href = '/'}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Go to Home
-        </button>
+        <div style={{
+          backgroundColor: 'var(--bg-primary, #ffffff)',
+          borderRadius: '16px',
+          padding: '2.5rem',
+          maxWidth: '420px',
+          width: '90%',
+          textAlign: 'center',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          animation: 'modalFadeIn 0.3s ease-out',
+        }}>
+          {/* Icon */}
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            backgroundColor: isDeactivated ? '#fef2f2' : '#fef2f2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.25rem',
+          }}>
+            <span style={{ fontSize: '32px' }}>
+              {isDeactivated ? '🔒' : '⚠️'}
+            </span>
+          </div>
+          
+          {/* Title */}
+          <h2 style={{
+            fontSize: '1.25rem',
+            fontWeight: '700',
+            color: 'var(--text-primary, #1a1a1a)',
+            marginBottom: '0.75rem',
+          }}>
+            {isDeactivated ? '로그인 불가' : '로그인 실패'}
+          </h2>
+          
+          {/* Message */}
+          <p style={{
+            fontSize: '0.95rem',
+            color: 'var(--text-secondary, #6b7280)',
+            lineHeight: '1.6',
+            marginBottom: '1.5rem',
+          }}>
+            {isDeactivated 
+              ? '현재 계정이 비활성 상태입니다. 서비스 이용을 원하시면 관리자에게 문의해주세요.'
+              : error
+            }
+          </p>
+          
+          {/* Admin Email Link */}
+          {isDeactivated && (
+            <a 
+              href={`mailto:${adminEmail}?subject=[UniLingo] 계정 활성화 요청&body=안녕하세요, UniLingo 계정 활성화를 요청합니다.%0A%0A이메일: %0A이름: `}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '10px 20px',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                textDecoration: 'none',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                marginBottom: '1rem',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            >
+              ✉️ 관리자에게 메일 보내기
+            </a>
+          )}
+          
+          {/* Admin email display */}
+          {isDeactivated && (
+            <p style={{
+              fontSize: '0.8rem',
+              color: 'var(--text-tertiary, #9ca3af)',
+              marginBottom: '1.25rem',
+            }}>
+              {adminEmail}
+            </p>
+          )}
+          
+          {/* Home button */}
+          <button 
+            onClick={() => window.location.href = '/'}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '10px 16px',
+              backgroundColor: 'var(--bg-secondary, #f3f4f6)',
+              color: 'var(--text-primary, #374151)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: '500',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = 'var(--bg-tertiary, #e5e7eb)'}
+            onMouseOut={(e) => e.target.style.backgroundColor = 'var(--bg-secondary, #f3f4f6)'}
+          >
+            홈으로 돌아가기
+          </button>
+        </div>
+        
+        <style>{`
+          @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `}</style>
       </div>
     );
   }
