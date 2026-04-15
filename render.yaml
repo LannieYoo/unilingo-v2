@@ -18,6 +18,8 @@ services:
         value: https://unilingo-backend.onrender.com
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false  # Dashboard에서 수동 설정
+      - key: VITE_ADMIN_USER
+        sync: false  # Dashboard에서 수동 설정
 
   # 백엔드 웹 서비스 (Flask)
   - type: web
