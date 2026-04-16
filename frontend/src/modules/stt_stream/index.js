@@ -1,6 +1,6 @@
 /**
  * STT Stream Module
- * Vosk 기반 실시간 STT 모듈 - 통합 내보내기
+ * Web Speech API 기반 실시간 STT 모듈 - 통합 내보내기
  * 
  * 이 모듈은 프론트엔드 모듈 계층화 규범을 따릅니다.
  * - _01_router: 라우터 설정
@@ -29,7 +29,7 @@ export {
 } from './_03_components'
 
 // Hooks
-export { useVoskRecognition } from './_04_hooks'
+export { useHybridSTT } from './_04_hooks'
 
 // Stores
 export {
@@ -50,7 +50,6 @@ export {
 // Constants
 export {
   LANGUAGE_OPTIONS,
-  MODEL_URLS,
   STATUS,
   LOG_TYPES,
   LOG_TYPE_COLORS,
