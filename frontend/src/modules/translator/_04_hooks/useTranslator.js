@@ -17,16 +17,20 @@ export function detectLanguage(text) {
   
   const trimmedText = text.trim()
   const koreanMatches = trimmedText.match(/[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/g)
-  const chineseMatches = trimmedText.match(/[\u4E00-\u9FFF]/g)
+  const chineseMatches = trimmedText.match(/[\u4E00-\u9FFF\u3400-\u4DBF]/g)
   const englishMatches = trimmedText.match(/[A-Za-z]/g)
   
   const koreanCount = koreanMatches ? koreanMatches.length : 0
   const chineseCount = chineseMatches ? chineseMatches.length : 0
   const englishCount = englishMatches ? englishMatches.length : 0
   
-  if (koreanCount > 0) return 'ko'
-  if (chineseCount > 0) return 'zh'
-  if (englishCount > 0) return 'en'
+  // Return the dominant language by character count
+  const max = Math.max(koreanCount, chineseCount, englishCount)
+  if (max === 0) return null
+  
+  if (koreanCount === max) return 'ko'
+  if (chineseCount === max) return 'zh'
+  if (englishCount === max) return 'en'
   
   return null
 }
@@ -102,7 +106,14 @@ export function useTranslator() {
 
   const handleTranslate = useCallback(async (text = inputText) => {
     if (!text?.trim()) {
+      // Abort any in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      // Invalidate pending results
+      latestRequestIdRef.current++
       setOutputText('')
+      setIsTranslating(false)
       return
     }
 
@@ -223,7 +234,15 @@ export function useTranslator() {
     }
 
     if (!inputText?.trim()) {
+      // Abort any in-flight request to prevent ghost results
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      latestRequestIdRef.current++
       setOutputText('')
+      setIsTranslating(false)
+      // Reset manual lang change flag so auto-detection works for new input
+      isManualLangChangeRef.current = false
       return
     }
 
