@@ -11,28 +11,9 @@ const STT_SUPPORTED_CODES = ['en-US', 'en-GB', 'en-IN', 'en-AU', 'ko', 'zh', 'ja
 export const LANGUAGE_OPTIONS = LANGUAGES
   .filter(lang => STT_SUPPORTED_CODES.includes(lang.code))
   .map(lang => ({
-    value: lang.voice.toLowerCase(), // en-US -> en-us
+    value: lang.voice, // BCP-47 format: en-US, zh-CN, ko-KR (Web Speech API requires proper casing)
     label: lang.name,
-    usesHybrid: lang.code === 'en-US' // 미국 영어만 하이브리드 모드
   }))
-
-// Vosk 모델 URL (현재 Web Speech API 사용으로 미사용 - Vosk 오프라인 모드 필요 시 모델 파일 추가 후 활성화)
-// Key는 selectedLang 값 (LANGUAGE_OPTIONS의 value = voice.toLowerCase())과 일치해야 함
-export const MODEL_URLS = {
-  'en-us': '/vosk-models/vosk-model-small-en-us-0.15.zip',
-  'en-us-lgraph': '/vosk-models/vosk-model-en-us-0.22-lgraph.zip',
-  'en-in': '/vosk-models/vosk-model-small-en-in-0.4.zip',
-  'ko-kr': '/vosk-models/vosk-model-small-ko-0.22.zip',
-  'zh-cn': '/vosk-models/vosk-model-small-cn-0.22.zip',
-  'ja-jp': '/vosk-models/vosk-model-small-ja-0.22.zip',
-  'es-es': '/vosk-models/vosk-model-small-es-0.42.zip',
-  'fr-fr': '/vosk-models/vosk-model-small-fr-0.22.zip',
-  'de-de': '/vosk-models/vosk-model-small-de-0.15.zip',
-  'ar-sa': '/vosk-models/vosk-model-ar-mgb2-0.4.zip',
-}
-
-// Vosk lgraph 모델 URL (128MB, 7.82% WER - gap filling용)
-export const VOSK_LGRAPH_MODEL_URL = '/vosk-models/vosk-model-en-us-0.22-lgraph.zip'
 
 // Status messages
 export const STATUS = {
@@ -63,7 +44,7 @@ export const LOG_TYPE_COLORS = {
 }
 
 // Default settings
-export const DEFAULT_LANGUAGE = 'en-us'
+export const DEFAULT_LANGUAGE = 'en-US'
 export const MAX_LOGS = 100
 export const SAMPLE_RATE = 16000
 
@@ -72,7 +53,6 @@ export const BACKEND_STT_URL = import.meta.env.VITE_BACKEND_STT_URL || '/api/stt
 
 export default {
   LANGUAGE_OPTIONS,
-  MODEL_URLS,
   STATUS,
   LOG_TYPES,
   LOG_TYPE_COLORS,

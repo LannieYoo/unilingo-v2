@@ -7,6 +7,8 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
 import { useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useInlineDictionary } from '../_04_hooks'
+import { LANGUAGE_OPTIONS } from '../_08_constants'
+import { getVoiceCode } from '../../../config/languages'
 import {
   DebugPanel,
   LanguageSelect,
@@ -133,13 +135,12 @@ export function SttStreamView() {
 
   useEffect(() => {
     if (!preferencesLoaded) return
-    let sttLangCode = targetLanguage
-    if (targetLanguage === 'en') {
-      sttLangCode = 'en-us'
-    }
-    const supportedLangs = ['en-us', 'en-in', 'ko', 'zh', 'ja', 'es', 'fr', 'de', 'hi']
-    if (supportedLangs.includes(sttLangCode)) {
-      setSelectedLang(sttLangCode)
+    // Map translateCode (en, ko, zh) to voice code (en-US, ko-KR, zh-CN) for Web Speech API
+    const voiceCode = getVoiceCode(targetLanguage)
+    // Check if voiceCode matches any supported LANGUAGE_OPTIONS value
+    const isSupported = LANGUAGE_OPTIONS.some(opt => opt.value === voiceCode)
+    if (isSupported) {
+      setSelectedLang(voiceCode)
     }
   }, [preferencesLoaded, targetLanguage, setSelectedLang])
 
