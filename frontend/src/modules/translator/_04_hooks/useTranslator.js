@@ -41,9 +41,8 @@ export function useTranslator() {
   const [targetLang, setTargetLang] = useState('en')
   const [isTranslating, setIsTranslating] = useState(false)
   
-  // Frozen output: preserves existing translation when source language changes mid-session
-  const frozenOutputRef = useRef('')
-  const frozenInputLengthRef = useRef(0)
+  // Track whether a translation is in progress to avoid race conditions
+  const latestRequestIdRef = useRef(0)
   
   const translateTimeoutRef = useRef(null)
   const abortControllerRef = useRef(null)
@@ -83,7 +82,6 @@ export function useTranslator() {
     }
     
     if (!inputText?.trim()) {
-      isManualLangChangeRef.current = false  // Reset when input is cleared
       return
     }
     
@@ -105,24 +103,13 @@ export function useTranslator() {
   const handleTranslate = useCallback(async (text = inputText) => {
     if (!text?.trim()) {
       setOutputText('')
-      frozenOutputRef.current = ''
-      frozenInputLengthRef.current = 0
       return
     }
 
-    // If there's a frozen boundary, only translate the new portion
-    const frozenLen = frozenInputLengthRef.current
-    const frozenOut = frozenOutputRef.current
-    let textToTranslate = text
-    if (frozenLen > 0 && frozenOut) {
-      textToTranslate = text.slice(frozenLen).trim()
-      if (!textToTranslate) {
-        // No new text beyond frozen point, keep frozen output
-        setOutputText(frozenOut)
-        setIsTranslating(false)
-        return
-      }
-    }
+    const textToTranslate = text
+
+    // Increment request ID to track latest request
+    const requestId = ++latestRequestIdRef.current
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
@@ -137,7 +124,7 @@ export function useTranslator() {
       const targetCode = LANG_MAP[targetLang] || 'ko'
       
       if (sourceCode === targetCode) {
-        setOutputText(frozenOut ? frozenOut + '\n' + textToTranslate : text)
+        setOutputText(text)
         setIsTranslating(false)
         return
       }
@@ -201,11 +188,12 @@ export function useTranslator() {
         }
       }
       
-      if (!abortControllerRef.current.signal.aborted) {
+      // Only update if this is still the latest request (prevents race conditions)
+      if (!abortControllerRef.current.signal.aborted && requestId === latestRequestIdRef.current) {
         if (translatedText) {
           // 3. 번역 후 용어 복원
           const finalText = postProcess(translatedText, termMap)
-          setOutputText(frozenOut ? frozenOut + '\n' + finalText : finalText)
+          setOutputText(finalText)
           
           // Track usage - count characters in input text
           const charCount = text.length
@@ -236,9 +224,6 @@ export function useTranslator() {
 
     if (!inputText?.trim()) {
       setOutputText('')
-      frozenOutputRef.current = ''
-      frozenInputLengthRef.current = 0
-      isManualLangChangeRef.current = false  // Reset manual flag when input cleared
       return
     }
 
@@ -255,11 +240,6 @@ export function useTranslator() {
 
   const handleSourceLangChange = useCallback((lang) => {
     isManualLangChangeRef.current = true
-    // Freeze current output so it doesn't get re-translated
-    if (outputText.trim()) {
-      frozenOutputRef.current = outputText
-      frozenInputLengthRef.current = inputText.length
-    }
     setSourceLang(lang)
     // If source and target become the same, auto-adjust target
     setTargetLang(prev => {
@@ -268,15 +248,10 @@ export function useTranslator() {
       }
       return prev
     })
-  }, [outputText, inputText])
+  }, [])
 
   const handleTargetLangChange = useCallback((lang) => {
     isManualLangChangeRef.current = true
-    // Freeze current output so it doesn't get re-translated
-    if (outputText.trim()) {
-      frozenOutputRef.current = outputText
-      frozenInputLengthRef.current = inputText.length
-    }
     setTargetLang(lang)
     // If source and target become the same, auto-adjust source
     setSourceLang(prev => {
@@ -285,24 +260,10 @@ export function useTranslator() {
       }
       return prev
     })
-  }, [outputText, inputText])
+  }, [])
 
   const handleInputChange = useCallback((text) => {
     setInputText(text)
-    
-    if (text?.trim()) {
-      const detected = detectLanguage(text)
-      if (detected === 'ko') {
-        setSourceLang('ko')
-        setTargetLang('en')
-      } else if (detected === 'en') {
-        setSourceLang('en')
-        setTargetLang('ko')
-      } else if (detected === 'zh') {
-        setSourceLang('zh')
-        setTargetLang('en')
-      }
-    }
   }, [])
 
   return {
