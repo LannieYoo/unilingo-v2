@@ -1,19 +1,17 @@
 /**
  * SttStreamView
- * Web Speech API (Main) + Vosk lgraph (Gap Filling) 하이브리드 STT + 번역 뷰
+ * Web Speech API 기반 실시간 STT + 번역 뷰
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
-import { useVoskRecognition, useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useModelCache, useInlineDictionary } from '../_04_hooks'
+import { useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useInlineDictionary } from '../_04_hooks'
 import {
   DebugPanel,
   LanguageSelect,
   StatusIndicator,
   ActionButton,
-  ModelDownloadManager,
-  DownloadOverlay,
   DictionaryTooltip,
 } from '../_03_components'
 import { downloadAsFile, generateFileName } from '../_07_utils'
@@ -49,14 +47,8 @@ export function SttStreamView() {
     getFullText,
   } = useTranscriptStore()
 
-  // All languages use Web Speech API (hybrid mode)
-  const voskHook = useVoskRecognition()
+  // Web Speech API
   const hybridHook = useHybridSTT(selectedLang)
-
-  const {
-    setLanguage,
-    isLoading,
-  } = voskHook
 
   const {
     stop: hybridStop,
@@ -109,7 +101,6 @@ export function SttStreamView() {
     reset: resetTimer
   } = useTimer()
 
-  const { isModelCached, downloadingModel, downloadProgress } = useModelCache()
   const { isAuthenticated, tokens, isAdmin } = useAuthStore()
   
   const {
@@ -252,9 +243,8 @@ export function SttStreamView() {
     }
   }, [displayFinalText, selectedLang, addSentenceToTranslate])
 
-  const handleLanguageChange = async (newLang) => {
+  const handleLanguageChange = (newLang) => {
     setSelectedLang(newLang)
-    await setLanguage(newLang)
   }
 
   const handleClear = () => {
@@ -319,7 +309,7 @@ export function SttStreamView() {
 
   return (
     <PageLayout title="Speech to Text" fullHeight>
-      <TopLoadingBar isLoading={isLoading || isTranslating || isRetranslating || isDictionaryLoading} />
+      <TopLoadingBar isLoading={isTranslating || isRetranslating || isDictionaryLoading} />
       <PageBox noPadding flex>
         {!isAuthenticated && (
           <div className="stt-auth-bar">
@@ -373,7 +363,7 @@ export function SttStreamView() {
               <ActionButton
                 variant={isRunning ? 'recording' : 'default'}
                 onClick={handleToggle}
-                disabled={!isSupported || isLoading || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
+                disabled={!isSupported || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
               >
                 {isRunning ? 'Stop' : 'Start'}
               </ActionButton>
@@ -548,11 +538,7 @@ export function SttStreamView() {
 
       <DebugPanel isOpen={showDebug && isAdmin} onClose={() => setShowDebug(false)} />
       
-      <DownloadOverlay 
-        isVisible={!!downloadingModel || isLoading} 
-        modelLang={downloadingModel || selectedLang} 
-        progress={downloadingModel ? downloadProgress : loadProgress}
-      />
+
       
       <LoginModal isOpen={showLoginModal || (!isAuthenticated && isLimitReached)} onClose={closeLoginModal} />
       
