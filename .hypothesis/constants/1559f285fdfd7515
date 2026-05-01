@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\trace_middleware.py
-# hypothesis_version: 6.150.0
-
-['ERROR_TRACE', 'NO_TRACE', 'trace_id', 'x-trace-id']

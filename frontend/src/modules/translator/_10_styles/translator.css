@@ -2159,3 +2159,129 @@ body.translator-focus-active {
 .dark .translator-focus-mode .translator-output-wrapper {
   border-top-color: #1a2d4d;
 }
+
+/* ===== Grammar Correction Suggestion ===== */
+.translator-grammar-suggestion {
+  margin-top: 6px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #fefce8, #fef9c3);
+  border: 1.5px solid #fbbf24;
+  border-radius: 10px;
+  animation: grammar-slide-in 0.25s ease-out;
+}
+
+@keyframes grammar-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.translator-grammar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.translator-grammar-icon {
+  font-size: 14px;
+}
+
+.translator-grammar-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  letter-spacing: 0.02em;
+}
+
+.translator-grammar-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(146, 64, 14, 0.1);
+  color: #92400e;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.translator-grammar-dismiss:hover {
+  background: rgba(146, 64, 14, 0.2);
+}
+
+.translator-grammar-text {
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+}
+
+.translator-grammar-apply {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.translator-grammar-apply:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+}
+
+.translator-grammar-checking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.translator-grammar-spinner {
+  animation: grammar-spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes grammar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Dark mode grammar */
+.dark .translator-grammar-suggestion {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.2), rgba(146, 64, 14, 0.15));
+  border-color: #b45309;
+}
+
+.dark .translator-grammar-label {
+  color: #fbbf24;
+}
+
+.dark .translator-grammar-text {
+  color: #fcd34d;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .translator-grammar-dismiss {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+}
+
+.dark .translator-grammar-dismiss:hover {
+  background: rgba(251, 191, 36, 0.2);
+}

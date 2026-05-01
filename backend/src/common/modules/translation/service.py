@@ -7,6 +7,7 @@ import json
 import time
 import logging
 import re
+import os
 from typing import Dict, Any, Optional, List, Tuple
 
 from ..cache import get_cache_service
@@ -24,7 +25,9 @@ class TranslationService:
         self.cache_ttl = cache_ttl
         self.cache = get_cache_service() if cache_enabled else None
         self.timeout_strategy = [5.0, 3.0, 1.0]
+        self.deepl_api_key = os.getenv('DEEPL_API_KEY', '')
         self.provider_health = {
+            'deepl': {'failures': 0, 'last_success': None},
             'google_direct': {'failures': 0, 'last_success': None},
             'mymemory': {'failures': 0, 'last_success': None},
             'google_proxy': {'failures': 0, 'last_success': None}
@@ -110,14 +113,21 @@ class TranslationService:
         }
 
     def _get_ordered_providers(self) -> List[Tuple[str, callable]]:
-        """상태 기반 제공자 순서"""
-        providers = [
+        """상태 기반 제공자 순서 (DeepL 최우선)"""
+        providers = []
+        # DeepL is always first if API key is configured
+        if self.deepl_api_key:
+            providers.append(('deepl', self._translate_deepl))
+        providers.extend([
             ('google_direct', self._translate_google_direct),
             ('mymemory', self._translate_mymemory),
             ('google_proxy', self._translate_google_proxy)
-        ]
+        ])
         def sort_key(provider_tuple):
             name = provider_tuple[0]
+            # DeepL always gets priority (lowest sort key)
+            if name == 'deepl':
+                return (-1, 0)
             health = self.provider_health[name]
             return (health['failures'], -(health['last_success'] or 0))
         return sorted(providers, key=sort_key)
@@ -152,6 +162,47 @@ class TranslationService:
                 attempts.append({'provider_name': provider_name, 'success': False, 'error_message': str(e), 'response_time': response_time, 'timeout_used': timeout})
                 break
         return False, None, attempts
+
+    # --- DeepL Free API (최우선) ---
+    
+    # DeepL language code mapping
+    DEEPL_LANG_MAP = {
+        'ko': 'KO', 'en': 'EN', 'zh': 'ZH',
+        'ja': 'JA', 'de': 'DE', 'fr': 'FR',
+        'es': 'ES', 'pt': 'PT-BR', 'ru': 'RU',
+        'it': 'IT', 'ar': 'AR', 'hi': 'HI',
+    }
+    
+    def _translate_deepl(self, text: str, source_lang: str, target_lang: str, timeout: float = 5.0) -> Optional[str]:
+        """DeepL Free API 번역 (최고 품질)"""
+        if not self.deepl_api_key:
+            return None
+        
+        # DeepL Free API uses api-free.deepl.com
+        base_url = 'https://api-free.deepl.com' if self.deepl_api_key.endswith(':fx') else 'https://api.deepl.com'
+        url = f'{base_url}/v2/translate'
+        
+        dl_source = self.DEEPL_LANG_MAP.get(source_lang, source_lang.upper())
+        dl_target = self.DEEPL_LANG_MAP.get(target_lang, target_lang.upper())
+        
+        headers = {
+            'Authorization': f'DeepL-Auth-Key {self.deepl_api_key}',
+            'Content-Type': 'application/json',
+        }
+        payload = {
+            'text': [text],
+            'source_lang': dl_source,
+            'target_lang': dl_target,
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        data = response.json()
+        
+        if data.get('translations') and len(data['translations']) > 0:
+            translated = data['translations'][0].get('text', '').strip()
+            return translated if translated and translated != text else None
+        return None
 
     def _translate_google_direct(self, text: str, source_lang: str, target_lang: str, timeout: float = 5.0) -> Optional[str]:
         """Google Translate 직접 호출"""

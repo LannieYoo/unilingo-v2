@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\translation\service.py
-# hypothesis_version: 6.150.0
-
-[1.0, 2.0, 3.0, 5.0, 100, 200, 86400, '<[^>]*>', 'Accept', 'All providers failed', 'Empty or unchanged', 'Hello', 'User-Agent', 'application/json', 'available', 'cached', 'client', 'contents', 'dt', 'en', 'error', 'error_message', 'failures', 'fallback', 'google_direct', 'google_proxy', 'gtx', 'ko', 'langpair', 'last_success', 'mymemory', 'none', 'processing_time', 'provider', 'provider_attempts', 'provider_name', 'q', 'responseData', 'responseStatus', 'response_time', 'retry_count', 'sl', 'source_lang', 'success', 't', 'target_lang', 'timeout_used', 'tl', 'translate', 'translatedText', 'translated_text', 'zh']

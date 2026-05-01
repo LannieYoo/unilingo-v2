@@ -10,6 +10,10 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+electron-dist
+electron/models/*.onnx
+electron/models/*.tar.bz2
+electron/models/*.txt
 *.local
 
 # Editor directories and files

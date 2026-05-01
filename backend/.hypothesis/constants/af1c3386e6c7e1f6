@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\exception\__init__.py
-# hypothesis_version: 6.150.0
-
-['BaseAppException', 'CacheError', 'ConfigError', 'DExceptionContext', 'DictionaryError', 'EExceptionLevel', 'ICustomException', 'IException', 'STTError', 'TranslationError', 'ValidationError']

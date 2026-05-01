@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\exception\errors.py
-# hypothesis_version: 6.150.0
-
-['APP_ERROR', 'CACHE_ERROR', 'CONFIG_ERROR', 'DICTIONARY_ERROR', 'STT_ERROR', 'TRANSLATION_ERROR', 'VALIDATION_ERROR', 'critical', 'debug', 'error', 'info', 'warning']

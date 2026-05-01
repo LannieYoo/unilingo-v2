@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\health\router.py
-# hypothesis_version: 6.150.0
-
-[200, 503, '/api', '/health', 'GET', 'Z', 'health', 'healthy', 'services', 'status', 'timestamp', 'trace_id', 'unknown']

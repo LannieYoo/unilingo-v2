@@ -146,55 +146,61 @@ export function useTranslator() {
       let translatedText = ''
       const timeout = 5000
       
-      // 2. Google Translate API (보호된 텍스트 번역)
+      // 1. Backend DeepL API (최고 품질 — DeepL Free 500K chars/month)
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), timeout)
-        const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(processedText)}`
-        const response = await fetch(googleUrl, { signal: controller.signal })
+        const apiUrl = import.meta.env.VITE_API_URL || ''
+        const response = await fetch(`${apiUrl}/api/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: processedText,
+            source_lang: sourceCode,
+            target_lang: targetCode
+          }),
+          signal: controller.signal
+        })
         clearTimeout(timeoutId)
         
         if (response.ok && !abortControllerRef.current.signal.aborted) {
-          const googleData = await response.json()
-          if (googleData?.[0] && Array.isArray(googleData[0])) {
-            const translated = googleData[0]
-              .filter(item => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
-              .map(item => item[0])
-              .join('')
-              .trim()
-            if (translated && translated.length > 0 && translated !== processedText) {
-              translatedText = translated
-            }
+          const data = await response.json()
+          if (data.translated_text && data.translated_text.trim() && data.translated_text !== processedText) {
+            translatedText = data.translated_text.trim()
+            console.log(`[Translator] Used provider: ${data.provider || 'backend'}`)
           }
         }
       } catch (e) {
         if (e.name !== 'AbortError') {
-          console.error('Google Translate error:', e)
+          console.warn('Backend translate unavailable, falling back to Google:', e.message)
         }
       }
-      
-      // MyMemory API fallback
+
+      // 2. Google Translate fallback (백엔드 실패 시)
       if (!translatedText && !abortControllerRef.current.signal.aborted) {
         try {
           const controller = new AbortController()
           const timeoutId = setTimeout(() => controller.abort(), timeout)
-          const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(processedText)}&langpair=${sourceCode}|${targetCode}`
-          const response = await fetch(myMemoryUrl, { signal: controller.signal })
+          const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(processedText)}`
+          const response = await fetch(googleUrl, { signal: controller.signal })
           clearTimeout(timeoutId)
           
           if (response.ok && !abortControllerRef.current.signal.aborted) {
-            const data = await response.json()
-            if (data.responseStatus === 200 && data.responseData?.translatedText) {
-              let translated = data.responseData.translatedText
-              translated = translated.replace(/^t\d+\//, '').replace(/<[^>]*>/g, '').trim()
-              if (translated && translated !== processedText && translated.toUpperCase() !== processedText.toUpperCase()) {
+            const googleData = await response.json()
+            if (googleData?.[0] && Array.isArray(googleData[0])) {
+              const translated = googleData[0]
+                .filter(item => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
+                .map(item => item[0])
+                .join('')
+                .trim()
+              if (translated && translated.length > 0 && translated !== processedText) {
                 translatedText = translated
               }
             }
           }
         } catch (e) {
           if (e.name !== 'AbortError') {
-            console.error('MyMemory error:', e)
+            console.error('Google Translate error:', e)
           }
         }
       }

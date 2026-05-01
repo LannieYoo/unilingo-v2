@@ -6,9 +6,12 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranscriptStore } from '../_05_stores'
-import { useHybridSTT, useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useInlineDictionary } from '../_04_hooks'
+import { useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useInlineDictionary } from '../_04_hooks'
 import { LANGUAGE_OPTIONS } from '../_08_constants'
 import { getVoiceCode } from '../../../config/languages'
+import { useSpeechInput, getSTTLanguage } from '../../../common/hooks/useSpeechInput'
+import { Platform } from '../../../common/utils/platformUtils'
+import { addPunctuation } from '../_07_utils/textFormatter'
 import {
   DebugPanel,
   LanguageSelect,
@@ -49,26 +52,56 @@ export function SttStreamView() {
     getFullText,
   } = useTranscriptStore()
 
-  // Web Speech API
-  const hybridHook = useHybridSTT(selectedLang)
+  // Accumulated transcript state
+  const [displayFinalText, setDisplayFinalText] = useState('')
+  const [displayInterimText, setDisplayInterimText] = useState('')
+  const lastFinalRef = useRef('')
+  const restartCountRef = useRef(0)
 
+  // Unified STT hook: routes to sherpa-onnx (Electron), Native (Mobile), Web Speech (Browser)
+  const sttLanguage = getSTTLanguage(selectedLang)
   const {
-    stop: hybridStop,
-    toggle: hybridToggle,
-    isRunning: hybridIsRunning,
-    isRestarting: hybridIsRestarting,
-    transcript: hybridTranscript,
-    interimTranscript: hybridInterimTranscript,
-    error: hybridError,
-    stats: hybridStats,
-  } = hybridHook
+    start: sttStart,
+    stop: sttStop,
+    isListening: isRunning,
+    error: sttError,
+    isAvailable: sttAvailable,
+  } = useSpeechInput({
+    language: sttLanguage,
+    continuous: true,
+    onResult: (text, isFinal) => {
+      if (isFinal && text.trim()) {
+        // Duplicate prevention
+        if (text === lastFinalRef.current) return
+        lastFinalRef.current = text
+        const punctLang = selectedLang.split('-')[0]
+        const textWithPunctuation = addPunctuation(text, punctLang)
+        setDisplayFinalText(prev => prev + textWithPunctuation + ' ')
+        setDisplayInterimText('')
+      } else if (!isFinal && text.trim()) {
+        setDisplayInterimText(text)
+      }
+    },
+  })
 
-  // All languages use Web Speech API
-  const isRunning = hybridIsRunning
-  const stop = hybridStop
-  const toggle = hybridToggle
-  const displayFinalText = hybridTranscript
-  const displayInterimText = hybridInterimTranscript
+  const stop = useCallback(() => {
+    sttStop()
+    setDisplayInterimText('')
+    lastFinalRef.current = ''
+  }, [sttStop])
+
+  const toggle = useCallback(async () => {
+    if (isRunning) {
+      stop()
+    } else {
+      sttStart()
+    }
+  }, [isRunning, stop, sttStart])
+
+  // Determine current engine name for badge
+  const engineName = Platform.isElectron() ? '🎯 sherpa-onnx (Offline)' 
+    : Platform.isNative() ? '🎯 Native STT (OS)' 
+    : '🎯 Web Speech API (Real-time)'
 
   const {
     translatedText,
@@ -133,13 +166,12 @@ export function SttStreamView() {
   const containerRef = useRef(null)
 
 
+
   useEffect(() => {
     if (!preferencesLoaded) return
-    // Map translateCode (en, ko, zh) to voice code (en-US, ko-KR, zh-CN) for Web Speech API
     const voiceCode = getVoiceCode(targetLanguage)
-    // Check if voiceCode matches any supported LANGUAGE_OPTIONS value
-    const isSupported = LANGUAGE_OPTIONS.some(opt => opt.value === voiceCode)
-    if (isSupported) {
+    const isLangSupported = LANGUAGE_OPTIONS.some(opt => opt.value === voiceCode)
+    if (isLangSupported) {
       setSelectedLang(voiceCode)
     }
   }, [preferencesLoaded, targetLanguage, setSelectedLang])
@@ -253,6 +285,9 @@ export function SttStreamView() {
     clearTranslation()
     resetTimer()
     prevFinalTextRef.current = ''
+    setDisplayFinalText('')
+    setDisplayInterimText('')
+    lastFinalRef.current = ''
   }
 
   const handleDownload = () => {
@@ -327,20 +362,18 @@ export function SttStreamView() {
             <StatusIndicator status={status} loadProgress={loadProgress} errorMessage={errorMessage} />
             
             <div className="stt-hybrid-status">
-              <span className="stt-hybrid-badge">🎯 Web Speech API (Real-time)</span>
-              {hybridIsRestarting && <span className="stt-processing">Reconnecting...</span>}
-              <span className="stt-stats">Restarts: {hybridStats.restartCount}</span>
+              <span className="stt-hybrid-badge">{engineName}</span>
             </div>
 
-            {hybridError && (
+            {sttError && (
               <div className="stt-error-banner">
                 <span className="stt-error-icon">⚠️</span>
                 <div className="stt-error-content">
                   <div className="stt-error-title">
-                    {hybridError.message.includes('audio-capture') ? 'Microphone Access Error' : 'Speech Recognition Error'}
+                    {sttError.message?.includes('audio-capture') ? 'Microphone Access Error' : 'Speech Recognition Error'}
                   </div>
                   <div className="stt-error-message">
-                    {hybridError.message.includes('audio-capture') ? (
+                    {sttError.message?.includes('audio-capture') ? (
                       <>
                         Cannot access microphone. Please check:
                         <ul className="stt-error-list">
@@ -350,10 +383,10 @@ export function SttStreamView() {
                           <li>Microphone is set as default recording device</li>
                         </ul>
                       </>
-                    ) : hybridError.message.includes('not-allowed') ? (
-                      'Microphone permission denied. Please allow microphone access in your browser.'
+                    ) : sttError.message?.includes('not-allowed') ? (
+                      'Microphone permission denied. Please allow microphone access.'
                     ) : (
-                      hybridError.message
+                      sttError.message || 'Unknown error'
                     )}
                   </div>
                 </div>
@@ -364,7 +397,7 @@ export function SttStreamView() {
               <ActionButton
                 variant={isRunning ? 'recording' : 'default'}
                 onClick={handleToggle}
-                disabled={!isSupported || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
+                disabled={!sttAvailable || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
               >
                 {isRunning ? 'Stop' : 'Start'}
               </ActionButton>
@@ -422,7 +455,7 @@ export function SttStreamView() {
               <LanguageSelect
                 value={selectedLang}
                 onChange={handleLanguageChange}
-                disabled={isRunning || isLoading}
+                disabled={isRunning}
                 label=""
               />
               <span className="stt-char-count">
@@ -525,14 +558,14 @@ export function SttStreamView() {
           )}
         </div>
 
-        {!isSupported && (
+        {!sttAvailable && (
           <div className="stt-warning-box">
             ⚠️ Microphone access is not supported in this browser.
           </div>
         )}
 
         <div className="stt-stream-notes">
-          📝 All languages use Web Speech API (real-time, requires internet, Chrome recommended)
+          📝 {Platform.isElectron() ? 'Using sherpa-onnx (offline, high accuracy)' : 'Using Web Speech API (real-time, Chrome recommended)'}
           {!isAuthenticated && ` • Guest limit: ${MAX_CHARS_GUEST.toLocaleString()} characters`}
         </div>
       </PageBox>

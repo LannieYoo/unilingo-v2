@@ -340,8 +340,27 @@ export function useDictionary() {
     }
   }, [targetLang, isSearching])
 
-  // Google Translate 헬퍼
-  const googleTranslate = useCallback(async (text, sl, tl, signal) => {
+  // 번역 헬퍼 (Backend DeepL → Google Translate fallback)
+  const translateText = useCallback(async (text, sl, tl, signal) => {
+    // 1. Backend DeepL (higher quality + caching)
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || ''
+      const res = await fetch(`${apiUrl}/api/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source_lang: sl, target_lang: tl }),
+        signal
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.translated_text && data.translated_text.trim() && data.translated_text !== text) {
+          return data.translated_text.trim()
+        }
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') throw e
+    }
+    // 2. Google Translate fallback
     try {
       const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`
       const res = await fetch(url, { signal })
@@ -350,7 +369,7 @@ export function useDictionary() {
         return data?.[0]?.[0]?.[0] || null
       }
     } catch (e) {
-      if (e.name !== 'AbortError') console.error('Google Translate error:', e)
+      if (e.name !== 'AbortError') console.error('Translate error:', e)
     }
     return null
   }, [])
@@ -383,7 +402,7 @@ export function useDictionary() {
       let englishWord = wordToSearch
       let originalWord = null
       if (fromLang === 'ko' || fromLang === 'zh') {
-        const translated = await googleTranslate(wordToSearch, fromLang, 'en', signal)
+        const translated = await translateText(wordToSearch, fromLang, 'en', signal)
         if (translated && translated.toLowerCase() !== wordToSearch.toLowerCase()) {
           englishWord = translated.toLowerCase().trim()
           originalWord = wordToSearch
@@ -450,7 +469,7 @@ export function useDictionary() {
               if (toLang !== 'en') {
                 const defRef = definitions[definitions.length - 1]
                 translationPromises.push(
-                  googleTranslate(def.definition, 'en', toLang, signal).then(t => {
+                  translateText(def.definition, 'en', toLang, signal).then(t => {
                     defRef.translation = t
                   })
                 )
@@ -468,7 +487,7 @@ export function useDictionary() {
       let simpleTranslation = null
       if (toLang !== 'en') {
         translationPromises.push(
-          googleTranslate(englishWord, 'en', toLang, signal).then(t => {
+          translateText(englishWord, 'en', toLang, signal).then(t => {
             simpleTranslation = t
           })
         )
@@ -520,7 +539,7 @@ export function useDictionary() {
       const errorResult = [{ word: wordToSearch, translation: 'Error: ' + error.message }]
       setResults(errorResult)
     }
-  }, [trackUsage, searchHistory, googleTranslate])
+  }, [trackUsage, searchHistory, translateText])
 
   // 검색 실행
   const handleSearch = useCallback(async () => {

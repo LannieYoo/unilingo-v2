@@ -28,8 +28,7 @@ export {
   TranscriptDisplay
 } from './_03_components'
 
-// Hooks
-export { useHybridSTT } from './_04_hooks'
+// Hooks (useHybridSTT removed — now using useSpeechInput from common/hooks)
 
 // Stores
 export {

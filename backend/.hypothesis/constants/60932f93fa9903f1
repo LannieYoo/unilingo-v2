@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\helper.py
-# hypothesis_version: 6.150.0
-
-[1.0, 2.0, '(?<!^)(?=[A-Z])', '*', '...', 'T', 'Z', '_', 'has_next', 'has_prev', 'items', 'limit', 'page', 'pagination', 'sha256', 'total', 'total_pages']

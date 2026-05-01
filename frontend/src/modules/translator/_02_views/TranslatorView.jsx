@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSpeechInput, getSTTLanguage } from '../../../common/hooks/useSpeechInput'
 import { useNavigate } from 'react-router-dom'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useTranslator, useOCR, useTTS } from '../_04_hooks'
@@ -13,6 +14,8 @@ import { useAuthStore, authService, MAX_CHARS_GUEST, LoginModal } from '../../au
 import { useUsage } from '../../../common/hooks/useUsage'
 import { UsageIndicator } from '../../../common/components/UsageIndicator'
 import { TopLoadingBar } from '../../../common/components/TopLoadingBar'
+import { AILoadingBar } from '../../../common/components/AILoadingBar'
+import { useAI } from '../../../common/hooks/useAI'
 import '../_10_styles/translator.css'
 
 export function TranslatorView() {
@@ -37,7 +40,6 @@ export function TranslatorView() {
   const fileInputRef = useRef(null)
   const inputTextareaRef = useRef(null)
   const outputTextareaRef = useRef(null)
-  const recognitionRef = useRef(null)
   const [recentHistory, setRecentHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, text }
@@ -47,126 +49,51 @@ export function TranslatorView() {
   const [lastSavedText, setLastSavedText] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [guestCharCount, setGuestCharCount] = useState(0)
-  const [isListening, setIsListening] = useState(false)
   const [conversationMode, setConversationMode] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
 
-  // Web Speech API language mapping
-  const getSpeechLang = (lang) => {
-    const map = {
-      'en': 'en-US', 'en-us': 'en-US', 'en-gb': 'en-GB',
-      'ko': 'ko-KR', 'zh': 'zh-CN', 'zh-tw': 'zh-TW',
-      'ja': 'ja-JP', 'es': 'es-ES', 'fr': 'fr-FR',
-      'de': 'de-DE', 'ar': 'ar-SA', 'hi': 'hi-IN',
-      'pt': 'pt-BR', 'ru': 'ru-RU', 'it': 'it-IT',
-    }
-    return map[lang] || map[lang?.split('-')[0]] || 'en-US'
-  }
+  // AI grammar correction
+  const { checkGrammar, modelStates } = useAI()
+  const [grammarSuggestion, setGrammarSuggestion] = useState(null)
+  const [isCheckingGrammar, setIsCheckingGrammar] = useState(false)
+  const grammarTimeoutRef = useRef(null)
 
-  const isSpeechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+  // Shared STT hook: auto-branches between native (mobile) and Web Speech API (desktop)
+  const sttLanguage = getSTTLanguage(sourceLang)
+  const {
+    start: startListening,
+    stop: stopListening,
+    isListening,
+    isAvailable: isSpeechSupported,
+  } = useSpeechInput({
+    language: sttLanguage,
+    continuous: true,
+    onResult: (text, isFinal) => {
+      if (isFinal && text.trim()) {
+        setInputTextRaw(prev => prev + (prev ? '\n' : '') + text)
+      } else if (!isFinal && text.trim()) {
+        // Show interim text in the input area
+        setInputTextRaw(prev => {
+          const lines = prev.split('\n')
+          // If last line is interim, replace it
+          return prev + (prev ? '\n' : '') + text
+        })
+      }
+    },
+  })
 
+  // Voice input handler using shared STT hook
   const handleVoiceInput = () => {
     if (!isSpeechSupported) {
       alert('Your browser does not support speech recognition.')
       return
     }
-
     if (isListening) {
-      recognitionRef.current?.stop()
-      return
+      stopListening()
+    } else {
+      startListening()
     }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    const recognition = new SpeechRecognition()
-    recognitionRef.current = recognition
-
-    recognition.lang = getSpeechLang(sourceLang)
-    recognition.interimResults = true
-    recognition.continuous = true
-    recognition.maxAlternatives = 1
-
-    let finalTranscript = inputText
-
-    // Auto-stop after 20s of silence
-    let idleTimer = null
-    const resetIdleTimer = () => {
-      if (idleTimer) clearTimeout(idleTimer)
-      idleTimer = setTimeout(() => {
-        recognition.stop()
-      }, 20000)
-    }
-
-    recognition.onstart = () => {
-      setIsListening(true)
-      resetIdleTimer()
-    }
-
-    // Post-process: add punctuation to recognized text
-    const addPunctuation = (text) => {
-      if (!text) return text
-      let t = text.trim()
-
-      // Korean: insert period + space between merged sentences
-      t = t.replace(/(니다|세요|어요|해요|에요|거야|잖아|네요|구나|할게|래요|한다|인데|거든|겠어|죠|지요|어라|구요|군요|듯요)(?=[가-힣])/g, '$1. ')
-
-      // Chinese: insert 。between merged sentences  
-      t = t.replace(/(了|的|吗|呢|吧|啊|哦|啦|呀|么)(?=[\u4e00-\u9fff])/g, '$1。')
-
-      // Capitalize first letter (for English)
-      t = t.charAt(0).toUpperCase() + t.slice(1)
-
-      // Add period if sentence doesn't end with punctuation
-      if (t && !/[.!?。！？，,;:]$/.test(t)) {
-        t += '.'
-      }
-      return t
-    }
-
-    recognition.onresult = (event) => {
-      resetIdleTimer()  // Reset 20s timer on each input
-      let interim = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
-        if (event.results[i].isFinal) {
-          if (!transcript || !transcript.trim()) continue
-          const punctuated = addPunctuation(transcript)
-          if (punctuated && punctuated.trim()) {
-            finalTranscript += (finalTranscript ? '\n' : '') + punctuated
-          }
-        } else {
-          if (transcript && transcript.trim()) {
-            interim += transcript
-          }
-        }
-      }
-      setInputTextRaw(finalTranscript + (interim && interim.trim() ? '\n' + interim : ''))
-    }
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error)
-      if (idleTimer) clearTimeout(idleTimer)
-      setIsListening(false)
-      recognitionRef.current = null
-      if (event.error === 'not-allowed') {
-        alert('Microphone access denied. Please allow microphone access in your browser settings.')
-      }
-    }
-
-    recognition.onend = () => {
-      if (idleTimer) clearTimeout(idleTimer)
-      setIsListening(false)
-      recognitionRef.current = null
-    }
-
-    recognition.start()
   }
-
-  // Cleanup recognition on unmount
-  useEffect(() => {
-    return () => {
-      recognitionRef.current?.stop()
-    }
-  }, [])
 
   // Auto-scroll input textarea to bottom when text changes
   useEffect(() => {
@@ -182,12 +109,7 @@ export function TranslatorView() {
     }
   }, [outputText])
 
-  // Stop voice recognition when sourceLang changes
-  useEffect(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-    }
-  }, [sourceLang])
+  // Stop voice recognition when sourceLang changes (handled by useSpeechInput internally)
 
   // Check if user has exceeded their usage limit
   const isLimitExceeded = isAuthenticated && checkUsageLimit()
@@ -198,6 +120,34 @@ export function TranslatorView() {
       loadRecentHistory()
     }
   }, [isAuthenticated, tokens?.access_token])
+
+  // Grammar correction: debounce check when English text is typed
+  useEffect(() => {
+    if (grammarTimeoutRef.current) clearTimeout(grammarTimeoutRef.current)
+    setGrammarSuggestion(null)
+
+    // Only check English text that's long enough
+    const isEnglish = sourceLang === 'en' || /^[a-zA-Z\s.,!?;:'"()-]+$/.test(inputText?.trim() || '')
+    if (!isEnglish || !inputText?.trim() || inputText.trim().length < 8) return
+
+    grammarTimeoutRef.current = setTimeout(async () => {
+      setIsCheckingGrammar(true)
+      try {
+        const corrected = await checkGrammar(inputText.trim())
+        if (corrected && corrected !== inputText.trim()) {
+          setGrammarSuggestion(corrected)
+        }
+      } catch (err) {
+        console.error('[Grammar] Check failed:', err)
+      } finally {
+        setIsCheckingGrammar(false)
+      }
+    }, 1500)
+
+    return () => {
+      if (grammarTimeoutRef.current) clearTimeout(grammarTimeoutRef.current)
+    }
+  }, [inputText, sourceLang, checkGrammar])
 
   const loadRecentHistory = async () => {
     if (!tokens?.access_token) return
@@ -512,6 +462,7 @@ export function TranslatorView() {
   return (
     <PageLayout title="Translator">
       <TopLoadingBar isLoading={isTranslating || isOCRProcessing} />
+      <AILoadingBar modelStates={modelStates} />
       <PageBox className={focusMode ? 'translator-focus-mode' : ''}>
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">
@@ -732,6 +683,39 @@ export function TranslatorView() {
           >
           <div className="translator-resize-handle-bar" />
           </div>
+
+          {/* Grammar correction suggestion */}
+          {grammarSuggestion && (
+            <div className="translator-grammar-suggestion">
+              <div className="translator-grammar-header">
+                <span className="translator-grammar-icon">✨</span>
+                <span className="translator-grammar-label">Grammar Suggestion</span>
+                <button
+                  className="translator-grammar-dismiss"
+                  onClick={() => setGrammarSuggestion(null)}
+                  title="Dismiss"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+              <div className="translator-grammar-text">{grammarSuggestion}</div>
+              <button
+                className="translator-grammar-apply"
+                onClick={() => {
+                  setInputText(grammarSuggestion)
+                  setGrammarSuggestion(null)
+                }}
+              >
+                Apply Correction
+              </button>
+            </div>
+          )}
+          {isCheckingGrammar && (
+            <div className="translator-grammar-checking">
+              <span className="translator-grammar-spinner">⏳</span>
+              Checking grammar...
+            </div>
+          )}
         </div>
 
         {/* Focus mode btn-group */}

@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\errors.py
-# hypothesis_version: 6.150.0
-
-[400, 401, 403, 404, 500, 503, 'AUTHENTICATION_ERROR', 'AUTHORIZATION_ERROR', 'INTERNAL_ERROR', 'NOT_FOUND', 'Permission denied', 'Resource not found', 'SESSION_EXPIRED', 'Session expired', 'TOKEN_EXPIRED', 'Token expired', 'VALIDATION_ERROR', 'code', 'details', 'error', 'message', 'service']

@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\dictionary\service.py
-# hypothesis_version: 6.150.0
-
-[200, 500, 1000, 3600, 604800, '*', '[A-Za-z]', '[\\u4E00-\\u9FFF]', 'audio', 'audio_url', 'auto', 'autocomplete', 'cached', 'created_at', 'definition', 'definitions', 'dictionary_cache', 'dictionary_logs', 'en', 'example', 'examples', 'expires_at', 'free_dictionary_api', 'id', 'ip_address', 'ipa', 'is_non_english', 'ko', 'lang', 'lang,term', 'meanings', 'original', 'partOfSpeech', 'part_of_speech', 'payload', 'phonetic', 'phonetics', 'pronunciation', 'related', 'score', 'search_results', 'search_word', 'source', 'source_lang', 'source_translation', 'spell', 'success', 'suggest', 'synonym', 'target_lang', 'term', 'text', 'trace_id', 'translated_text', 'translation', 'type', 'unknown', 'user_id', 'word', 'zh']

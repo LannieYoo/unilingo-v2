@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\modules\stt\vosk_processor.py
-# hypothesis_version: 6.150.0
-
-[b'RIFF', b'WAVE', 4000, 16000, '16000', 'VOSK_MODEL_PATH', 'VOSK_SAMPLE_RATE', 'text']

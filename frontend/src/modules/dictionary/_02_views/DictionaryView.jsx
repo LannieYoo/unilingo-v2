@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useSpeechInput, getSTTLanguage } from '../../../common/hooks/useSpeechInput'
 import { useLocation } from 'react-router-dom'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useDictionary } from '../_04_hooks'
@@ -13,6 +14,8 @@ import { playPronunciation, getWordLevel, getLevelColor } from '../_07_utils'
 import { UsageIndicator } from '../../../common/components/UsageIndicator'
 import { DeeplStatusIndicator } from '../../../common/components/DeeplStatusIndicator'
 import { TopLoadingBar } from '../../../common/components/TopLoadingBar'
+import { AILoadingBar } from '../../../common/components/AILoadingBar'
+import { useAI } from '../../../common/hooks/useAI'
 import { authService } from '../../auth'
 import '../_10_styles/dictionary.css'
 
@@ -50,23 +53,44 @@ export function DictionaryView() {
     fetchSuggestions,
   } = useDictionary()
 
+  // AI features
+  const { getSimilarWords, suggestWords, modelStates } = useAI()
+  const [aiSimilar, setAiSimilar] = useState([])
+  const [aiSuggestions, setAiSuggestions] = useState([])
+  const [aiLoading, setAiLoading] = useState({ similar: false, suggestions: false })
+
   const location = useLocation()
   const inputRef = useRef(null)
-  const recognitionRef = useRef(null)
-  const [isListening, setIsListening] = useState(false)
-  const [voiceLang, setVoiceLang] = useState('en-US')
-
-  const isSpeechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 
   const VOICE_LANGS = [
     { code: 'en-US', label: 'EN', name: 'English' },
     { code: 'ko-KR', label: 'KO', name: 'Korean' },
     { code: 'zh-CN', label: 'ZH', name: 'Chinese' },
   ]
+  const [voiceLang, setVoiceLang] = useState('en-US')
 
   // Ref to always have the latest searchWithWord
   const searchWithWordRef = useRef(searchWithWord)
   useEffect(() => { searchWithWordRef.current = searchWithWord }, [searchWithWord])
+
+  // Shared STT hook: auto-branches between native (mobile) and Web Speech API (desktop)
+  const {
+    start: startListening,
+    stop: stopListening,
+    isListening,
+    isAvailable: isSpeechSupported,
+  } = useSpeechInput({
+    language: voiceLang,
+    continuous: false,
+    onResult: (text, isFinal) => {
+      if (text.trim()) {
+        setSearchTerm(text)
+      }
+      if (isFinal && text.trim()) {
+        searchWithWordRef.current(text.trim())
+      }
+    },
+  })
 
   const handleVoiceInput = useCallback(() => {
     if (!isSpeechSupported) {
@@ -74,56 +98,13 @@ export function DictionaryView() {
       return
     }
     if (isListening) {
-      recognitionRef.current?.stop()
-      return
+      stopListening()
+    } else {
+      startListening()
     }
+  }, [isSpeechSupported, isListening, startListening, stopListening])
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    const recognition = new SpeechRecognition()
-    recognitionRef.current = recognition
-
-    recognition.lang = voiceLang
-    recognition.interimResults = true
-    recognition.continuous = false
-    recognition.maxAlternatives = 1
-
-    let finalTranscript = ''
-
-    recognition.onstart = () => setIsListening(true)
-
-    recognition.onresult = (event) => {
-      let interim = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript
-        } else {
-          interim += event.results[i][0].transcript
-        }
-      }
-      setSearchTerm(finalTranscript || interim)
-    }
-
-    recognition.onerror = (event) => {
-      if (event.error === 'aborted') return
-      console.error('Speech recognition error:', event.error)
-      setIsListening(false)
-      if (event.error === 'not-allowed') {
-        alert('Microphone access denied. Please allow microphone access in your browser settings.')
-      }
-    }
-
-    recognition.onend = () => {
-      setIsListening(false)
-      recognitionRef.current = null
-      if (finalTranscript.trim()) {
-        searchWithWordRef.current(finalTranscript.trim())
-      }
-    }
-
-    recognition.start()
-  }, [isSpeechSupported, isListening, voiceLang, setSearchTerm])
-
-  // Cycle voice language: EN → KO → ZH → EN
+  // Cycle voice language: EN -> KO -> ZH -> EN
   const cycleVoiceLang = useCallback(() => {
     if (isListening) return
     setVoiceLang(prev => {
@@ -131,11 +112,6 @@ export function DictionaryView() {
       return VOICE_LANGS[(idx + 1) % VOICE_LANGS.length].code
     })
   }, [isListening])
-
-  // Cleanup recognition on unmount
-  useEffect(() => {
-    return () => { recognitionRef.current?.stop() }
-  }, [])
 
   // Handle location state for pre-filling search term and target language
   useEffect(() => {
@@ -221,7 +197,6 @@ export function DictionaryView() {
   }
 
   const handleWordClick = (text) => {
-    // 텍스트에서 첫 번째 단어 추출 (영어 단어만)
     const words = text.match(/\b[a-zA-Z]+\b/g)
     if (words && words.length > 0) {
       const word = words[0].toLowerCase()
@@ -229,9 +204,44 @@ export function DictionaryView() {
     }
   }
 
+  // AI: Semantic similar words + fill-mask when results change
+  useEffect(() => {
+    if (!results || results.length === 0) {
+      setAiSimilar([])
+      setAiSuggestions([])
+      return
+    }
+
+    const word = results[0]?.englishWord || results[0]?.term || results[0]?.word
+    if (!word || !/^[a-zA-Z]+$/.test(word)) return
+
+    // Semantic similar words
+    const synonyms = results[0]?.synonyms || []
+    if (synonyms.length > 0) {
+      setAiLoading(prev => ({ ...prev, similar: true }))
+      getSimilarWords(word, synonyms)
+        .then(ranked => setAiSimilar(ranked))
+        .catch(() => setAiSimilar([]))
+        .finally(() => setAiLoading(prev => ({ ...prev, similar: false })))
+    }
+
+    // Fill-mask context suggestions
+    const firstDef = results[0]?.meanings?.[0]?.definitions?.[0]?.definition
+    if (firstDef) {
+      // Build a masked sentence using the word's context
+      const maskedText = `I want to [MASK] something ${word}.`
+      setAiLoading(prev => ({ ...prev, suggestions: true }))
+      suggestWords(maskedText)
+        .then(suggestions => setAiSuggestions(suggestions))
+        .catch(() => setAiSuggestions([]))
+        .finally(() => setAiLoading(prev => ({ ...prev, suggestions: false })))
+    }
+  }, [results, getSimilarWords, suggestWords])
+
   return (
     <PageLayout title="Dictionary">
       <TopLoadingBar isLoading={isSearching} />
+      <AILoadingBar modelStates={modelStates} />
       <PageBox>
         {/* 검색 컨트롤 */}
         <div className="search-controls">
@@ -621,6 +631,68 @@ export function DictionaryView() {
             </div>
           )}
         </div>
+
+        {/* AI-Powered Sections */}
+        {results.length > 0 && (results[0]?.englishWord || results[0]?.term) && (
+          <div className="ai-sections">
+            {/* Semantic Similar Words */}
+            {(aiSimilar.length > 0 || aiLoading.similar) && (
+              <div className="ai-section">
+                <div className="ai-section-header">
+                  <span className="ai-badge">🤖 AI</span>
+                  <span className="ai-section-title">Semantically Similar</span>
+                </div>
+                {aiLoading.similar ? (
+                  <div className="ai-loading">Analyzing word meaning...</div>
+                ) : (
+                  <div className="ai-word-list">
+                    {aiSimilar.map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="ai-word-tag"
+                        onClick={() => searchWithWord(item.word)}
+                        title={`Similarity: ${(item.similarity * 100).toFixed(0)}%`}
+                        style={{
+                          opacity: 0.5 + item.similarity * 0.5,
+                        }}
+                      >
+                        {item.word}
+                        <span className="ai-score">{(item.similarity * 100).toFixed(0)}%</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fill-Mask Word Suggestions */}
+            {(aiSuggestions.length > 0 || aiLoading.suggestions) && (
+              <div className="ai-section">
+                <div className="ai-section-header">
+                  <span className="ai-badge">🧠 AI</span>
+                  <span className="ai-section-title">Context Suggestions</span>
+                </div>
+                {aiLoading.suggestions ? (
+                  <div className="ai-loading">Generating suggestions...</div>
+                ) : (
+                  <div className="ai-word-list">
+                    {aiSuggestions.map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="ai-word-tag ai-suggestion-tag"
+                        onClick={() => searchWithWord(item.word)}
+                        title={item.sequence}
+                      >
+                        {item.word}
+                        <span className="ai-score">{(item.score * 100).toFixed(0)}%</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </PageBox>
 
       {/* Dictionary Usage Indicator */}

@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\decorators.py
-# hypothesis_version: 6.150.0
-
-[401, 403, 'APPROVAL_REQUIRED', 'UNAUTHORIZED', 'admin', 'code', 'current_user', 'error', 'is_approved', 'message', 'require_approval', 'trace_id', 'unknown', 'user', 'user_level']

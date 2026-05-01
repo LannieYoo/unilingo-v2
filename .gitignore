@@ -62,6 +62,15 @@ ENV/
 # Whisper 모델 캐시 (선택사항)
 .whisper_cache/
 
+# Electron
+frontend/electron-dist/
+frontend/electron/models/*.onnx
+frontend/electron/models/*.tar.bz2
+frontend/electron/models/*.txt
+
+# Test/hypothesis
+.hypothesis/
+
 # Log files
 logs/*.log
 !logs/.gitkeep

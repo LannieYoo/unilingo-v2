@@ -1,4 +1,0 @@
-# file: D:\AI_Project\UniLingo_new\backend\src\common\logger.py
-# hypothesis_version: 6.150.0
-
-['%Y-%m-%d %H:%M:%S', 'LOG_LEVEL', 'NO_TRACE', 'TraceIDFormatter', 'setup_logging', 'trace_id']
