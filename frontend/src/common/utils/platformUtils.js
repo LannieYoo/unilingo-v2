@@ -68,9 +68,47 @@ export const Platform = {
   /**
    * True if native STT (speech recognition) should be used.
    * Native STT is preferred on mobile for stability and accuracy.
-   * Desktop/web falls back to Web Speech API.
+   * Desktop/web falls back to WASM or Web Speech API.
    */
   useNativeSTT: () => {
     return Platform.isNative()
+  },
+
+  /**
+   * True if WebAssembly is supported in this browser.
+   * Required for sherpa-onnx WASM SenseVoice STT.
+   */
+  supportsWasm: () => {
+    return typeof WebAssembly !== 'undefined'
+  },
+
+  /**
+   * True if Web Audio API is available (required for microphone capture).
+   */
+  supportsWebAudio: () => {
+    return typeof window !== 'undefined'
+      && (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined')
+  },
+
+  /**
+   * True if WASM-based STT is available on this platform.
+   * Requires both WebAssembly and Web Audio API.
+   */
+  supportsWasmSTT: () => {
+    return Platform.isWeb() && Platform.supportsWasm() && Platform.supportsWebAudio()
+  },
+
+  /**
+   * Returns the recommended STT engine for the current platform.
+   * @returns {'native' | 'electron' | 'wasm' | 'web-speech' | 'server'}
+   */
+  getSTTEngine: (language) => {
+    if (Platform.isNative()) return 'native'
+    if (Platform.isElectron()) return 'electron'
+    // Web browser: check language for server Whisper (future)
+    const code = (language || '').toLowerCase()
+    if (code === 'en-in' || code === 'en-accent') return 'server'
+    if (Platform.supportsWasmSTT()) return 'wasm'
+    return 'web-speech'
   },
 }

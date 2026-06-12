@@ -144,5 +144,9 @@ export function useNativeSpeechInput({ language = 'en-US', onResult, continuous 
     interimTranscript,
     error,
     isAvailable,
+    // WASM-compatible fields (native STT has no model download)
+    isModelLoading: false,
+    modelLoadProgress: 1,
+    modelLoadStage: null,
   }
 }

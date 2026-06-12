@@ -472,6 +472,40 @@ body.translator-focus-active {
   50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); }
 }
 
+/* Voice button loading state (WASM model downloading) */
+.translator-voice-btn.loading {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+  opacity: 0.9;
+  cursor: wait;
+}
+
+.translator-voice-btn.loading:hover {
+  transform: none;
+}
+
+@keyframes spin-download {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.translator-voice-btn.loading .material-symbols-outlined {
+  animation: spin-download 2s linear infinite;
+}
+
+/* Progress bar inside voice button */
+.translator-voice-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #34d399, #10b981);
+  border-radius: 0 0 8px 8px;
+  transition: width 0.3s ease;
+}
+
 /* Keep Listening Toggle */
 .translator-keep-listening-btn {
   display: flex;

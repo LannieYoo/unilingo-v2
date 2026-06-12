@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 REM ========================================
-REM UniLingo - Optimized Server Startup
+REM UniLingo - Web Development Server
 REM ========================================
 REM Parallel server startup with health checks
 REM Browser opens automatically via Vite
@@ -57,8 +57,8 @@ REM Step 2: Port Cleanup
 REM ========================================
 echo [2/5] Cleaning up ports...
 
-REM Kill processes on port 3001, 5173, and 8001
-for %%p in (3001 5173 8001) do (
+REM Kill processes on port 3001 and 8001
+for %%p in (3001 8001) do (
     for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%%p " ^| findstr "LISTENING" 2^>nul') do (
         echo      Killing PID %%a on port %%p...
         taskkill /F /PID %%a >nul 2>nul
@@ -151,7 +151,7 @@ start "UniLingo Backend" /MIN cmd /c "call venv\Scripts\activate.bat && cd backe
 REM Brief wait for backend initialization
 timeout /t 2 /nobreak >nul
 
-REM Start Frontend (minimized window)
+REM Start Frontend (Vite dev server - opens browser automatically)
 cd /d "%PROJECT_DIR%frontend"
 start "UniLingo Frontend" /MIN cmd /c "npm run dev"
 
@@ -165,50 +165,35 @@ REM ========================================
 cls
 echo.
 echo ========================================
-echo     Servers Running Successfully!
+echo      UniLingo Web App Starting!
 echo ========================================
 echo.
+echo  Mode:       Browser (Vite Dev Server)
 echo  Frontend:   http://localhost:3001
 echo  Backend:    http://localhost:8001
 echo  Database:   Supabase (Cloud)
 echo.
 echo ========================================
-echo  Quick Links
+echo  STT Engine (WASM - Browser)
 echo ========================================
 echo.
-echo  STT Stream:     /stt-stream
-echo  Translator:     /translator
-echo  Dictionary:     /dictionary
-echo  Admin Panel:    /admin
-echo.
-echo ========================================
-echo  STT Features
-echo ========================================
-echo.
-echo  English: Web Speech API (real-time)
-echo           + Vosk lgraph (backup)
-echo  Other Languages: Vosk offline models
-echo  First use: Model download required
-echo  Models cached in browser
+echo  Engine:   SenseVoice ONNX (WASM)
+echo  VAD:      Silero VAD
+echo  Languages: Korean, English, Chinese,
+echo             Japanese, Cantonese
+echo  Local:    Yes (runs in browser)
 echo.
 echo ========================================
 echo  Server Management
 echo ========================================
 echo.
-echo  Browser opens automatically
-echo  Servers run in background windows
-echo  Close windows to stop servers
+echo  Browser opens automatically at
+echo  http://localhost:3001
+echo  Backend runs in background window
+echo  Close this window or press Ctrl+C
 echo  Re-run this script to restart
 echo.
 echo ========================================
 echo.
-echo Press any key to open browser...
-pause >nul
-
-REM Open browser
-start http://localhost:3001
-
-echo.
-echo Browser opened. Keep this window open.
 echo Press any key to exit (servers will continue)...
 pause >nul

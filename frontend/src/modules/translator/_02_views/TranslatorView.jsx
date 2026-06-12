@@ -58,39 +58,62 @@ export function TranslatorView() {
   const [isCheckingGrammar, setIsCheckingGrammar] = useState(false)
   const grammarTimeoutRef = useRef(null)
 
-  // Shared STT hook: auto-branches between native (mobile) and Web Speech API (desktop)
+  // Shared STT hook: auto-branches between WASM (browser), native (mobile), Electron
   const sttLanguage = getSTTLanguage(sourceLang)
+  const sttBaseTextRef = useRef('')  // Text before current interim result
+  const hasInterimRef = useRef(false)
   const {
     start: startListening,
     stop: stopListening,
     isListening,
     isAvailable: isSpeechSupported,
+    isModelLoading: isSttModelLoading,
+    modelLoadProgress: sttModelProgress,
+    modelLoadStage: sttModelStage,
+    activeEngine: sttEngine,
   } = useSpeechInput({
     language: sttLanguage,
     continuous: true,
     onResult: (text, isFinal) => {
+      console.log('[STT-DEBUG] onResult called:', { text, isFinal, baseText: sttBaseTextRef.current })
       if (isFinal && text.trim()) {
-        setInputTextRaw(prev => prev + (prev ? '\n' : '') + text)
+        // Final result: set base text to include this final result
+        const newText = sttBaseTextRef.current + (sttBaseTextRef.current ? '\n' : '') + text
+        sttBaseTextRef.current = newText
+        hasInterimRef.current = false
+        setInputTextRaw(newText)
+        // Immediately trigger translation for the final result
+        // (don't wait for the 500ms debounce — improves responsiveness)
+        translate(newText)
+        console.log('[STT-DEBUG] Final result set:', newText)
       } else if (!isFinal && text.trim()) {
-        // Show interim text in the input area
-        setInputTextRaw(prev => {
-          const lines = prev.split('\n')
-          // If last line is interim, replace it
-          return prev + (prev ? '\n' : '') + text
-        })
+        // Interim result: replace previous interim (don't accumulate)
+        const display = sttBaseTextRef.current + (sttBaseTextRef.current ? '\n' : '') + text
+        hasInterimRef.current = true
+        setInputTextRaw(display)
+        console.log('[STT-DEBUG] Interim result set:', display)
       }
     },
   })
 
   // Voice input handler using shared STT hook
   const handleVoiceInput = () => {
+    console.log('[STT-DEBUG] handleVoiceInput called, isSpeechSupported:', isSpeechSupported, 'isListening:', isListening)
+    if (isSttModelLoading) {
+      // Model still downloading, show feedback
+      return
+    }
     if (!isSpeechSupported) {
-      alert('Your browser does not support speech recognition.')
+      alert('Speech recognition is not available.')
       return
     }
     if (isListening) {
       stopListening()
     } else {
+      // Snapshot current text as the base for STT results
+      sttBaseTextRef.current = inputText || ''
+      hasInterimRef.current = false
+      console.log('[STT-DEBUG] Starting listening, base text:', sttBaseTextRef.current)
       startListening()
     }
   }
@@ -549,22 +572,31 @@ export function TranslatorView() {
                 {isOCRProcessing ? `Processing... ${ocrProgress}%` : 'Upload Image'}
               </span>
             </button>
-            {isSpeechSupported && (
+            {(isSpeechSupported || isSttModelLoading) && (
               <button
                 onClick={handleVoiceInput}
-                className={`translator-voice-btn ${isListening ? 'listening' : ''}`}
-                title={isListening ? 'Stop listening' : 'Voice input'}
+                className={`translator-voice-btn ${isListening ? 'listening' : ''} ${isSttModelLoading ? 'loading' : ''}`}
+                title={isSttModelLoading ? `Loading STT model: ${sttModelStage || '...'}` : isListening ? 'Stop listening' : 'Voice input'}
+                disabled={isSttModelLoading}
               >
                 <span className="material-symbols-outlined">
-                  {isListening ? 'mic_off' : 'mic'}
+                  {isSttModelLoading ? 'downloading' : isListening ? 'mic_off' : 'mic'}
                 </span>
                 <span className="translator-voice-btn-text">
-                  {isListening ? 'Listening...' : 'Voice Input'}
+                  {isSttModelLoading
+                    ? `Loading... ${Math.round((sttModelProgress || 0) * 100)}%`
+                    : isListening ? 'Listening...' : 'Voice Input'}
                 </span>
+                {isSttModelLoading && (
+                  <span
+                    className="translator-voice-progress"
+                    style={{ width: `${(sttModelProgress || 0) * 100}%` }}
+                  />
+                )}
               </button>
             )}
             <span className="translator-image-upload-hint">
-              📷 Image is processed locally • 🎤 Voice input supported
+              📷 Image is processed locally • 🎤 {sttEngine === 'wasm' ? 'WASM Local STT' : sttEngine === 'web-speech' ? 'Web Speech' : sttEngine === 'server' ? 'Server STT' : 'Voice input'}
             </span>
             {/* Right-aligned button group in toolbar */}
             <div className="translator-toolbar-right">

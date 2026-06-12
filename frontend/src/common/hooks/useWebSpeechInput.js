@@ -199,5 +199,9 @@ export function useWebSpeechInput({ language = 'en-US', onResult, continuous = f
     interimTranscript,
     error,
     isAvailable,
+    // WASM-compatible fields (always ready, no model download)
+    isModelLoading: false,
+    modelLoadProgress: 1,
+    modelLoadStage: null,
   }
 }

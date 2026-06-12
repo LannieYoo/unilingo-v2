@@ -232,5 +232,9 @@ export function useElectronSpeechInput({ language = 'en-US', onResult, continuou
     interimTranscript,
     error,
     isAvailable,
+    // WASM-compatible fields (Electron uses native sherpa-onnx, no browser model download)
+    isModelLoading: false,
+    modelLoadProgress: 1,
+    modelLoadStage: null,
   }
 }

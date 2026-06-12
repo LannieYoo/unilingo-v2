@@ -5,12 +5,15 @@ Usage Service
 Business logic for usage tracking and limit enforcement
 """
 
+import logging
 from datetime import datetime
 from typing import Optional, Tuple
 from sqlalchemy import Column, BigInteger, String, Integer, DateTime, text
 from sqlalchemy.dialects.postgresql import insert
 from src.common.supabase import get_db, Base
 from config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class UsageLog(Base):
@@ -143,10 +146,17 @@ class UsageService:
         Returns:
             Dictionary with usage data for each feature
         """
-        session = next(get_db())
+        session = None
         current_month = UsageService.get_current_month()
         
+        # Get limits for each feature
+        translator_limit = UsageService.get_monthly_limit('translator', user_level, approval_status)
+        tts_limit = UsageService.get_monthly_limit('tts', user_level, approval_status)
+        stt_stream_limit = UsageService.get_monthly_limit('stt_stream', user_level, approval_status)
+        dictionary_limit = UsageService.get_monthly_limit('dictionary', user_level, approval_status)
+        
         try:
+            session = next(get_db())
             # Query usage record for current month
             usage_record = session.query(UsageLog).filter(
                 UsageLog.user_id == user_id,
@@ -164,38 +174,39 @@ class UsageService:
                 tts_chars = usage_record.tts_chars if hasattr(usage_record, 'tts_chars') else 0
                 stt_stream_chars = usage_record.stt_stream_chars if hasattr(usage_record, 'stt_stream_chars') else 0
                 dictionary_searches = usage_record.dictionary_searches if hasattr(usage_record, 'dictionary_searches') else 0
-            
-            # Get limits for each feature
-            translator_limit = UsageService.get_monthly_limit('translator', user_level, approval_status)
-            tts_limit = UsageService.get_monthly_limit('tts', user_level, approval_status)
-            stt_stream_limit = UsageService.get_monthly_limit('stt_stream', user_level, approval_status)
-            dictionary_limit = UsageService.get_monthly_limit('dictionary', user_level, approval_status)
-            
-            # Calculate percentages
-            translator_percentage = UsageService.calculate_percentage(translator_chars, translator_limit)
-            tts_percentage = UsageService.calculate_percentage(tts_chars, tts_limit)
-            stt_stream_percentage = UsageService.calculate_percentage(stt_stream_chars, stt_stream_limit)
-            dictionary_percentage = UsageService.calculate_percentage(dictionary_searches, dictionary_limit)
-            
-            return {
-                'translator_chars': translator_chars,
-                'translator_limit': translator_limit,
-                'translator_percentage': translator_percentage,
-                'tts_chars': tts_chars,
-                'tts_limit': tts_limit,
-                'tts_percentage': tts_percentage,
-                'stt_stream_chars': stt_stream_chars,
-                'stt_stream_limit': stt_stream_limit,
-                'stt_stream_percentage': stt_stream_percentage,
-                'dictionary_searches': dictionary_searches,
-                'dictionary_limit': dictionary_limit,
-                'dictionary_percentage': dictionary_percentage,
-                'month': current_month,
-                'user_level': user_level,
-                'approval_status': approval_status
-            }
+        except Exception as e:
+            logger.warning(f"Failed to query database for user current usage (falling back to 0): {e}")
+            translator_chars = 0
+            tts_chars = 0
+            stt_stream_chars = 0
+            dictionary_searches = 0
         finally:
-            session.close()
+            if session:
+                session.close()
+            
+        # Calculate percentages
+        translator_percentage = UsageService.calculate_percentage(translator_chars, translator_limit)
+        tts_percentage = UsageService.calculate_percentage(tts_chars, tts_limit)
+        stt_stream_percentage = UsageService.calculate_percentage(stt_stream_chars, stt_stream_limit)
+        dictionary_percentage = UsageService.calculate_percentage(dictionary_searches, dictionary_limit)
+        
+        return {
+            'translator_chars': translator_chars,
+            'translator_limit': translator_limit,
+            'translator_percentage': translator_percentage,
+            'tts_chars': tts_chars,
+            'tts_limit': tts_limit,
+            'tts_percentage': tts_percentage,
+            'stt_stream_chars': stt_stream_chars,
+            'stt_stream_limit': stt_stream_limit,
+            'stt_stream_percentage': stt_stream_percentage,
+            'dictionary_searches': dictionary_searches,
+            'dictionary_limit': dictionary_limit,
+            'dictionary_percentage': dictionary_percentage,
+            'month': current_month,
+            'user_level': user_level,
+            'approval_status': approval_status
+        }
     
     @staticmethod
     def track_usage(user_id: int, char_count: int, usage_type: str) -> None:
@@ -223,10 +234,11 @@ class UsageService:
         }
         usage_type = type_mapping.get(usage_type, usage_type)
         
-        session = next(get_db())
+        session = None
         current_month = UsageService.get_current_month()
         
         try:
+            session = next(get_db())
             # Prepare column to increment
             if usage_type == 'translator':
                 column_to_increment = 'translator_chars'
@@ -255,8 +267,11 @@ class UsageService:
             
             session.execute(stmt)
             session.commit()
+        except Exception as e:
+            logger.warning(f"Failed to track usage in database (silently ignoring): {e}")
         finally:
-            session.close()
+            if session:
+                session.close()
     
     @staticmethod
     def check_limit(user_id: int, user_level: str, char_count: int, feature: str, approval_status: str = 'approved') -> Tuple[bool, Optional[str]]:
@@ -319,10 +334,17 @@ class UsageService:
         Returns:
             Dictionary with usage data for each feature
         """
-        session = next(get_db())
+        session = None
         current_month = UsageService.get_current_month()
         
+        # Get limits for each feature (guest limits)
+        translator_limit = UsageService.get_monthly_limit('translator', 'guest', 'pending')
+        tts_limit = UsageService.get_monthly_limit('tts', 'guest', 'pending')
+        stt_stream_limit = UsageService.get_monthly_limit('stt_stream', 'guest', 'pending')
+        dictionary_limit = UsageService.get_monthly_limit('dictionary', 'guest', 'pending')
+        
         try:
+            session = next(get_db())
             # Query usage record for current month
             usage_record = session.query(GuestUsageLog).filter(
                 GuestUsageLog.ip_address == ip_address,
@@ -340,38 +362,39 @@ class UsageService:
                 tts_chars = usage_record.tts_chars if hasattr(usage_record, 'tts_chars') else 0
                 stt_stream_chars = usage_record.stt_stream_chars if hasattr(usage_record, 'stt_stream_chars') else 0
                 dictionary_searches = usage_record.dictionary_searches if hasattr(usage_record, 'dictionary_searches') else 0
-            
-            # Get limits for each feature (guest limits)
-            translator_limit = UsageService.get_monthly_limit('translator', 'guest', 'pending')
-            tts_limit = UsageService.get_monthly_limit('tts', 'guest', 'pending')
-            stt_stream_limit = UsageService.get_monthly_limit('stt_stream', 'guest', 'pending')
-            dictionary_limit = UsageService.get_monthly_limit('dictionary', 'guest', 'pending')
-            
-            # Calculate percentages
-            translator_percentage = UsageService.calculate_percentage(translator_chars, translator_limit)
-            tts_percentage = UsageService.calculate_percentage(tts_chars, tts_limit)
-            stt_stream_percentage = UsageService.calculate_percentage(stt_stream_chars, stt_stream_limit)
-            dictionary_percentage = UsageService.calculate_percentage(dictionary_searches, dictionary_limit)
-            
-            return {
-                'translator_chars': translator_chars,
-                'translator_limit': translator_limit,
-                'translator_percentage': translator_percentage,
-                'tts_chars': tts_chars,
-                'tts_limit': tts_limit,
-                'tts_percentage': tts_percentage,
-                'stt_stream_chars': stt_stream_chars,
-                'stt_stream_limit': stt_stream_limit,
-                'stt_stream_percentage': stt_stream_percentage,
-                'dictionary_searches': dictionary_searches,
-                'dictionary_limit': dictionary_limit,
-                'dictionary_percentage': dictionary_percentage,
-                'month': current_month,
-                'user_level': 'guest',
-                'approval_status': 'pending'
-            }
+        except Exception as e:
+            logger.warning(f"Failed to query database for guest current usage (falling back to 0): {e}")
+            translator_chars = 0
+            tts_chars = 0
+            stt_stream_chars = 0
+            dictionary_searches = 0
         finally:
-            session.close()
+            if session:
+                session.close()
+            
+        # Calculate percentages
+        translator_percentage = UsageService.calculate_percentage(translator_chars, translator_limit)
+        tts_percentage = UsageService.calculate_percentage(tts_chars, tts_limit)
+        stt_stream_percentage = UsageService.calculate_percentage(stt_stream_chars, stt_stream_limit)
+        dictionary_percentage = UsageService.calculate_percentage(dictionary_searches, dictionary_limit)
+        
+        return {
+            'translator_chars': translator_chars,
+            'translator_limit': translator_limit,
+            'translator_percentage': translator_percentage,
+            'tts_chars': tts_chars,
+            'tts_limit': tts_limit,
+            'tts_percentage': tts_percentage,
+            'stt_stream_chars': stt_stream_chars,
+            'stt_stream_limit': stt_stream_limit,
+            'stt_stream_percentage': stt_stream_percentage,
+            'dictionary_searches': dictionary_searches,
+            'dictionary_limit': dictionary_limit,
+            'dictionary_percentage': dictionary_percentage,
+            'month': current_month,
+            'user_level': 'guest',
+            'approval_status': 'pending'
+        }
     
     @staticmethod
     def track_guest_usage(ip_address: str, char_count: int, usage_type: str) -> None:
@@ -399,10 +422,11 @@ class UsageService:
         }
         usage_type = type_mapping.get(usage_type, usage_type)
         
-        session = next(get_db())
+        session = None
         current_month = UsageService.get_current_month()
         
         try:
+            session = next(get_db())
             # Prepare column to increment
             if usage_type == 'translator':
                 column_to_increment = 'translator_chars'
@@ -431,5 +455,8 @@ class UsageService:
             
             session.execute(stmt)
             session.commit()
+        except Exception as e:
+            logger.warning(f"Failed to track guest usage in database (silently ignoring): {e}")
         finally:
-            session.close()
+            if session:
+                session.close()
