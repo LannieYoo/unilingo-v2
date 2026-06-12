@@ -5,7 +5,7 @@
  * Runs entirely in the browser via Web Worker — no server, no OS dependency.
  *
  * Features:
- *   - Identical interface to useElectronSpeechInput / useNativeSpeechInput
+ *   - Identical interface to useWebSpeechInput (fallback engine)
  *   - Model auto-download with progress reporting (cached in IndexedDB)
  *   - Silero VAD for voice activity detection
  *   - Korean spacing fix
