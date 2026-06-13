@@ -56,10 +56,11 @@ export function DictionaryView() {
   // AI features
   const { getSimilarWords, suggestWords, modelStates } = useAI()
   const [aiSimilar, setAiSimilar] = useState([])
-  const [aiSuggestions, setAiSuggestions] = useState([])
-  const [aiLoading, setAiLoading] = useState({ similar: false, suggestions: false })
+  const [aiLoading, setAiLoading] = useState({ similar: false })
 
-  // Phrasal Verbs (RAG Server)
+  // LLM Lannie Server features
+  const [contextSuggestions, setContextSuggestions] = useState([])
+  const [contextLoading, setContextLoading] = useState(false)
   const [phrasalVerbs, setPhrasalVerbs] = useState([])
   const [phrasalLoading, setPhrasalLoading] = useState(false)
 
@@ -208,18 +209,16 @@ export function DictionaryView() {
     }
   }
 
-  // AI: Semantic similar words + fill-mask when results change
+  // AI: Semantic similar words (local MiniLM)
   useEffect(() => {
     if (!results || results.length === 0) {
       setAiSimilar([])
-      setAiSuggestions([])
       return
     }
 
     const word = results[0]?.englishWord || results[0]?.term || results[0]?.word
     if (!word || !/^[a-zA-Z]+$/.test(word)) return
 
-    // Semantic similar words
     const synonyms = results[0]?.synonyms || []
     if (synonyms.length > 0) {
       setAiLoading(prev => ({ ...prev, similar: true }))
@@ -228,66 +227,64 @@ export function DictionaryView() {
         .catch(() => setAiSimilar([]))
         .finally(() => setAiLoading(prev => ({ ...prev, similar: false })))
     }
+  }, [results, getSimilarWords])
 
-    // Fill-mask context suggestions
-    const firstDef = results[0]?.meanings?.[0]?.definitions?.[0]?.definition
-    if (firstDef) {
-      // Build a masked sentence using the word's context
-      const maskedText = `I want to [MASK] something ${word}.`
-      setAiLoading(prev => ({ ...prev, suggestions: true }))
-      suggestWords(maskedText)
-        .then(suggestions => setAiSuggestions(suggestions))
-        .catch(() => setAiSuggestions([]))
-        .finally(() => setAiLoading(prev => ({ ...prev, suggestions: false })))
-    }
-  }, [results, getSimilarWords, suggestWords])
-
-  // Phrasal Verbs: fetch from RAG server when results change
+  // LLM Lannie Server: Phrasal Verbs + Context Suggestions (sequential to avoid GPU contention)
   useEffect(() => {
     if (!results || results.length === 0) {
       setPhrasalVerbs([])
+      setContextSuggestions([])
       return
     }
 
     const word = results[0]?.englishWord || results[0]?.term || results[0]?.word
-    if (!word || !/^[a-zA-Z\s]+$/.test(word)) {
-      return
-    }
+    if (!word || !/^[a-zA-Z\s]+$/.test(word)) return
 
-    // Only fetch phrasal verbs when target language is English
-    // Phrasal verbs are English-specific, skip for Chinese/Japanese etc. to save GPU
+    // Only for English target
     if (!targetLang.startsWith('en')) {
       setPhrasalVerbs([])
+      setContextSuggestions([])
       return
     }
 
     const apiUrl = import.meta.env.VITE_API_URL || ''
-    const url = `${apiUrl}/api/dictionary/phrasal-verbs?word=${encodeURIComponent(word)}&target_lang=ko`
-    setPhrasalLoading(true)
-
     const controller = new AbortController()
-    fetch(url, { signal: controller.signal })
-      .then(res => {
-        return res.ok ? res.json() : null
-      })
-      .then(data => {
-        if (!data) {
-          setPhrasalVerbs([])
-          return
-        }
-        if (data?.phrasal_verbs?.length > 0) {
-          setPhrasalVerbs(data.phrasal_verbs)
-        } else {
-          setPhrasalVerbs([])
-        }
-      })
-      .catch((err) => {
-        if (err.name !== 'AbortError') {
-          setPhrasalVerbs([])
-        }
-      })
-      .finally(() => setPhrasalLoading(false))
 
+    // Sequential: phrasal verbs first, then context suggestions
+    const fetchSequential = async () => {
+      // 1. Phrasal Verbs
+      setPhrasalLoading(true)
+      try {
+        const pvRes = await fetch(
+          `${apiUrl}/api/dictionary/phrasal-verbs?word=${encodeURIComponent(word)}&target_lang=ko`,
+          { signal: controller.signal }
+        )
+        const pvData = pvRes.ok ? await pvRes.json() : null
+        setPhrasalVerbs(pvData?.phrasal_verbs?.length > 0 ? pvData.phrasal_verbs : [])
+      } catch (err) {
+        if (err.name !== 'AbortError') setPhrasalVerbs([])
+      } finally {
+        setPhrasalLoading(false)
+      }
+
+      // 2. Context Suggestions (after phrasal verbs complete)
+      if (controller.signal.aborted) return
+      setContextLoading(true)
+      try {
+        const ctxRes = await fetch(
+          `${apiUrl}/api/dictionary/context-suggestions?word=${encodeURIComponent(word)}`,
+          { signal: controller.signal }
+        )
+        const ctxData = ctxRes.ok ? await ctxRes.json() : null
+        setContextSuggestions(ctxData?.suggestions?.length > 0 ? ctxData.suggestions : [])
+      } catch (err) {
+        if (err.name !== 'AbortError') setContextSuggestions([])
+      } finally {
+        setContextLoading(false)
+      }
+    }
+
+    fetchSequential()
     return () => controller.abort()
   }, [results, targetLang])
 
@@ -719,26 +716,27 @@ export function DictionaryView() {
               </div>
             )}
 
-            {/* Fill-Mask Word Suggestions */}
-            {(aiSuggestions.length > 0 || aiLoading.suggestions) && (
+            {/* Context Suggestions (LLM Lannie Server) */}
+            {(contextSuggestions.length > 0 || contextLoading) && (
               <div className="ai-section">
                 <div className="ai-section-header">
-                  <span className="ai-badge">🧠 AI</span>
+                  <span className="ai-badge phrasal-badge">🧠 LLM</span>
                   <span className="ai-section-title">Context Suggestions</span>
+                  <span className="lannie-server-badge">⚡ Lannie Server</span>
                 </div>
-                {aiLoading.suggestions ? (
-                  <div className="ai-loading">Generating suggestions...</div>
+                {contextLoading ? (
+                  <div className="ai-loading">Generating context suggestions...</div>
                 ) : (
                   <div className="ai-word-list">
-                    {aiSuggestions.map((item, idx) => (
+                    {contextSuggestions.map((item, idx) => (
                       <span
                         key={idx}
                         className="ai-word-tag ai-suggestion-tag"
                         onClick={() => searchWithWord(item.word)}
-                        title={item.sequence}
+                        title={item.relation}
                       >
                         {item.word}
-                        <span className="ai-score">{(item.score * 100).toFixed(0)}%</span>
+                        {item.word_ko && <span className="ai-score">{item.word_ko}</span>}
                       </span>
                     ))}
                   </div>
@@ -752,6 +750,7 @@ export function DictionaryView() {
                 <div className="ai-section-header">
                   <span className="ai-badge phrasal-badge">📖 LLM</span>
                   <span className="ai-section-title">Phrasal Verbs & Idioms</span>
+                  <span className="lannie-server-badge">⚡ Lannie Server</span>
                 </div>
                 {phrasalLoading ? (
                   <div className="ai-loading">Generating phrasal verbs...</div>

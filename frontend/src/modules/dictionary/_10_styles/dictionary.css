@@ -1613,6 +1613,21 @@
   padding: 4px 0;
 }
 
+.ai-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lannie-server-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
 /* Dark mode AI sections */
 .dark .ai-section {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.06));
@@ -1642,6 +1657,10 @@
 .dark .ai-suggestion-tag:hover {
   background: rgba(139, 92, 246, 0.15);
   border-color: #8b5cf6;
+}
+
+.dark .lannie-server-badge {
+  color: #64748b;
 }
 
 .dark .ai-score {

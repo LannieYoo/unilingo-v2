@@ -67,6 +67,39 @@ class PhrasalVerbsService:
             logger.error(f"RAG server error for '{word}': {e}")
             return {"word": word, "phrasal_verbs": [], "source": "error"}
 
+    def get_context_suggestions(self, word: str) -> Dict[str, Any]:
+        """문맥 연관어 조회 (캐시 → RAG 서버)"""
+        word = word.lower().strip()
+        if not word:
+            return {"word": word, "suggestions": [], "source": "none"}
+
+        cache_key = f"ctx:{word}"
+        cached = _cache.get(cache_key)
+        if cached and time.time() - cached["ts"] < CACHE_TTL:
+            result = cached["data"].copy()
+            result["cached"] = True
+            return result
+
+        try:
+            url = f"{RAG_SERVER_URL}/api/context-suggestions"
+            resp = requests.get(url, params={"word": word}, timeout=RAG_TIMEOUT)
+
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("suggestions"):
+                    _cache[cache_key] = {"data": data, "ts": time.time()}
+                return data
+            else:
+                logger.warning(f"RAG context returned {resp.status_code} for '{word}'")
+                return {"word": word, "suggestions": [], "source": "error"}
+
+        except requests.exceptions.Timeout:
+            logger.warning(f"RAG context timeout for '{word}'")
+            return {"word": word, "suggestions": [], "source": "timeout"}
+        except Exception as e:
+            logger.error(f"RAG context error for '{word}': {e}")
+            return {"word": word, "suggestions": [], "source": "error"}
+
     def health_check(self) -> Dict[str, Any]:
         """RAG 서버 상태 확인"""
         try:

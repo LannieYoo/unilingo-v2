@@ -168,6 +168,7 @@ async def _call_ollama(word: str, target_lang: str) -> List[Dict]:
             {"role": "user", "content": prompt}
         ],
         "stream": False,
+        "think": False,
         "options": {
             "temperature": 0.3,
             "num_predict": 4096,
@@ -285,6 +286,112 @@ async def clear_cache():
     return {"cleared": count}
 
 
+# ── Context Suggestions ─────────────────────────────────
+def _build_context_prompt(word: str) -> str:
+    return f"""/no_think
+You are an English vocabulary expert. Given the English word "{word}", suggest 5-8 words that are commonly used in the SAME CONTEXT or situation as "{word}".
+
+These should NOT be synonyms — they should be words that a learner would encounter alongside "{word}" in real-world usage (collocations, related actions, associated concepts).
+
+For example:
+- "cook" → ["recipe", "ingredient", "stir", "boil", "kitchen"]
+- "invest" → ["portfolio", "dividend", "stock", "compound", "return"]
+
+Return ONLY a valid JSON array of objects. Each object must have:
+- "word": the suggested English word
+- "word_ko": Korean translation (1-2 words)
+- "relation": very short description of the contextual relationship (in English, max 5 words)
+
+IMPORTANT: Return ONLY the JSON array, no markdown, no explanation."""
+
+
+async def _call_ollama_context(word: str) -> List[Dict]:
+    """Ollama로 context suggestions 생성"""
+    prompt = _build_context_prompt(word)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a JSON-only responder. Never use thinking tags. Output raw JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.4,
+            "num_predict": 2048,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            # If content is empty or very short, use thinking field
+            if not raw_response or (len(raw_response) < 50 and thinking):
+                logger.info(f"Context content too short ({len(raw_response)}), checking thinking (len={len(thinking)})")
+                raw_response = thinking if thinking else raw_response
+            logger.info(f"Context RAW for '{word}' (len={len(raw_response)}): {raw_response[:500]}")
+
+            items = _extract_json_array(raw_response)
+            # Fallback: if content failed, also try thinking
+            if not items and thinking and thinking != raw_response:
+                logger.info(f"Trying thinking field for JSON extraction")
+                items = _extract_json_array(thinking)
+            valid = []
+            for item in items:
+                if isinstance(item, dict) and "word" in item:
+                    valid.append({
+                        "word": item.get("word", ""),
+                        "word_ko": item.get("word_ko", ""),
+                        "relation": item.get("relation", ""),
+                    })
+            return valid[:8]
+
+    except Exception as e:
+        logger.error(f"Context suggestions error for '{word}': {e}")
+        return []
+
+
+@app.get("/api/context-suggestions")
+async def get_context_suggestions(word: str):
+    """문맥 연관어 생성 API"""
+    word = word.lower().strip()
+    if not word:
+        raise HTTPException(status_code=400, detail="word is required")
+
+    start_time = time.time()
+
+    # Check cache (use 'ctx:' prefix to avoid collision with phrasal verbs)
+    cache_key = _cache_key(f"ctx:{word}", "en")
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    suggestions = await _call_ollama_context(word)
+
+    result = {
+        "word": word,
+        "suggestions": suggestions,
+        "source": "ollama",
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if suggestions:  # Only cache non-empty results
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8100)
+

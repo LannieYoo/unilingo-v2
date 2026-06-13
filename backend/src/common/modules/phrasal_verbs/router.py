@@ -28,9 +28,24 @@ def get_phrasal_verbs():
     return jsonify(result)
 
 
+@phrasal_verbs_bp.route("/api/dictionary/context-suggestions", methods=["GET"])
+def get_context_suggestions():
+    """문맥 연관어 API"""
+    word = request.args.get("word", "").strip()
+
+    if not word:
+        return jsonify({"error": "word parameter is required"}), 400
+
+    service = get_phrasal_verbs_service()
+    result = service.get_context_suggestions(word)
+
+    return jsonify(result)
+
+
 @phrasal_verbs_bp.route("/api/dictionary/phrasal-verbs/health", methods=["GET"])
 def phrasal_verbs_health():
     """RAG 서버 상태 확인"""
     service = get_phrasal_verbs_service()
     result = service.health_check()
     return jsonify(result)
+
