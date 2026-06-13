@@ -59,6 +59,10 @@ export function DictionaryView() {
   const [aiSuggestions, setAiSuggestions] = useState([])
   const [aiLoading, setAiLoading] = useState({ similar: false, suggestions: false })
 
+  // Phrasal Verbs (RAG Server)
+  const [phrasalVerbs, setPhrasalVerbs] = useState([])
+  const [phrasalLoading, setPhrasalLoading] = useState(false)
+
   const location = useLocation()
   const inputRef = useRef(null)
 
@@ -183,9 +187,9 @@ export function DictionaryView() {
       alert('Login required to use favorites')
       return
     }
-    
+
     if (togglingFavorite) return
-    
+
     setTogglingFavorite(true)
     try {
       await toggleFavorite()
@@ -237,6 +241,55 @@ export function DictionaryView() {
         .finally(() => setAiLoading(prev => ({ ...prev, suggestions: false })))
     }
   }, [results, getSimilarWords, suggestWords])
+
+  // Phrasal Verbs: fetch from RAG server when results change
+  useEffect(() => {
+    if (!results || results.length === 0) {
+      setPhrasalVerbs([])
+      return
+    }
+
+    const word = results[0]?.englishWord || results[0]?.term || results[0]?.word
+    if (!word || !/^[a-zA-Z\s]+$/.test(word)) {
+      return
+    }
+
+    // Only fetch phrasal verbs when target language is English
+    // Phrasal verbs are English-specific, skip for Chinese/Japanese etc. to save GPU
+    if (!targetLang.startsWith('en')) {
+      setPhrasalVerbs([])
+      return
+    }
+
+    const apiUrl = import.meta.env.VITE_API_URL || ''
+    const url = `${apiUrl}/api/dictionary/phrasal-verbs?word=${encodeURIComponent(word)}&target_lang=ko`
+    setPhrasalLoading(true)
+
+    const controller = new AbortController()
+    fetch(url, { signal: controller.signal })
+      .then(res => {
+        return res.ok ? res.json() : null
+      })
+      .then(data => {
+        if (!data) {
+          setPhrasalVerbs([])
+          return
+        }
+        if (data?.phrasal_verbs?.length > 0) {
+          setPhrasalVerbs(data.phrasal_verbs)
+        } else {
+          setPhrasalVerbs([])
+        }
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          setPhrasalVerbs([])
+        }
+      })
+      .finally(() => setPhrasalLoading(false))
+
+    return () => controller.abort()
+  }, [results, targetLang])
 
   return (
     <PageLayout title="Dictionary">
@@ -463,32 +516,32 @@ export function DictionaryView() {
                             <>
                               <button className="speaker-btn flag-btn" onClick={() => playPronunciation(result.term || result.word, 'en-US')}>
                                 <svg width="20" height="15" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
-                                  <rect width="60" height="30" fill="#B22234"/>
-                                  <path d="M0,3.46h60M0,6.92h60M0,10.38h60M0,13.84h60M0,17.3h60M0,20.76h60M0,24.22h60M0,27.68h60" stroke="#fff" strokeWidth="2.3"/>
-                                  <rect width="24" height="17.3" fill="#3C3B6E"/>
+                                  <rect width="60" height="30" fill="#B22234" />
+                                  <path d="M0,3.46h60M0,6.92h60M0,10.38h60M0,13.84h60M0,17.3h60M0,20.76h60M0,24.22h60M0,27.68h60" stroke="#fff" strokeWidth="2.3" />
+                                  <rect width="24" height="17.3" fill="#3C3B6E" />
                                   <g fill="#fff">
                                     <g id="s5">
                                       <g id="s4">
-                                        <path id="s" d="M3,2.3L3.3,3.3L2.4,2.8h1.2L2.7,3.3z"/>
-                                        <use href="#s" x="6"/>
-                                        <use href="#s" x="12"/>
-                                        <use href="#s" x="18"/>
+                                        <path id="s" d="M3,2.3L3.3,3.3L2.4,2.8h1.2L2.7,3.3z" />
+                                        <use href="#s" x="6" />
+                                        <use href="#s" x="12" />
+                                        <use href="#s" x="18" />
                                       </g>
-                                      <use href="#s4" y="4.6"/>
+                                      <use href="#s4" y="4.6" />
                                     </g>
-                                    <use href="#s5" y="9.2"/>
-                                    <use href="#s4" y="2.3"/>
+                                    <use href="#s5" y="9.2" />
+                                    <use href="#s4" y="2.3" />
                                   </g>
                                 </svg>
                                 <span className="flag-label">US</span>
                               </button>
                               <button className="speaker-btn flag-btn" onClick={() => playPronunciation(result.term || result.word, 'en-GB')}>
                                 <svg width="20" height="15" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
-                                  <rect width="60" height="30" fill="#012169"/>
-                                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
-                                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
-                                  <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10"/>
-                                  <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
+                                  <rect width="60" height="30" fill="#012169" />
+                                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+                                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
+                                  <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+                                  <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
                                 </svg>
                                 <span className="flag-label">UK</span>
                               </button>
@@ -510,98 +563,98 @@ export function DictionaryView() {
                           const partOfSpeech = meaning.part_of_speech || 'unknown';
                           // Proxy 객체를 일반 배열로 변환
                           const definitions = meaning.definitions ? Array.from(meaning.definitions) : [];
-                          
+
                           return (
                             <div key={idx} className="meaning-item">
                               <div className="meaning-header">
                                 <span className="part-of-speech">{partOfSpeech}</span>
                               </div>
-                            <div className="meaning-content">
-                              {definitions.map((def, defIdx) => (
-                                <div key={defIdx} className="definition-block">
-                                  <div className="definition-number">{defIdx + 1}</div>
-                                  <div className="definition-content">
-                                    <div 
-                                      className="definition-text clickable-example"
-                                      onClick={() => handleWordClick(def.definition)}
-                                      title="Click to search words"
-                                    >
-                                      {def.definition.split(/\b/).map((part, partIdx) => {
-                                        const isWord = /^[a-zA-Z]+$/.test(part)
-                                        return isWord ? (
-                                          <span 
-                                            key={partIdx} 
-                                            className="clickable-word"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              searchWithWord(part.toLowerCase())
-                                            }}
-                                          >
-                                            {part}
-                                          </span>
-                                        ) : (
-                                          <span key={partIdx}>{part}</span>
-                                        )
-                                      })}
-                                      <button className="inline-speaker-btn" onClick={(e) => {
-                                        e.stopPropagation()
-                                        playPronunciation(def.definition, 'en-US')
-                                      }} title="Listen">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                                        </svg>
-                                      </button>
-                                    </div>
-                                    {def.translation && (
-                                      <div className="definition-translation">{def.translation}</div>
-                                    )}
-                                    {def.examples && def.examples.length > 0 && (
-                                      <div className="examples-list">
-                                        {def.examples.map((example, exIdx) => (
-                                          <div key={exIdx} className="example-item">
-                                            <span className="example-icon">💬</span>
-                                            <span 
-                                              className="example-text clickable-example"
-                                              onClick={() => handleWordClick(example)}
-                                              title="Click to search words"
-                                            >
-                                              {example.split(/\b/).map((part, partIdx) => {
-                                                const isWord = /^[a-zA-Z]+$/.test(part)
-                                                return isWord ? (
-                                                  <span 
-                                                    key={partIdx} 
-                                                    className="clickable-word"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation()
-                                                      searchWithWord(part.toLowerCase())
-                                                    }}
-                                                  >
-                                                    {part}
-                                                  </span>
-                                                ) : (
-                                                  <span key={partIdx}>{part}</span>
-                                                )
-                                              })}
-                                              <button className="inline-speaker-btn" onClick={(e) => {
+                              <div className="meaning-content">
+                                {definitions.map((def, defIdx) => (
+                                  <div key={defIdx} className="definition-block">
+                                    <div className="definition-number">{defIdx + 1}</div>
+                                    <div className="definition-content">
+                                      <div
+                                        className="definition-text clickable-example"
+                                        onClick={() => handleWordClick(def.definition)}
+                                        title="Click to search words"
+                                      >
+                                        {def.definition.split(/\b/).map((part, partIdx) => {
+                                          const isWord = /^[a-zA-Z]+$/.test(part)
+                                          return isWord ? (
+                                            <span
+                                              key={partIdx}
+                                              className="clickable-word"
+                                              onClick={(e) => {
                                                 e.stopPropagation()
-                                                playPronunciation(example, 'en-US')
-                                              }} title="Listen">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                                                </svg>
-                                              </button>
+                                                searchWithWord(part.toLowerCase())
+                                              }}
+                                            >
+                                              {part}
                                             </span>
-                                          </div>
-                                        ))}
+                                          ) : (
+                                            <span key={partIdx}>{part}</span>
+                                          )
+                                        })}
+                                        <button className="inline-speaker-btn" onClick={(e) => {
+                                          e.stopPropagation()
+                                          playPronunciation(def.definition, 'en-US')
+                                        }} title="Listen">
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                          </svg>
+                                        </button>
                                       </div>
-                                    )}
+                                      {def.translation && (
+                                        <div className="definition-translation">{def.translation}</div>
+                                      )}
+                                      {def.examples && def.examples.length > 0 && (
+                                        <div className="examples-list">
+                                          {def.examples.map((example, exIdx) => (
+                                            <div key={exIdx} className="example-item">
+                                              <span className="example-icon">💬</span>
+                                              <span
+                                                className="example-text clickable-example"
+                                                onClick={() => handleWordClick(example)}
+                                                title="Click to search words"
+                                              >
+                                                {example.split(/\b/).map((part, partIdx) => {
+                                                  const isWord = /^[a-zA-Z]+$/.test(part)
+                                                  return isWord ? (
+                                                    <span
+                                                      key={partIdx}
+                                                      className="clickable-word"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        searchWithWord(part.toLowerCase())
+                                                      }}
+                                                    >
+                                                      {part}
+                                                    </span>
+                                                  ) : (
+                                                    <span key={partIdx}>{part}</span>
+                                                  )
+                                                })}
+                                                <button className="inline-speaker-btn" onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  playPronunciation(example, 'en-US')
+                                                }} title="Listen">
+                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                  </svg>
+                                                </button>
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
                           );
                         })}
                       </div>
@@ -609,9 +662,9 @@ export function DictionaryView() {
                     {result.translation && (
                       <div className="result-translation">
                         {result.translation}
-                        <button 
-                          className="inline-speaker-btn" 
-                          onClick={() => playPronunciation(result.translation, targetLang === 'zh' ? 'zh-CN' : targetLang === 'ko' ? 'ko-KR' : 'en-US')} 
+                        <button
+                          className="inline-speaker-btn"
+                          onClick={() => playPronunciation(result.translation, targetLang === 'zh' ? 'zh-CN' : targetLang === 'ko' ? 'ko-KR' : 'en-US')}
                           title="Listen"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -631,6 +684,7 @@ export function DictionaryView() {
             </div>
           )}
         </div>
+
 
         {/* AI-Powered Sections */}
         {results.length > 0 && (results[0]?.englishWord || results[0]?.term) && (
@@ -691,6 +745,50 @@ export function DictionaryView() {
                 )}
               </div>
             )}
+
+            {/* Phrasal Verbs (RAG Server) */}
+            {(phrasalVerbs.length > 0 || phrasalLoading) && (
+              <div className="ai-section phrasal-section">
+                <div className="ai-section-header">
+                  <span className="ai-badge phrasal-badge">📖 LLM</span>
+                  <span className="ai-section-title">Phrasal Verbs & Idioms</span>
+                </div>
+                {phrasalLoading ? (
+                  <div className="ai-loading">Generating phrasal verbs...</div>
+                ) : (
+                  <div className="phrasal-verbs-list">
+                    {phrasalVerbs.map((pv, idx) => (
+                      <div key={idx} className="phrasal-verb-card">
+                        <div className="phrasal-verb-header">
+                          <span
+                            className="phrasal-verb-phrase"
+                            onClick={() => searchWithWord(pv.phrase)}
+                          >
+                            {pv.phrase}
+                          </span>
+                          {pv.phrase_translated && (
+                            <span className="phrasal-verb-phrase-ko">{pv.phrase_translated}</span>
+                          )}
+                        </div>
+                        <div className="phrasal-verb-meaning">{pv.meaning}</div>
+                        {pv.meaning_translated && (
+                          <div className="phrasal-verb-meaning-translated">{pv.meaning_translated}</div>
+                        )}
+                        {pv.example && (
+                          <div className="phrasal-verb-example">
+                            <span className="example-icon">💬</span>
+                            <span>{pv.example}</span>
+                          </div>
+                        )}
+                        {pv.example_translated && (
+                          <div className="phrasal-verb-example-translated">{pv.example_translated}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </PageBox>
@@ -711,7 +809,7 @@ export function DictionaryView() {
           <div className="history-words">
             {searchHistory.slice(-20).reverse().map((item, index) => {
               const actualIndex = searchHistory.length - 1 - index
-              
+
               return (
                 <span key={item.id || index} className="history-item">
                   <span

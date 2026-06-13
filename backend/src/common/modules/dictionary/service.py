@@ -103,7 +103,10 @@ class DictionaryService:
                     translation_result = self.translation_service.translate(word, detected_lang, 'en', trace_id)
                     english_word = translation_result.get('translated_text')
                     if english_word:
-                        return self.search(english_word, target_lang, trace_id)
+                        # Normalize translated word for WordNet lookup
+                        english_word = self._normalize_translated_word(english_word)
+                        if english_word:
+                            return self.search(english_word, target_lang, trace_id)
                 except Exception as e:
                     logger.error(f"Translation error: {e}")
 
@@ -113,6 +116,64 @@ class DictionaryService:
             raise
 
     
+    def _normalize_translated_word(self, english_word: str) -> Optional[str]:
+        """Normalize translated English word for WordNet lookup.
+        
+        Handles common translation artifacts:
+        - "to endure" → "endure" (infinitive prefix)
+        - "a book" / "the book" → "book" (articles)
+        - "very happy" → "happy" (common adverbs)
+        - "I endure" → "endure" (subject pronouns)
+        - Multi-word: try last word, then first content word
+        """
+        if not english_word:
+            return None
+        
+        word = english_word.lower().strip()
+        
+        # Remove common prefixes
+        prefixes_to_strip = [
+            'to ', 'a ', 'an ', 'the ',
+            'be ', 'being ', 'been ',
+            'very ', 'really ', 'quite ', 'so ',
+            'i ', 'you ', 'he ', 'she ', 'it ', 'we ', 'they ',
+            'not ', "don't ", "doesn't ", "didn't ",
+        ]
+        
+        for prefix in prefixes_to_strip:
+            if word.startswith(prefix):
+                word = word[len(prefix):].strip()
+        
+        # Remove trailing particles/words like "something", "oneself"
+        suffixes_to_strip = [' oneself', ' something', ' someone', ' somebody', ' up', ' out', ' down', ' off']
+        for suffix in suffixes_to_strip:
+            if word.endswith(suffix):
+                candidate = word[:-len(suffix)].strip()
+                if candidate:
+                    word = candidate
+        
+        # If still multi-word, try to find a WordNet-recognized word
+        if ' ' in word:
+            _ensure_nltk()
+            from nltk.corpus import wordnet as wn
+            
+            words = word.split()
+            
+            # Try the full phrase with underscores (WordNet compound words)
+            compound = '_'.join(words)
+            if wn.synsets(compound):
+                return compound
+            
+            # Try each word individually, prefer longer words (more likely to be content words)
+            for w in sorted(words, key=len, reverse=True):
+                if len(w) > 2 and wn.synsets(w):
+                    return w
+            
+            # Fallback: return the last word (usually the main verb/noun)
+            word = words[-1] if words else word
+        
+        return word if word else None
+
     def _translate_word(self, word: str, source_lang: str, target_lang: str) -> Optional[str]:
         """단어 번역 (DeepL > LibreTranslate > Google)"""
         try:

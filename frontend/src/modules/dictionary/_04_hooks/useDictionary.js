@@ -406,6 +406,15 @@ export function useDictionary() {
         if (translated && translated.toLowerCase() !== wordToSearch.toLowerCase()) {
           englishWord = translated.toLowerCase().trim()
           originalWord = wordToSearch
+          
+          // Normalize: strip common prefixes that break dictionary lookup
+          // e.g. "to endure" → "endure", "a book" → "book"
+          const prefixes = ['to ', 'a ', 'an ', 'the ', 'be ', 'very ', 'really ', 'quite ']
+          for (const prefix of prefixes) {
+            if (englishWord.startsWith(prefix)) {
+              englishWord = englishWord.slice(prefix.length).trim()
+            }
+          }
         }
       }
 

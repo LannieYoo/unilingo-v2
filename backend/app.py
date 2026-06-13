@@ -30,6 +30,7 @@ from backend.src.common.modules import (
 )
 from backend.src.common.modules.errors import errors_bp
 from backend.src.common.modules.usage import usage_bp
+from backend.src.common.modules.phrasal_verbs.router import phrasal_verbs_bp
 from backend.src.common.supabase import Base
 from backend.src.common.trace_middleware import setup_trace_middleware
 from backend.src.common.usage_middleware import setup_usage_middleware
@@ -90,6 +91,7 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(approval_bp)
     app.register_blueprint(errors_bp)
     app.register_blueprint(usage_bp)
+    app.register_blueprint(phrasal_verbs_bp)
     
     # Create database tables
     try:

@@ -29,6 +29,9 @@ frontend/.env.*
 backend/.env
 backend/.env.*
 
+# Google OAuth credentials (sensitive)
+client_secret*.json
+
 # Config files (sensitive - local overrides only)
 **/config.local.py
 

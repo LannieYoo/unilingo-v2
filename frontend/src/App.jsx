@@ -68,14 +68,14 @@ function AuthCallback() {
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            backgroundColor: isDeactivated ? '#fef2f2' : '#fef2f2',
+            backgroundColor: isDeactivated ? '#f0f9ff' : '#fef2f2',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 1.25rem',
           }}>
             <span style={{ fontSize: '32px' }}>
-              {isDeactivated ? '🔒' : '⚠️'}
+              {isDeactivated ? '⏳' : '⚠️'}
             </span>
           </div>
           
@@ -86,7 +86,7 @@ function AuthCallback() {
             color: 'var(--text-primary, #1a1a1a)',
             marginBottom: '0.75rem',
           }}>
-            {isDeactivated ? 'Access Denied' : 'Login Failed'}
+            {isDeactivated ? 'Approval Pending' : 'Login Failed'}
           </h2>
           
           {/* Message */}
@@ -97,68 +97,50 @@ function AuthCallback() {
             marginBottom: '1.5rem',
           }}>
             {isDeactivated 
-              ? 'Your account is currently inactive. Please contact the administrator to request access.'
+              ? 'Your account is awaiting administrator approval. You will be able to use the service once approved.'
               : error
             }
           </p>
           
-          {/* Admin Email Link */}
-          {isDeactivated && (
-            <a 
-              href={`mailto:${adminEmail}?subject=[UniLingo] Account Activation Request&body=Hello, I would like to request account activation for UniLingo.%0A%0AEmail: %0AName: `}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '10px 20px',
-                backgroundColor: '#3b82f6',
-                color: '#ffffff',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                marginBottom: '1rem',
-                transition: 'background-color 0.2s',
-              }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
-            >
-              ✉️ Contact Administrator
-            </a>
-          )}
-          
-          {/* Admin email display */}
-          {isDeactivated && (
-            <p style={{
-              fontSize: '0.8rem',
-              color: 'var(--text-tertiary, #9ca3af)',
-              marginBottom: '1.25rem',
-            }}>
-              {adminEmail}
-            </p>
-          )}
-          
-          {/* Home button */}
+          {/* Home button - Primary */}
           <button 
             onClick={() => window.location.href = '/'}
             style={{
               display: 'block',
               width: '100%',
-              padding: '10px 16px',
-              backgroundColor: 'var(--bg-secondary, #f3f4f6)',
-              color: 'var(--text-primary, #374151)',
-              border: '1px solid var(--border-color, #e5e7eb)',
+              padding: '12px 16px',
+              backgroundColor: '#3b82f6',
+              color: '#ffffff',
+              border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: '500',
+              fontSize: '0.95rem',
+              fontWeight: '600',
               transition: 'background-color 0.2s',
+              marginBottom: '1rem',
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = 'var(--bg-tertiary, #e5e7eb)'}
-            onMouseOut={(e) => e.target.style.backgroundColor = 'var(--bg-secondary, #f3f4f6)'}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
           >
             Go to Home
           </button>
+          
+          {/* Contact link - small and subtle at bottom */}
+          {isDeactivated && (
+            <a 
+              href={`mailto:${adminEmail}?subject=[UniLingo] Account Activation Request&body=Hello, I would like to request account activation for UniLingo.%0A%0AEmail: %0AName: `}
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-tertiary, #9ca3af)',
+                textDecoration: 'none',
+                transition: 'color 0.2s',
+              }}
+              onMouseOver={(e) => e.target.style.color = '#6b7280'}
+              onMouseOut={(e) => e.target.style.color = '#9ca3af'}
+            >
+              Contact: {adminEmail}
+            </a>
+          )}
         </div>
         
         <style>{`
