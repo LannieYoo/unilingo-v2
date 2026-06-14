@@ -92,7 +92,7 @@ export function useWasmSpeechInput({ language = 'en-US', onResult, continuous = 
               setTranscript(text)
             }
             if (onResultRef.current) {
-              onResultRef.current(text, true)
+              onResultRef.current(text, true, msg.forcedSplit || false)
             }
           }
           break

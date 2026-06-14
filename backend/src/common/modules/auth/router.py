@@ -330,6 +330,7 @@ def get_users():
                     'is_active': u.is_active, 
                     'user_level': u.user_level,
                     'is_approved': u.is_approved,
+                    'daily_gpu_limit_minutes': u.daily_gpu_limit_minutes,
                     'created_at': u.created_at.isoformat() if u.created_at else None, 
                     'last_login_at': u.last_login_at.isoformat() if u.last_login_at else None,
                     'approved_at': u.approved_at.isoformat() if u.approved_at else None
@@ -473,6 +474,51 @@ def update_user_level(user_id):
             db.close()
     except ValueError as e:
         return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': str(e), 'trace_id': trace_id}}), 400
+    except Exception as e:
+        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
+
+
+@admin_router.route('/users/<int:user_id>/update-gpu-limit', methods=['POST'])
+@admin_required
+def update_user_gpu_limit(user_id):
+    """Update per-user daily GPU usage time limit (minutes). None = use level default."""
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Request body is required', 'trace_id': trace_id}}), 400
+        
+        # Accept null to reset to level default
+        daily_gpu_limit_minutes = data.get('daily_gpu_limit_minutes')
+        
+        # Validate: must be null or non-negative integer
+        if daily_gpu_limit_minutes is not None:
+            if not isinstance(daily_gpu_limit_minutes, int) or daily_gpu_limit_minutes < 0:
+                return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'daily_gpu_limit_minutes must be null or a non-negative integer', 'trace_id': trace_id}}), 400
+        
+        db = next(get_db())
+        try:
+            user_repo = UserRepository(db)
+            target_user = user_repo.get_by_id(user_id)
+            if not target_user:
+                return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found', 'trace_id': trace_id}}), 404
+            
+            updated_user = user_repo.update_gpu_limit(user_id, daily_gpu_limit_minutes)
+            
+            return jsonify({
+                'user': {
+                    'id': updated_user.id, 
+                    'email': updated_user.email, 
+                    'name': updated_user.name, 
+                    'daily_gpu_limit_minutes': updated_user.daily_gpu_limit_minutes,
+                    'user_level': updated_user.user_level,
+                }, 
+                'message': f"GPU limit updated to {daily_gpu_limit_minutes} minutes" if daily_gpu_limit_minutes is not None else 'GPU limit reset to level default', 
+                'trace_id': trace_id
+            }), 200
+        finally:
+            db.close()
     except Exception as e:
         return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
 

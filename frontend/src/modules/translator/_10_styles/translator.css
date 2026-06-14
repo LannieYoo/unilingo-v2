@@ -38,7 +38,7 @@ body.translator-focus-active {
   position: sticky;
   top: 0;
   z-index: 10000;
-  background: rgba(255,255,255,0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
   padding: 6px 8px;
   margin: 0;
@@ -230,7 +230,7 @@ body.translator-focus-active {
     padding: 0.375rem 0.625rem;
     font-size: 0.75rem;
   }
-  
+
   .translator-domain-btn .material-symbols-outlined {
     font-size: 16px;
   }
@@ -240,19 +240,19 @@ body.translator-focus-active {
   .translator-domain-selector {
     margin-bottom: 1rem;
   }
-  
+
   .translator-domain-buttons {
     gap: 0.375rem;
   }
-  
+
   .translator-domain-btn {
     padding: 0.375rem 0.5rem;
   }
-  
+
   .translator-domain-name {
     display: none;
   }
-  
+
   .translator-domain-btn .material-symbols-outlined {
     font-size: 20px;
   }
@@ -468,8 +468,17 @@ body.translator-focus-active {
 }
 
 @keyframes pulse-voice {
-  0%, 100% { transform: scale(1); box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); }
-  50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); }
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+  }
 }
 
 /* Voice button loading state (WASM model downloading) */
@@ -487,8 +496,13 @@ body.translator-focus-active {
 }
 
 @keyframes spin-download {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .translator-voice-btn.loading .material-symbols-outlined {
@@ -547,7 +561,7 @@ body.translator-focus-active {
   .translator-voice-btn-text {
     display: none;
   }
-  
+
   .translator-voice-btn {
     padding: 0.625rem;
   }
@@ -831,8 +845,15 @@ body.translator-focus-active {
 }
 
 @keyframes pulse-speak {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .translator-speak-btn .material-symbols-outlined {
@@ -927,32 +948,32 @@ body.translator-focus-active {
     font-size: 1.25rem;
     padding-bottom: 0.5rem;
   }
-  
+
   .translator-swap-btn {
     width: 36px;
     height: 36px;
   }
-  
+
   .translator-swap-btn .material-symbols-outlined {
     font-size: 20px;
   }
-  
+
   .translator-lang-group {
     min-width: 140px;
   }
-  
+
   .translator-save-btn-text {
     display: none;
   }
-  
+
   .translator-save-btn {
     padding: 1rem;
   }
-  
+
   .translator-image-upload-text {
     display: none;
   }
-  
+
   .translator-image-upload-btn {
     padding: 0.625rem;
   }
@@ -1076,6 +1097,7 @@ body.translator-focus-active {
 
 /* 매우 작은 화면 (550px 이하) */
 @media (max-width: 550px) {
+
   /* ===== Row 1: 두 언어 선택 한 줄로 ===== */
   .translator-lang-selectors {
     flex-direction: row;
@@ -1089,7 +1111,7 @@ body.translator-focus-active {
     min-width: 0;
   }
 
-  .translator-lang-group > label {
+  .translator-lang-group>label {
     display: none;
   }
 
@@ -1141,7 +1163,7 @@ body.translator-focus-active {
   }
 
   /* 이미지/음성 버튼은 아이콘만 표시 (텍스트 숨김) */
-  .translator-image-upload-container > .translator-image-upload-btn {
+  .translator-image-upload-container>.translator-image-upload-btn {
     display: flex;
     padding: 0.5rem;
   }
@@ -1150,7 +1172,7 @@ body.translator-focus-active {
     display: none;
   }
 
-  .translator-image-upload-container > .translator-voice-btn {
+  .translator-image-upload-container>.translator-voice-btn {
     display: flex;
     padding: 0.5rem;
   }
@@ -1159,7 +1181,7 @@ body.translator-focus-active {
     display: none;
   }
 
-  .translator-image-upload-container > .translator-image-upload-hint {
+  .translator-image-upload-container>.translator-image-upload-hint {
     display: none;
   }
 
@@ -1568,11 +1590,11 @@ body.translator-focus-active {
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
   .translator-history-arrow {
     display: none;
   }
-  
+
   .translator-history-source,
   .translator-history-target {
     width: 100%;
@@ -1680,7 +1702,7 @@ body.translator-focus-active {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  
+
   .translation-history-card-header {
     flex-direction: column;
     align-items: flex-start;
@@ -2205,8 +2227,15 @@ body.translator-focus-active {
 }
 
 @keyframes grammar-slide-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .translator-grammar-header {
@@ -2292,8 +2321,13 @@ body.translator-focus-active {
 }
 
 @keyframes grammar-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Dark mode grammar */
@@ -2319,3 +2353,591 @@ body.translator-focus-active {
 .dark .translator-grammar-dismiss:hover {
   background: rgba(251, 191, 36, 0.2);
 }
+
+/* ======================================== 
+   유사 표현 (Alternative Translations) 
+   ======================================== */
+
+/* Toggle bar */
+.translator-alt-toggle-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+}
+
+.translator-alt-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.8125rem;
+}
+
+.translator-alt-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.translator-alt-toggle-slider {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: #cbd5e1;
+  border-radius: 9px;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.translator-alt-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.25s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.translator-alt-toggle input:checked+.translator-alt-toggle-slider {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.translator-alt-toggle input:checked+.translator-alt-toggle-slider::after {
+  transform: translateX(14px);
+}
+
+.translator-alt-toggle-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.8125rem;
+}
+
+/* Lannie Server small badge */
+.lannie-server-badge-sm {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Line group wrapper */
+.translator-output-line-group {
+  margin-bottom: 2px;
+}
+
+/* Line actions row */
+.translator-line-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* Alt button per line */
+.translator-alt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #f59e0b;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.translator-alt-btn:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.translator-alt-btn.active {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.translator-alt-btn:disabled {
+  cursor: wait;
+}
+
+/* Alt spinner */
+.translator-alt-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin-alt 0.6s linear infinite;
+}
+
+@keyframes spin-alt {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Alt cards container */
+.translator-alt-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0 6px 20px;
+  animation: fadeInAlt 0.3s ease;
+}
+
+@keyframes fadeInAlt {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Individual alt card */
+.translator-alt-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  cursor: default;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+
+.translator-alt-card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.15);
+}
+
+.translator-alt-card-text {
+  color: #92400e;
+  font-weight: 500;
+}
+
+.translator-alt-card-nuance {
+  font-size: 0.6875rem;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Alt loading */
+.translator-alt-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 6px 20px;
+  font-size: 0.75rem;
+  color: #d97706;
+  animation: fadeInAlt 0.3s ease;
+}
+
+/* Dark mode */
+.dark .translator-alt-toggle-bar {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.dark .translator-alt-toggle-label {
+  color: #e2e8f0;
+}
+
+.dark .translator-alt-toggle-slider {
+  background: #475569;
+}
+
+.dark .lannie-server-badge-sm {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+.dark .translator-alt-card {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.1) 100%);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.dark .translator-alt-card-text {
+  color: #fcd34d;
+}
+
+.dark .translator-alt-card-nuance {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.dark .translator-alt-loading {
+  color: #fbbf24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .translator-alt-toggle-bar {
+    padding: 4px 8px;
+  }
+
+  .translator-alt-cards {
+    padding-left: 8px;
+    gap: 4px;
+  }
+
+  .translator-alt-card {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Auth required message for alt translations */
+.translator-alt-auth-msg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.dark .translator-alt-auth-msg {
+  color: #64748b;
+}
+
+/* Help button and content */
+.translator-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.translator-help-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+  transform: scale(1.05);
+}
+
+.dark .translator-help-btn {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.dark .translator-help-btn:hover {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+.translator-help-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dark .translator-help-modal-title {
+  color: #f1f5f9;
+}
+
+.translator-help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.dark .translator-help-content {
+  color: #94a3b8;
+}
+
+.translator-help-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.translator-help-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.translator-help-text strong {
+  display: block;
+  color: #1e293b;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.dark .translator-help-text strong {
+  color: #e2e8f0;
+}
+
+/* ========================================
+   STT Mode Toggle (Local/Server) — Translator
+   ======================================== */
+.translator-source-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.translator-source-label-row .stt-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.translator-source-label-row .stt-mode-toggle:hover:not(:disabled) {
+  border-color: #9ca3af;
+  background: #f3f4f6;
+}
+
+.translator-source-label-row .stt-mode-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.translator-source-label-row .stt-mode-toggle.local {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.translator-source-label-row .stt-mode-toggle.server {
+  border-color: #c4b5fd;
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.translator-source-label-row .stt-mode-toggle-track {
+  width: 30px;
+  height: 16px;
+  border-radius: 8px;
+  background: #d1d5db;
+  position: relative;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.translator-source-label-row .stt-mode-toggle.local .stt-mode-toggle-track {
+  background: #3b82f6;
+}
+
+.translator-source-label-row .stt-mode-toggle.server .stt-mode-toggle-track {
+  background: #7c3aed;
+}
+
+.translator-source-label-row .stt-mode-toggle-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.translator-source-label-row .stt-mode-toggle.server .stt-mode-toggle-thumb {
+  transform: translateX(14px);
+}
+
+.translator-source-label-row .stt-mode-toggle-label {
+  white-space: nowrap;
+}
+
+/* Dark mode */
+.dark .translator-source-label-row .stt-mode-toggle {
+  border-color: #4b5563;
+  background: #374151;
+  color: #9ca3af;
+}
+
+.dark .translator-source-label-row .stt-mode-toggle.local {
+  border-color: #3b82f6;
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+.dark .translator-source-label-row .stt-mode-toggle.server {
+  border-color: #7c3aed;
+  background: #2d1b69;
+  color: #c4b5fd;
+}
+
+/* ===== STT Mode Help Button ===== */
+.stt-mode-help-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.stt-mode-help-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #334155;
+}
+
+.dark .stt-mode-help-btn {
+  border-color: #4b5563;
+  background: #374151;
+  color: #9ca3af;
+}
+
+.dark .stt-mode-help-btn:hover {
+  background: #4b5563;
+  color: #e5e7eb;
+}
+
+/* ===== STT Mode Help Modal ===== */
+.stt-mode-help-modal {
+  max-width: 460px;
+}
+
+.stt-mode-help-card {
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid;
+}
+
+.stt-mode-help-card.local {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.stt-mode-help-card.server {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.stt-mode-help-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.stt-mode-help-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stt-mode-help-badge.local {
+  background: #3b82f6;
+  color: white;
+}
+
+.stt-mode-help-badge.server {
+  background: #7c3aed;
+  color: white;
+}
+
+.stt-mode-help-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #374151;
+}
+
+.stt-mode-help-note {
+  padding: 12px 16px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #713f12;
+}
+
+/* Dark mode help modal */
+.dark .stt-mode-help-card.local {
+  background: #1e3a5f;
+  border-color: #1d4ed8;
+}
+
+.dark .stt-mode-help-card.server {
+  background: #2d1b69;
+  border-color: #6d28d9;
+}
+
+.dark .stt-mode-help-list {
+  color: #d1d5db;
+}
+
+.dark .stt-mode-help-note {
+  background: #422006;
+  border-color: #92400e;
+  color: #fde68a;
+}

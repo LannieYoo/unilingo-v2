@@ -100,6 +100,34 @@ class PhrasalVerbsService:
             logger.error(f"RAG context error for '{word}': {e}")
             return {"word": word, "suggestions": [], "source": "error"}
 
+    def get_alternative_translations(self, original: str, translated: str,
+                                      source_lang: str = "ko", target_lang: str = "en") -> Dict[str, Any]:
+        """유사 번역 표현 조회 (RAG 서버)"""
+        if not original or not translated:
+            return {"alternatives": [], "source": "none"}
+
+        try:
+            url = f"{RAG_SERVER_URL}/api/alternative-translations"
+            resp = requests.post(url, json={
+                "original": original,
+                "translated": translated,
+                "source_lang": source_lang,
+                "target_lang": target_lang,
+            }, timeout=RAG_TIMEOUT)
+
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                logger.warning(f"RAG alt-translations returned {resp.status_code}")
+                return {"alternatives": [], "source": "error"}
+
+        except requests.exceptions.Timeout:
+            logger.warning("RAG alt-translations timeout")
+            return {"alternatives": [], "source": "timeout"}
+        except Exception as e:
+            logger.error(f"RAG alt-translations error: {e}")
+            return {"alternatives": [], "source": "error"}
+
     def health_check(self) -> Dict[str, Any]:
         """RAG 서버 상태 확인"""
         try:

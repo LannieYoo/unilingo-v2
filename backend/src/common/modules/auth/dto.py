@@ -44,6 +44,7 @@ class DUser:
     token_version: int = 1
     native_language: Optional[str] = 'en'
     target_language: Optional[str] = 'ko'
+    daily_gpu_limit_minutes: Optional[int] = None  # NULL = use level default
 
 
 @dataclass

@@ -36,6 +36,7 @@ class UserModel(Base):
     token_version = Column(Integer, default=1, nullable=False)
     native_language = Column(String(10), nullable=True, default='en')
     target_language = Column(String(10), nullable=True, default='ko')
+    daily_gpu_limit_minutes = Column(Integer, nullable=True, default=None)  # NULL = use level default
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
@@ -121,7 +122,8 @@ class UserRepository:
             approved_by=model.approved_by,
             token_version=model.token_version or 1, 
             native_language=model.native_language or 'en', 
-            target_language=model.target_language or 'ko'
+            target_language=model.target_language or 'ko',
+            daily_gpu_limit_minutes=model.daily_gpu_limit_minutes
         )
     
     def get_by_id(self, user_id: int) -> Optional[DUser]:
@@ -246,7 +248,13 @@ class UserRepository:
         self._db.commit()
         self._db.refresh(model)
         return self._to_domain(model)
-        model.target_language = target_language
+
+    def update_gpu_limit(self, user_id: int, daily_gpu_limit_minutes: int = None) -> Optional[DUser]:
+        """Update per-user daily GPU usage limit in minutes. None = use level default."""
+        model = self._db.query(UserModel).filter(UserModel.id == user_id).first()
+        if not model:
+            return None
+        model.daily_gpu_limit_minutes = daily_gpu_limit_minutes
         model.updated_at = datetime.utcnow()
         self._db.commit()
         self._db.refresh(model)

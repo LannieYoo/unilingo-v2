@@ -48,9 +48,62 @@ export function TranslatorView() {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSavedText, setLastSavedText] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
   const [guestCharCount, setGuestCharCount] = useState(0)
   const [conversationMode, setConversationMode] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
+  const [sttMode, setSttMode] = useState('local') // 'local' | 'server'
+  const [showSttModeHelp, setShowSttModeHelp] = useState(false)
+
+  // Alternative translations (유사 표현)
+  const [showAlternatives, setShowAlternatives] = useState(false)
+  const [alternatives, setAlternatives] = useState({}) // { lineIdx: [{text, nuance}] }
+  const [altLoading, setAltLoading] = useState({}) // { lineIdx: true/false }
+  const altFetchedRef = useRef('') // track which outputText was already fetched
+
+  // Auto-fetch alternatives for all lines when toggle is ON
+  useEffect(() => {
+    if (!showAlternatives || !outputText || !inputText) return
+    // Skip if we already fetched for this exact output
+    if (altFetchedRef.current === outputText) return
+    altFetchedRef.current = outputText
+
+    const outLines = outputText.split('\n').filter(l => l.trim())
+    const inLines = inputText.split('\n')
+    const apiUrl = import.meta.env.VITE_API_URL || ''
+    const srcLang = LANG_MAP[sourceLang] || 'ko'
+    const tgtLang = LANG_MAP[targetLang] || 'en'
+
+    // Sequential fetch to avoid GPU contention
+    const fetchAll = async () => {
+      for (let i = 0; i < outLines.length; i++) {
+        const realIdx = outputText.split('\n').indexOf(outLines[i])
+        if (!inLines[realIdx]?.trim()) continue
+        setAltLoading(prev => ({ ...prev, [realIdx]: true }))
+        try {
+          const res = await fetch(`${apiUrl}/api/translator/alternative-translations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              original: inLines[realIdx],
+              translated: outLines[i],
+              source_lang: srcLang,
+              target_lang: tgtLang,
+            }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setAlternatives(prev => ({ ...prev, [realIdx]: data.alternatives || [] }))
+          }
+        } catch (err) {
+          console.error('[Alt] fetch failed:', err)
+        } finally {
+          setAltLoading(prev => ({ ...prev, [realIdx]: false }))
+        }
+      }
+    }
+    fetchAll()
+  }, [showAlternatives, outputText, inputText, sourceLang, targetLang])
 
   // AI grammar correction
   const { checkGrammar, modelStates } = useAI()
@@ -73,6 +126,7 @@ export function TranslatorView() {
     activeEngine: sttEngine,
   } = useSpeechInput({
     language: sttLanguage,
+    mode: sttMode,
     continuous: true,
     onResult: (text, isFinal) => {
       console.log('[STT-DEBUG] onResult called:', { text, isFinal, baseText: sttBaseTextRef.current })
@@ -96,27 +150,58 @@ export function TranslatorView() {
     },
   })
 
-  // Voice input handler using shared STT hook
-  const handleVoiceInput = () => {
-    console.log('[STT-DEBUG] handleVoiceInput called, isSpeechSupported:', isSpeechSupported, 'isListening:', isListening)
-    if (isSttModelLoading) {
-      // Model still downloading, show feedback
-      return
-    }
-    if (!isSpeechSupported) {
-      alert('Speech recognition is not available.')
-      return
-    }
-    if (isListening) {
-      stopListening()
+  // Voice input — Click for 10s recording, or Hold to speak
+  const voiceAutoStopRef = useRef(null)
+  const voiceHoldRef = useRef(false)      // true if user is holding the button
+  const voiceClickTimerRef = useRef(null) // distinguishes click vs hold
+
+  const startVoiceRecording = useCallback(() => {
+    sttBaseTextRef.current = inputText || ''
+    hasInterimRef.current = false
+    startListening()
+  }, [inputText, startListening])
+
+  const stopVoiceRecording = useCallback(() => {
+    if (voiceAutoStopRef.current) { clearTimeout(voiceAutoStopRef.current); voiceAutoStopRef.current = null }
+    if (voiceClickTimerRef.current) { clearTimeout(voiceClickTimerRef.current); voiceClickTimerRef.current = null }
+    voiceHoldRef.current = false
+    stopListening()
+  }, [stopListening])
+
+  const handleVoiceStart = useCallback((e) => {
+    e.preventDefault()
+    if (isSttModelLoading || !isSpeechSupported) return
+    // If already listening (click-mode), stop on second press
+    if (isListening) { stopVoiceRecording(); return }
+    voiceHoldRef.current = true
+    // Delay to detect click vs hold: if released within 300ms → click mode (10s)
+    voiceClickTimerRef.current = setTimeout(() => {
+      voiceClickTimerRef.current = null
+      // Still holding → hold mode, no auto-stop
+    }, 300)
+    startVoiceRecording()
+  }, [isSttModelLoading, isSpeechSupported, isListening, startVoiceRecording, stopVoiceRecording])
+
+  const handleVoiceStop = useCallback((e) => {
+    e.preventDefault()
+    if (!isListening) return
+    if (voiceClickTimerRef.current) {
+      // Released within 300ms → click mode: auto-stop after 10s
+      clearTimeout(voiceClickTimerRef.current)
+      voiceClickTimerRef.current = null
+      voiceHoldRef.current = false
+      voiceAutoStopRef.current = setTimeout(() => {
+        voiceAutoStopRef.current = null
+        stopVoiceRecording()
+      }, 10000)
+      console.log('[STT] Click mode: auto-stop in 10s')
     } else {
-      // Snapshot current text as the base for STT results
-      sttBaseTextRef.current = inputText || ''
-      hasInterimRef.current = false
-      console.log('[STT-DEBUG] Starting listening, base text:', sttBaseTextRef.current)
-      startListening()
+      // Hold mode: stop immediately on release
+      voiceHoldRef.current = false
+      stopVoiceRecording()
+      console.log('[STT] Hold mode: stopped on release')
     }
-  }
+  }, [isListening, stopVoiceRecording])
 
   // Auto-scroll input textarea to bottom when text changes
   useEffect(() => {
@@ -174,7 +259,7 @@ export function TranslatorView() {
 
   const loadRecentHistory = async () => {
     if (!tokens?.access_token) return
-    
+
     setLoadingHistory(true)
     try {
       const data = await authService.getRecentTranslationLogs(tokens.access_token, 5)
@@ -193,11 +278,11 @@ export function TranslatorView() {
     if (!isAuthenticated || !tokens?.access_token) {
       return
     }
-    
+
     if (!inputText?.trim() || !outputText?.trim()) {
       return
     }
-    
+
     setIsSaving(true)
     try {
       await authService.createTranslationLog(tokens.access_token, {
@@ -260,7 +345,7 @@ export function TranslatorView() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirm || !tokens?.access_token) return
-    
+
     setDeletingId(deleteConfirm.id)
     try {
       await authService.deleteTranslationLog(tokens.access_token, deleteConfirm.id)
@@ -280,11 +365,11 @@ export function TranslatorView() {
   const handleToggleFavorite = async (e, item) => {
     e.stopPropagation()
     if (!tokens?.access_token || togglingFavoriteId) return
-    
+
     setTogglingFavoriteId(item.id)
     try {
       const result = await authService.toggleTranslationFavorite(tokens.access_token, item.id)
-      setRecentHistory(recentHistory.map(h => 
+      setRecentHistory(recentHistory.map(h =>
         h.id === item.id ? { ...h, is_favorite: result.log.is_favorite } : h
       ))
     } catch (err) {
@@ -299,7 +384,7 @@ export function TranslatorView() {
     const date = new Date(dateStr)
     const now = new Date()
     const diff = now - date
-    
+
     if (diff < 60000) return 'Just now'
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
@@ -339,7 +424,7 @@ export function TranslatorView() {
     }
 
     await translate()
-    
+
     // Track usage after translation for authenticated users
     if (outputText && isAuthenticated) {
       const charCount = inputText.length
@@ -374,14 +459,14 @@ export function TranslatorView() {
       else if (sourceLang === 'de') ocrLang = 'deu'
       else if (sourceLang === 'ar') ocrLang = 'ara'
       else if (sourceLang === 'hi') ocrLang = 'hin'
-      
+
       // Always include English for better accuracy
       if (ocrLang !== 'eng') {
         ocrLang = `${ocrLang}+eng`
       }
 
       const text = await extractText(file, ocrLang)
-      
+
       if (text) {
         setInputText(text)
       } else {
@@ -404,9 +489,9 @@ export function TranslatorView() {
 
   const handleSpeakSource = () => {
     if (!inputText?.trim()) return
-    
+
     const ttsLang = getVoiceCode(sourceLang)
-    
+
     if (isSpeaking && currentLang === ttsLang) {
       stop()
     } else {
@@ -416,9 +501,9 @@ export function TranslatorView() {
 
   const handleSpeakTarget = () => {
     if (!outputText?.trim()) return
-    
+
     const ttsLang = getVoiceCode(targetLang)
-    
+
     if (isSpeaking && currentLang === ttsLang) {
       stop()
     } else {
@@ -432,10 +517,10 @@ export function TranslatorView() {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
-      
+
       if (item.type.startsWith('image/')) {
         event.preventDefault()
-        
+
         const file = item.getAsFile()
         if (!file) continue
 
@@ -450,13 +535,13 @@ export function TranslatorView() {
           else if (sourceLang === 'de') ocrLang = 'deu'
           else if (sourceLang === 'ar') ocrLang = 'ara'
           else if (sourceLang === 'hi') ocrLang = 'hin'
-          
+
           if (ocrLang !== 'eng') {
             ocrLang = `${ocrLang}+eng`
           }
 
           const text = await extractText(file, ocrLang)
-          
+
           if (text) {
             setInputText(text)
           } else {
@@ -466,7 +551,7 @@ export function TranslatorView() {
           console.error('OCR failed:', err)
           alert('Failed to extract text from image. Please try another image.')
         }
-        
+
         break
       }
     }
@@ -490,7 +575,25 @@ export function TranslatorView() {
         {/* 언어 선택 */}
         <div className="translator-lang-selectors">
           <div className="translator-lang-group">
-            <label>Source Language</label>
+            <div className="translator-source-label-row">
+              <label>Source Language</label>
+              <button
+                className={`stt-mode-toggle ${sttMode === 'server' ? 'server' : 'local'}`}
+                onClick={() => !isListening && setSttMode(prev => prev === 'local' ? 'server' : 'local')}
+                disabled={isListening}
+                title={sttMode === 'server' ? 'Server Whisper (GPU) — click for Local' : 'Local SenseVoice — click for Server'}
+              >
+                <span className="stt-mode-toggle-track">
+                  <span className="stt-mode-toggle-thumb" />
+                </span>
+                <span className="stt-mode-toggle-label">{sttMode === 'server' ? 'Server' : 'Local'}</span>
+              </button>
+              <button
+                className="stt-mode-help-btn"
+                onClick={() => setShowSttModeHelp(true)}
+                title="Local vs Server 차이점"
+              >?</button>
+            </div>
             <div className="translator-source-row">
               <select
                 value={sourceLang}
@@ -515,27 +618,31 @@ export function TranslatorView() {
                 </button>
                 {isSpeechSupported && (
                   <button
-                    onClick={handleVoiceInput}
+                    onMouseDown={handleVoiceStart}
+                    onMouseUp={handleVoiceStop}
+                    onMouseLeave={handleVoiceStop}
+                    onTouchStart={handleVoiceStart}
+                    onTouchEnd={handleVoiceStop}
                     className={`translator-mobile-action-btn ${isListening ? 'listening' : ''}`}
-                    title={isListening ? 'Stop listening' : 'Voice input'}
+                    title={isListening ? 'Release to stop' : 'Hold to speak'}
                   >
                     <span className="material-symbols-outlined">
-                      {isListening ? 'mic_off' : 'mic'}
+                      {isListening ? 'mic' : 'mic'}
                     </span>
                   </button>
                 )}
               </div>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleSwapLanguages}
             className="translator-swap-btn"
             title="Swap languages"
           >
             <span className="material-symbols-outlined">swap_horiz</span>
           </button>
-          
+
           <div className="translator-lang-group translator-target-lang-group">
             <label>Target Language</label>
             <select
@@ -574,18 +681,22 @@ export function TranslatorView() {
             </button>
             {(isSpeechSupported || isSttModelLoading) && (
               <button
-                onClick={handleVoiceInput}
+                onMouseDown={handleVoiceStart}
+                onMouseUp={handleVoiceStop}
+                onMouseLeave={handleVoiceStop}
+                onTouchStart={handleVoiceStart}
+                onTouchEnd={handleVoiceStop}
                 className={`translator-voice-btn ${isListening ? 'listening' : ''} ${isSttModelLoading ? 'loading' : ''}`}
-                title={isSttModelLoading ? `Loading STT model: ${sttModelStage || '...'}` : isListening ? 'Stop listening' : 'Voice input'}
+                title={isSttModelLoading ? `Loading STT model: ${sttModelStage || '...'}` : isListening ? 'Release to stop' : 'Hold to speak'}
                 disabled={isSttModelLoading}
               >
                 <span className="material-symbols-outlined">
-                  {isSttModelLoading ? 'downloading' : isListening ? 'mic_off' : 'mic'}
+                  {isSttModelLoading ? 'downloading' : isListening ? 'mic' : 'mic'}
                 </span>
                 <span className="translator-voice-btn-text">
                   {isSttModelLoading
                     ? `Loading... ${Math.round((sttModelProgress || 0) * 100)}%`
-                    : isListening ? 'Listening...' : 'Voice Input'}
+                    : isListening ? 'Listening...' : 'Hold to Speak'}
                 </span>
                 {isSttModelLoading && (
                   <span
@@ -595,9 +706,13 @@ export function TranslatorView() {
                 )}
               </button>
             )}
-            <span className="translator-image-upload-hint">
-              📷 Image is processed locally • 🎤 {sttEngine === 'wasm' ? 'WASM Local STT' : sttEngine === 'web-speech' ? 'Web Speech' : sttEngine === 'server' ? 'Server STT' : 'Voice input'}
-            </span>
+            <button
+              className="translator-help-btn"
+              onClick={() => setShowHelpModal(true)}
+              title="Input methods guide"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>help_outline</span>
+            </button>
             {/* Right-aligned button group in toolbar */}
             <div className="translator-toolbar-right">
               <button
@@ -606,10 +721,10 @@ export function TranslatorView() {
                 className="translator-btn translator-btn--toolbar"
                 title={isLimitExceeded ? 'Usage limit exceeded' : isGuestLimitExceeded ? 'Guest limit reached - Please login' : ''}
               >
-                {isTranslating ? 'Translating...' : 
-                 isLimitExceeded ? 'Limit Exceeded' : 
-                 isGuestLimitExceeded ? 'Login Required' : 
-                 'Translate'}
+                {isTranslating ? 'Translating...' :
+                  isLimitExceeded ? 'Limit Exceeded' :
+                    isGuestLimitExceeded ? 'Login Required' :
+                      'Translate'}
               </button>
               <button
                 onClick={() => setConversationMode(prev => !prev)}
@@ -644,7 +759,7 @@ export function TranslatorView() {
               )}
             </div>
           </div>
-          
+
           <div className="translator-textarea-container">
             <textarea
               ref={inputTextareaRef}
@@ -713,7 +828,7 @@ export function TranslatorView() {
               document.addEventListener('touchend', onUp)
             }}
           >
-          <div className="translator-resize-handle-bar" />
+            <div className="translator-resize-handle-bar" />
           </div>
 
           {/* Grammar correction suggestion */}
@@ -763,12 +878,16 @@ export function TranslatorView() {
             </button>
             {isSpeechSupported && (
               <button
-                onClick={handleVoiceInput}
+                onMouseDown={handleVoiceStart}
+                onMouseUp={handleVoiceStop}
+                onMouseLeave={handleVoiceStop}
+                onTouchStart={handleVoiceStart}
+                onTouchEnd={handleVoiceStop}
                 className={`translator-conv-btn voice-focus-btn ${isListening ? 'active' : ''}`}
-                title={isListening ? 'Stop listening' : 'Voice input'}
+                title={isListening ? 'Release to stop' : 'Hold to speak'}
               >
                 <span className="material-symbols-outlined">
-                  {isListening ? 'mic_off' : 'mic'}
+                  {isListening ? 'mic' : 'mic'}
                 </span>
               </button>
             )}
@@ -778,10 +897,10 @@ export function TranslatorView() {
               className="translator-btn"
               title={isLimitExceeded ? 'Usage limit exceeded' : isGuestLimitExceeded ? 'Guest limit reached - Please login' : ''}
             >
-              {isTranslating ? 'Translating...' : 
-               isLimitExceeded ? 'Limit Exceeded' : 
-               isGuestLimitExceeded ? 'Login Required' : 
-               'Translate'}
+              {isTranslating ? 'Translating...' :
+                isLimitExceeded ? 'Limit Exceeded' :
+                  isGuestLimitExceeded ? 'Login Required' :
+                    'Translate'}
             </button>
             <button
               onClick={() => setConversationMode(prev => !prev)}
@@ -818,6 +937,50 @@ export function TranslatorView() {
 
         {/* 출력 - line-by-line with inline save */}
         <div className="translator-section translator-output-wrapper">
+          {/* Alternative Translations toggle */}
+          {outputText && (
+            <div className="translator-alt-toggle-bar">
+              {isAuthenticated ? (
+                <label className="translator-alt-toggle">
+                  <input
+                    type="checkbox"
+                    checked={showAlternatives}
+                    onChange={(e) => {
+                      setShowAlternatives(e.target.checked)
+                      if (!e.target.checked) {
+                        setAlternatives({})
+                        altFetchedRef.current = ''
+                      }
+                    }}
+                  />
+                  <span className="translator-alt-toggle-slider" />
+                  <span className="translator-alt-toggle-label">⚡ Alternative Translations</span>
+                  <span className="lannie-server-badge-sm">Lannie Server</span>
+                </label>
+              ) : (
+                <label 
+                  className="translator-alt-toggle" 
+                  style={{ opacity: 0.6, cursor: 'pointer' }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert("Alternative translations are available after login and admin approval.");
+                    setShowLoginModal(true);
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={false}
+                    readOnly
+                  />
+                  <span className="translator-alt-toggle-slider" />
+                  <span className="translator-alt-toggle-label">⚡ Alternative Translations</span>
+                  <span className="lannie-server-badge-sm">Lannie Server</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', marginLeft: '4px', color: '#94a3b8', verticalAlign: 'middle' }}>lock</span>
+                </label>
+              )}
+            </div>
+          )}
           <div
             ref={outputTextareaRef}
             className={`translator-textarea translator-textarea--output translator-output-lines ${conversationMode ? 'conversation-mode' : ''}`}
@@ -828,20 +991,40 @@ export function TranslatorView() {
               return outLines.map((line, i) => {
                 if (!line.trim()) return <div key={i} className="translator-output-empty-line">&nbsp;</div>
                 const srcLine = inLines[i] || ''
+                const lineAlts = alternatives[i] || []
+                const isAltLoading = altLoading[i]
+
                 return (
-                  <div key={i} className="translator-output-line">
-                    <span className="translator-output-line-text">{line}</span>
-                    {isAuthenticated && srcLine.trim() && (
-                      <button
-                        className={`translator-line-save-btn ${savedSentences.has(i) ? 'saved' : ''}`}
-                        onClick={() => handleSaveSentence(srcLine, line, i)}
-                        disabled={savingSentenceIdx === i || savedSentences.has(i)}
-                        title={savedSentences.has(i) ? 'Saved' : 'Save this sentence'}
-                      >
-                        <span className="material-symbols-outlined">
-                          {savedSentences.has(i) ? 'bookmark' : 'bookmark_add'}
-                        </span>
-                      </button>
+                  <div key={i} className="translator-output-line-group">
+                    <div className="translator-output-line">
+                      <span className="translator-output-line-text">{line}</span>
+                      {isAuthenticated && srcLine.trim() && (
+                        <button
+                          className={`translator-line-save-btn ${savedSentences.has(i) ? 'saved' : ''}`}
+                          onClick={() => handleSaveSentence(srcLine, line, i)}
+                          disabled={savingSentenceIdx === i || savedSentences.has(i)}
+                          title={savedSentences.has(i) ? 'Saved' : 'Save this sentence'}
+                        >
+                          <span className="material-symbols-outlined">
+                            {savedSentences.has(i) ? 'bookmark' : 'bookmark_add'}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                    {showAlternatives && lineAlts.length > 0 && (
+                      <div className="translator-alt-cards">
+                        {lineAlts.map((alt, j) => (
+                          <div key={j} className="translator-alt-card">
+                            <span className="translator-alt-card-text">{alt.text}</span>
+                            {alt.nuance && <span className="translator-alt-card-nuance">{alt.nuance}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {showAlternatives && isAltLoading && (
+                      <div className="translator-alt-loading">
+                        <span className="translator-alt-spinner" /> Generating alternative translations...
+                      </div>
                     )}
                   </div>
                 )
@@ -921,7 +1104,7 @@ export function TranslatorView() {
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>
-            
+
             {loadingHistory ? (
               <div className="translator-history-loading">
                 <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
@@ -986,8 +1169,8 @@ export function TranslatorView() {
                 <button onClick={handleDeleteCancel} className="translator-modal-btn translator-modal-btn--cancel">
                   Cancel
                 </button>
-                <button 
-                  onClick={handleDeleteConfirm} 
+                <button
+                  onClick={handleDeleteConfirm}
                   className="translator-modal-btn translator-modal-btn--delete"
                   disabled={deletingId === deleteConfirm.id}
                 >
@@ -1000,6 +1183,109 @@ export function TranslatorView() {
 
         {/* Login Modal for Guest Users */}
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+
+        {/* Help / Input Methods Guide Modal */}
+        {showHelpModal && (
+          <div className="translator-modal-overlay" onClick={() => setShowHelpModal(false)}>
+            <div className="translator-modal" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+              <h4 className="translator-help-modal-title">
+                <span className="material-symbols-outlined" style={{ color: '#3b82f6', fontSize: '20px' }}>info</span>
+                Translation Input Methods
+              </h4>
+              <div className="translator-help-content">
+                <div className="translator-help-item">
+                  <span className="translator-help-icon">📋</span>
+                  <div className="translator-help-text">
+                    <strong>Paste Image (Ctrl+V)</strong>
+                    You can paste any copied image or screenshot directly into the text box to translate it instantly.
+                  </div>
+                </div>
+                <div className="translator-help-item">
+                  <span className="translator-help-icon">📷</span>
+                  <div className="translator-help-text">
+                    <strong>OCR Button</strong>
+                    Click "Upload Image" to upload and translate text from image files. (Processed securely on-device)
+                  </div>
+                </div>
+                <div className="translator-help-item">
+                  <span className="translator-help-icon">🎤</span>
+                  <div className="translator-help-text">
+                    <strong>Voice Input</strong>
+                    <strong>Click</strong> the mic button to record for up to <strong>10 seconds</strong>, or <strong>hold</strong> the button to record as long as you want. Release to stop.
+                  </div>
+                </div>
+                <div className="translator-help-item">
+                  <span className="translator-help-icon">🔧</span>
+                  <div className="translator-help-text">
+                    <strong>English (Local)</strong>
+                    On-device SenseVoice model. Fast, offline, no usage limits. Best for standard pronunciation.
+                  </div>
+                </div>
+                <div className="translator-help-item">
+                  <span className="translator-help-icon">🖥️</span>
+                  <div className="translator-help-text">
+                    <strong>English (Server)</strong>
+                    GPU-powered Whisper large-v3 model. Higher accuracy, especially for accented English. <em>Daily usage time is limited.</em>
+                  </div>
+                </div>
+              </div>
+              <div className="translator-modal-actions" style={{ marginTop: '24px' }}>
+                <button onClick={() => setShowHelpModal(false)} className="translator-modal-btn translator-modal-btn--cancel" style={{ width: '100%' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STT Mode Help Modal */}
+        {showSttModeHelp && (
+          <div className="translator-modal-overlay" onClick={() => setShowSttModeHelp(false)}>
+            <div className="translator-modal stt-mode-help-modal" onClick={e => e.stopPropagation()}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '18px' }}>🎤 Voice Recognition Mode</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="stt-mode-help-card local">
+                  <div className="stt-mode-help-card-header">
+                    <span className="stt-mode-help-badge local">Local</span>
+                    <span style={{ fontWeight: 600 }}>SenseVoice (Browser)</span>
+                  </div>
+                  <ul className="stt-mode-help-list">
+                    <li>Runs entirely in your browser (WASM)</li>
+                    <li>No internet required after model download</li>
+                    <li>Unlimited usage — no daily limits</li>
+                    <li>Good accuracy for clear speech</li>
+                    <li>First-time model download ~40MB</li>
+                  </ul>
+                </div>
+
+                <div className="stt-mode-help-card server">
+                  <div className="stt-mode-help-card-header">
+                    <span className="stt-mode-help-badge server">Server</span>
+                    <span style={{ fontWeight: 600 }}>Whisper large-v3 (GPU)</span>
+                  </div>
+                  <ul className="stt-mode-help-list">
+                    <li>Runs on server with GPU acceleration</li>
+                    <li>Higher accuracy, especially for accented speech</li>
+                    <li>Better at handling background noise</li>
+                    <li>Requires internet connection</li>
+                    <li><strong style={{ color: '#dc2626' }}>⚠ Daily usage time is limited by member level</strong></li>
+                  </ul>
+                </div>
+
+                <div className="stt-mode-help-note">
+                  <strong>💡 Tip:</strong> Use <em>Local</em> for everyday practice. Switch to <em>Server</em> when you need maximum accuracy (e.g., scoring tests or accented speakers).
+                </div>
+              </div>
+
+              <div className="translator-modal-actions" style={{ marginTop: '20px' }}>
+                <button onClick={() => setShowSttModeHelp(false)} className="translator-modal-btn translator-modal-btn--cancel" style={{ width: '100%' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </PageBox>
     </PageLayout>
   )

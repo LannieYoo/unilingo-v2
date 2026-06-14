@@ -10,7 +10,6 @@ import { useAutoScroll, useTranslation, useTimer, TRANSLATION_LANGUAGES, useInli
 import { LANGUAGE_OPTIONS } from '../_08_constants'
 import { getVoiceCode } from '../../../config/languages'
 import { useSpeechInput, getSTTLanguage } from '../../../common/hooks/useSpeechInput'
-import { Platform } from '../../../common/utils/platformUtils'
 import { addPunctuation } from '../_07_utils/textFormatter'
 import {
   DebugPanel,
@@ -55,10 +54,12 @@ export function SttStreamView() {
   // Accumulated transcript state
   const [displayFinalText, setDisplayFinalText] = useState('')
   const [displayInterimText, setDisplayInterimText] = useState('')
+  const [sttMode, setSttMode] = useState('local') // 'local' | 'server'
+  const [showSttModeHelp, setShowSttModeHelp] = useState(false)
   const lastFinalRef = useRef('')
   const restartCountRef = useRef(0)
 
-  // Unified STT hook: routes to sherpa-onnx (Electron), Native (Mobile), Web Speech (Browser)
+  // Unified STT hook: routes based on mode (local/server)
   const sttLanguage = getSTTLanguage(selectedLang)
   const {
     start: sttStart,
@@ -66,17 +67,17 @@ export function SttStreamView() {
     isListening: isRunning,
     error: sttError,
     isAvailable: sttAvailable,
+    activeEngine,
   } = useSpeechInput({
     language: sttLanguage,
+    mode: sttMode,
     continuous: true,
     onResult: (text, isFinal) => {
       if (isFinal && text.trim()) {
-        // Duplicate prevention
         if (text === lastFinalRef.current) return
         lastFinalRef.current = text
-        const punctLang = selectedLang.split('-')[0]
-        const textWithPunctuation = addPunctuation(text, punctLang)
-        setDisplayFinalText(prev => prev + textWithPunctuation + ' ')
+        const cleaned = text.replace(/[.。！？!?]+$/, '')
+        setDisplayFinalText(prev => prev + cleaned + ' ')
         setDisplayInterimText('')
       } else if (!isFinal && text.trim()) {
         setDisplayInterimText(text)
@@ -99,9 +100,17 @@ export function SttStreamView() {
   }, [isRunning, stop, sttStart])
 
   // Determine current engine name for badge
-  const engineName = Platform.isElectron() ? '🎯 sherpa-onnx (Offline)' 
-    : Platform.isNative() ? '🎯 Native STT (OS)' 
-    : '🎯 Web Speech API (Real-time)'
+  const ENGINE_LABELS = {
+    'server-whisper': '🖥️ Server Whisper',
+    'wasm': '🔧 Local SenseVoice',
+    'web-speech': '🌐 Web Speech',
+  }
+  const engineName = ENGINE_LABELS[activeEngine] || '🎯 Speech Recognition'
+
+  const handleModeToggle = useCallback(() => {
+    if (isRunning) return // Don't switch while recording
+    setSttMode(prev => prev === 'local' ? 'server' : 'local')
+  }, [isRunning])
 
   const {
     translatedText,
@@ -360,10 +369,7 @@ export function SttStreamView() {
         <div className="stt-controls-bar">
           <div className="stt-controls-left">
             <StatusIndicator status={status} loadProgress={loadProgress} errorMessage={errorMessage} />
-            
-            <div className="stt-hybrid-status">
-              <span className="stt-hybrid-badge">{engineName}</span>
-            </div>
+
 
             {sttError && (
               <div className="stt-error-banner">
@@ -431,6 +437,9 @@ export function SttStreamView() {
           </div>
           
           <div className="stt-controls-right">
+            <div className="stt-hybrid-status">
+              <span className="stt-hybrid-badge">{engineName}</span>
+            </div>
             <label className="stt-translation-toggle">
               <input
                 type="checkbox"
@@ -452,12 +461,30 @@ export function SttStreamView() {
             style={isTranslationEnabled ? { width: `${leftPanelWidth}%` } : {}}
           >
             <div className="stt-panel-header">
-              <LanguageSelect
-                value={selectedLang}
-                onChange={handleLanguageChange}
-                disabled={isRunning}
-                label=""
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LanguageSelect
+                  value={selectedLang}
+                  onChange={handleLanguageChange}
+                  disabled={isRunning}
+                  label=""
+                />
+                <button
+                  className={`stt-mode-toggle ${sttMode === 'server' ? 'server' : 'local'}`}
+                  onClick={handleModeToggle}
+                  disabled={isRunning}
+                  title={sttMode === 'server' ? 'Server Whisper (GPU) — click for Local' : 'Local SenseVoice — click for Server'}
+                >
+                  <span className="stt-mode-toggle-track">
+                    <span className="stt-mode-toggle-thumb" />
+                  </span>
+                  <span className="stt-mode-toggle-label">{sttMode === 'server' ? 'Server' : 'Local'}</span>
+                </button>
+                <button
+                  className="stt-mode-help-btn"
+                  onClick={() => setShowSttModeHelp(true)}
+                  title="Local vs Server 차이점"
+                >?</button>
+              </div>
               <span className="stt-char-count">
                 {(displayFinalText || '').length} chars • {formattedTime}
               </span>
@@ -565,7 +592,7 @@ export function SttStreamView() {
         )}
 
         <div className="stt-stream-notes">
-          📝 {Platform.isElectron() ? 'Using sherpa-onnx (offline, high accuracy)' : 'Using Web Speech API (real-time, Chrome recommended)'}
+          📝 Real-time speech recognition • Chrome recommended for best results
           {!isAuthenticated && ` • Guest limit: ${MAX_CHARS_GUEST.toLocaleString()} characters`}
         </div>
       </PageBox>
@@ -591,6 +618,60 @@ export function SttStreamView() {
         onClose={closeTooltip}
         onToggleFavorite={toggleFavorite}
       />
+
+      {/* STT Mode Help Modal */}
+      {showSttModeHelp && (
+        <div className="stt-mode-help-overlay" onClick={() => setShowSttModeHelp(false)}>
+          <div className="stt-mode-help-modal-box" onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px' }}>🎤 Voice Recognition Mode</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="stt-mode-help-card local">
+                <div className="stt-mode-help-card-header">
+                  <span className="stt-mode-help-badge local">Local</span>
+                  <span style={{ fontWeight: 600 }}>SenseVoice (Browser)</span>
+                </div>
+                <ul className="stt-mode-help-list">
+                  <li>Runs entirely in your browser (WASM)</li>
+                  <li>No internet required after model download</li>
+                  <li>Unlimited usage — no daily limits</li>
+                  <li>Good accuracy for clear speech</li>
+                  <li>First-time model download ~40MB</li>
+                </ul>
+              </div>
+
+              <div className="stt-mode-help-card server">
+                <div className="stt-mode-help-card-header">
+                  <span className="stt-mode-help-badge server">Server</span>
+                  <span style={{ fontWeight: 600 }}>Whisper large-v3 (GPU)</span>
+                </div>
+                <ul className="stt-mode-help-list">
+                  <li>Runs on server with GPU acceleration</li>
+                  <li>Higher accuracy, especially for accented speech</li>
+                  <li>Better at handling background noise</li>
+                  <li>Requires internet connection</li>
+                  <li><strong style={{ color: '#dc2626' }}>⚠ Daily usage time is limited by member level</strong></li>
+                </ul>
+              </div>
+
+              <div className="stt-mode-help-note">
+                <strong>💡 Tip:</strong> Use <em>Local</em> for everyday practice. Switch to <em>Server</em> when you need maximum accuracy (e.g., scoring tests or accented speakers).
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button
+                onClick={() => setShowSttModeHelp(false)}
+                style={{
+                  width: '100%', padding: '10px', border: '1px solid #e2e8f0',
+                  borderRadius: '8px', background: '#f8fafc', cursor: 'pointer',
+                  fontSize: '14px', fontWeight: 600, color: '#475569'
+                }}
+              >Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageLayout>
   )
 }

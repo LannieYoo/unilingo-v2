@@ -27,6 +27,8 @@ export default function AdminView() {
   const [error, setError] = useState(null);
   const [togglingUserId, setTogglingUserId] = useState(null);
   const [changingLevelUserId, setChangingLevelUserId] = useState(null);
+  const [editingGpuLimitUserId, setEditingGpuLimitUserId] = useState(null);
+  const [gpuLimitInputValue, setGpuLimitInputValue] = useState('');
   
   // Search states
   const [usersSearch, setUsersSearch] = useState('');
@@ -196,6 +198,57 @@ export default function AdminView() {
     }
   };
 
+  // Default GPU limits by level (in minutes)
+  const GPU_LIMIT_DEFAULTS = {
+    admin: null,     // Unlimited
+    pro_plus: 180,   // 3 hours
+    pro: 60,         // 1 hour
+    guest: 0,        // No access
+  };
+
+  const getEffectiveGpuLimit = (user) => {
+    if (user.user_level === 'admin') return null; // always unlimited
+    if (user.daily_gpu_limit_minutes !== null && user.daily_gpu_limit_minutes !== undefined) {
+      return user.daily_gpu_limit_minutes;
+    }
+    return GPU_LIMIT_DEFAULTS[user.user_level] ?? 0;
+  };
+
+  const formatGpuLimit = (user) => {
+    if (user.user_level === 'admin') return '∞ Unlimited';
+    const effective = getEffectiveGpuLimit(user);
+    if (effective === 0) return '0 min (No access)';
+    const hours = Math.floor(effective / 60);
+    const mins = effective % 60;
+    if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+    if (hours > 0) return `${hours}h`;
+    return `${mins}m`;
+  };
+
+  const isCustomGpuLimit = (user) => {
+    return user.daily_gpu_limit_minutes !== null && user.daily_gpu_limit_minutes !== undefined;
+  };
+
+  const handleUpdateGpuLimit = async (userId, valueOverride) => {
+    const newValue = valueOverride !== undefined ? valueOverride : gpuLimitInputValue;
+    
+    setError(null);
+    try {
+      const result = await authService.updateUserGpuLimit(tokens.access_token, userId, newValue);
+      setUsers(users.map(u => 
+        u.id === userId ? { ...u, daily_gpu_limit_minutes: result.user.daily_gpu_limit_minutes } : u
+      ));
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'Failed to update GPU limit');
+    } finally {
+      setEditingGpuLimitUserId(null);
+      setGpuLimitInputValue('');
+    }
+  };
+
+  const GPU_STEP = 30; // 30 minute increments
+  const GPU_MAX = 720; // 12 hours max
+
   useEffect(() => {
     if (activeTab === 'users') {
       fetchUsers();
@@ -226,6 +279,15 @@ export default function AdminView() {
       minute: '2-digit',
       second: '2-digit',
       hour12: true
+    });
+  };
+
+  const formatDateShort = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     });
   };
 
@@ -418,17 +480,18 @@ export default function AdminView() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">Email</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">Name</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-24">Level</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-40">GPU Limit/Day</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-24">Approved</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-20">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-40">Joined</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-40">Last Login</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-24">Joined</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-24">Last Login</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-12 text-center text-gray-500">
                       No users found
                     </td>
                   </tr>
@@ -488,6 +551,78 @@ export default function AdminView() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm">
+                        {user.user_level === 'admin' ? (
+                          <span className="text-xs text-purple-600 font-medium">∞ Unlimited</span>
+                        ) : editingGpuLimitUserId === user.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setGpuLimitInputValue(prev => Math.max(0, (parseInt(prev) || 0) - GPU_STEP))}
+                              disabled={parseInt(gpuLimitInputValue) <= 0}
+                              className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold border ${
+                                parseInt(gpuLimitInputValue) <= 0
+                                  ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                                  : 'border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400'
+                              }`}
+                              title={`-${GPU_STEP}min`}
+                            >▼</button>
+                            <span className="text-xs font-medium text-gray-800 min-w-[40px] text-center">
+                              {(() => {
+                                const v = parseInt(gpuLimitInputValue) || 0;
+                                if (v === 0) return '0m';
+                                const h = Math.floor(v / 60);
+                                const m = v % 60;
+                                if (h > 0 && m > 0) return `${h}h${m}m`;
+                                if (h > 0) return `${h}h`;
+                                return `${m}m`;
+                              })()}
+                            </span>
+                            <button
+                              onClick={() => setGpuLimitInputValue(prev => Math.min(GPU_MAX, (parseInt(prev) || 0) + GPU_STEP))}
+                              disabled={parseInt(gpuLimitInputValue) >= GPU_MAX}
+                              className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold border ${
+                                parseInt(gpuLimitInputValue) >= GPU_MAX
+                                  ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                                  : 'border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400'
+                              }`}
+                              title={`+${GPU_STEP}min`}
+                            >▲</button>
+                            <button
+                              onClick={() => handleUpdateGpuLimit(user.id, parseInt(gpuLimitInputValue) || 0)}
+                              className="ml-1 text-green-600 hover:text-green-800 text-xs font-bold"
+                              title="Save"
+                            >✓</button>
+                            <button
+                              onClick={() => handleUpdateGpuLimit(user.id, null)}
+                              className="text-orange-500 hover:text-orange-700 text-[10px]"
+                              title="Reset to level default"
+                            >↺</button>
+                            <button
+                              onClick={() => { setEditingGpuLimitUserId(null); setGpuLimitInputValue(''); }}
+                              className="text-red-500 hover:text-red-700 text-xs font-bold"
+                              title="Cancel"
+                            >✕</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditingGpuLimitUserId(user.id);
+                              setGpuLimitInputValue(
+                                user.daily_gpu_limit_minutes !== null && user.daily_gpu_limit_minutes !== undefined
+                                  ? user.daily_gpu_limit_minutes
+                                  : getEffectiveGpuLimit(user)
+                              );
+                            }}
+                            className={`text-xs px-1.5 py-0.5 rounded hover:bg-gray-200 transition-colors ${
+                              isCustomGpuLimit(user) ? 'text-blue-700 font-semibold bg-blue-50' : 'text-gray-600'
+                            }`}
+                            title={isCustomGpuLimit(user) ? `Custom: ${user.daily_gpu_limit_minutes}min (click to edit)` : `Default for ${user.user_level} (click to customize)`}
+                          >
+                            {formatGpuLimit(user)}
+                            {isCustomGpuLimit(user) && <span className="ml-1 text-blue-400">✎</span>}
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           user.is_approved 
                             ? 'bg-green-100 text-green-700'
@@ -505,8 +640,8 @@ export default function AdminView() {
                           {user.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{formatDate(user.created_at)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{formatDate(user.last_login_at)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600" title={formatDate(user.created_at)}>{formatDateShort(user.created_at)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600" title={formatDate(user.last_login_at)}>{formatDateShort(user.last_login_at)}</td>
                       <td className="px-4 py-3 text-sm">
                         {canToggle ? (
                           <button

@@ -221,9 +221,9 @@ async function initEngine(wasmBaseUrl, initLanguage) {
     sileroVad: {
       model: './silero_vad.onnx',
       threshold: 0.45,
-      minSilenceDuration: 1.2,    // Wait 1.2s silence before splitting (default 0.5s)
-      minSpeechDuration: 0.5,     // Ignore segments < 0.5s (default 0.25s)
-      maxSpeechDuration: 30,      // Allow up to 30s segments
+      minSilenceDuration: 0.4,    // Wait 0.4s silence before splitting → near-realtime output
+      minSpeechDuration: 0.25,    // Catch shorter speech bursts
+      maxSpeechDuration: 3,       // Force-split at 3s even without silence
       windowSize: 512,
     },
     sampleRate: SAMPLE_RATE,
@@ -233,7 +233,7 @@ async function initEngine(wasmBaseUrl, initLanguage) {
     bufferSizeInSeconds: 60,
   }
   vad = createVad(Module, vadConfig)
-  console.log('[STT Worker] VAD created (tuned for longer segments)')
+  console.log('[STT Worker] VAD created (tuned for near-realtime: 0.4s silence, 5s max)')
 
   // Initialize CircularBuffer (30 seconds of audio at 16kHz)
   circularBuffer = new CircularBuffer(30 * SAMPLE_RATE, Module)
@@ -301,8 +301,11 @@ function processAudio(samples) {
           text = fixKoreanSpacing(text)
         }
         if (text) {
-          console.log(`[STT Worker] Recognized: "${text}"`)
-          self.postMessage({ type: 'final', text, confidence: 1.0 })
+          // Detect forced split: segment near maxSpeechDuration (5s) means
+          // VAD hit the limit, not a natural silence boundary
+          const forcedSplit = duration >= 2.5
+          console.log(`[STT Worker] Recognized: "${text}" (${duration.toFixed(1)}s, ${forcedSplit ? 'forced' : 'natural'})`)
+          self.postMessage({ type: 'final', text, confidence: 1.0, forcedSplit })
         }
       }
     }
@@ -396,7 +399,7 @@ self.onmessage = async (event) => {
         isRunning = true
         speechDetected = false
         self.postMessage({ type: 'started' })
-        console.log(`[STT Worker] Started (language: ${currentLanguage || 'auto'})`)
+        console.log(`[STT Worker] Started (language: ${currentLanguage || 'auto'}, maxSpeech: 5s)`)
         break
       }
 

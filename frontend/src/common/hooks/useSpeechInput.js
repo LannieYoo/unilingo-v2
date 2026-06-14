@@ -1,18 +1,20 @@
 /**
  * useSpeechInput - Unified Speech Input Hook
  *
- * STT engine selection for browser-based app:
- * - Default: WASM SenseVoice (local, offline, high accuracy for ko/en/zh/ja)
+ * STT engine selection:
+ * - mode='local': WASM SenseVoice (browser, offline)
+ * - mode='server': Server Whisper large-v3 (GPU, higher accuracy, usage limited)
  * - Fallback: Web Speech API (if WASM unavailable)
  *
  * Usage:
  *   const { start, stop, isListening, isAvailable,
  *           isModelLoading, modelLoadProgress, modelLoadStage, activeEngine }
- *     = useSpeechInput({ language: 'en-US', onResult, continuous: false })
+ *     = useSpeechInput({ language: 'en-US', mode: 'local', onResult, continuous: false })
  */
 
 import { useWasmSpeechInput } from './useWasmSpeechInput'
 import { useWebSpeechInput } from './useWebSpeechInput'
+import { useServerSpeechInput } from './useServerSpeechInput'
 
 /**
  * Check if WASM STT is supported in this browser
@@ -36,15 +38,25 @@ function detectSTTEngine() {
 // Determine engine once at module load time
 const STT_ENGINE = detectSTTEngine()
 
-export function useSpeechInput({ language = 'en-US', onResult, continuous = false }) {
+export function useSpeechInput({ language = 'en-US', mode = 'local', onResult, continuous = false }) {
   // Call ALL hooks unconditionally - React requires hooks to always be called
   // in the same order on every render.
   const wasmResult = useWasmSpeechInput({ language, onResult, continuous })
   const webSpeechResult = useWebSpeechInput({ language, onResult, continuous })
+  const serverResult = useServerSpeechInput({ language, onResult, continuous })
 
+  // Server mode: route to GPU Whisper
+  if (mode === 'server') {
+    if (serverResult.isAvailable) {
+      return { ...serverResult, activeEngine: 'server-whisper' }
+    }
+    // Fallback to local if server unavailable
+    console.warn('[STT] Server Whisper unavailable, falling back to local')
+  }
+
+  // Local mode: WASM SenseVoice or Web Speech fallback
   switch (STT_ENGINE) {
     case 'wasm':
-      // Dynamic fallback: if WASM STT init failed, use Web Speech API
       if (!wasmResult.isAvailable) {
         return { ...webSpeechResult, activeEngine: 'web-speech' }
       }
@@ -63,7 +75,6 @@ export const STT_LANG_MAP = {
   'en': 'en-US',
   'en-us': 'en-US',
   'en-gb': 'en-GB',
-  'en-in': 'en-IN',
   'ko': 'ko-KR',
   'zh': 'zh-CN',
   'zh-tw': 'zh-TW',

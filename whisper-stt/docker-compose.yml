@@ -1,0 +1,27 @@
+services:
+  whisper-stt:
+    build: .
+    container_name: whisper-stt
+    restart: always
+    network_mode: host
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - TZ=Asia/Seoul
+    volumes:
+      - whisper_models:/root/.cache/huggingface
+      - ./whisper_stt_api.py:/app/whisper_stt_api.py
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/api/stt/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  whisper_models:

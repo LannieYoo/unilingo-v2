@@ -160,6 +160,21 @@ export const authService = {
     return response.data;
   },
 
+  /**
+   * Update user GPU time limit (admin only).
+   * @param {number|null} dailyGpuLimitMinutes - Minutes per day, or null to reset to level default
+   */
+  async updateUserGpuLimit(accessToken, userId, dailyGpuLimitMinutes) {
+    const response = await api.post(`${ADMIN_ENDPOINTS.USERS}/${userId}/update-gpu-limit`, {
+      daily_gpu_limit_minutes: dailyGpuLimitMinutes
+    }, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data;
+  },
+
   // STT Log APIs
   /**
    * Create STT usage log.

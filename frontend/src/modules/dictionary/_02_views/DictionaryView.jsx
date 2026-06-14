@@ -231,6 +231,12 @@ export function DictionaryView() {
 
   // LLM Lannie Server: Phrasal Verbs + Context Suggestions (sequential to avoid GPU contention)
   useEffect(() => {
+    if (!isAuthenticated) {
+      setPhrasalVerbs([])
+      setContextSuggestions([])
+      return
+    }
+
     if (!results || results.length === 0) {
       setPhrasalVerbs([])
       setContextSuggestions([])
@@ -286,7 +292,7 @@ export function DictionaryView() {
 
     fetchSequential()
     return () => controller.abort()
-  }, [results, targetLang])
+  }, [results, targetLang, isAuthenticated])
 
   return (
     <PageLayout title="Dictionary">
@@ -717,14 +723,19 @@ export function DictionaryView() {
             )}
 
             {/* Context Suggestions (LLM Lannie Server) */}
-            {(contextSuggestions.length > 0 || contextLoading) && (
+            {(isAuthenticated ? (contextSuggestions.length > 0 || contextLoading) : true) && (
               <div className="ai-section">
                 <div className="ai-section-header">
                   <span className="ai-badge phrasal-badge">🧠 LLM</span>
                   <span className="ai-section-title">Context Suggestions</span>
                   <span className="lannie-server-badge">⚡ Lannie Server</span>
                 </div>
-                {contextLoading ? (
+                {!isAuthenticated ? (
+                  <div className="dict-llm-auth-lock">
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle' }}>lock</span>
+                    {' '}Login and admin approval required
+                  </div>
+                ) : contextLoading ? (
                   <div className="ai-loading">Generating context suggestions...</div>
                 ) : (
                   <div className="ai-word-list">
@@ -745,14 +756,19 @@ export function DictionaryView() {
             )}
 
             {/* Phrasal Verbs (RAG Server) */}
-            {(phrasalVerbs.length > 0 || phrasalLoading) && (
+            {(isAuthenticated ? (phrasalVerbs.length > 0 || phrasalLoading) : true) && (
               <div className="ai-section phrasal-section">
                 <div className="ai-section-header">
                   <span className="ai-badge phrasal-badge">📖 LLM</span>
                   <span className="ai-section-title">Phrasal Verbs & Idioms</span>
                   <span className="lannie-server-badge">⚡ Lannie Server</span>
                 </div>
-                {phrasalLoading ? (
+                {!isAuthenticated ? (
+                  <div className="dict-llm-auth-lock">
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle' }}>lock</span>
+                    {' '}Login and admin approval required
+                  </div>
+                ) : phrasalLoading ? (
                   <div className="ai-loading">Generating phrasal verbs...</div>
                 ) : (
                   <div className="phrasal-verbs-list">

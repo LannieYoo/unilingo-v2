@@ -10,6 +10,16 @@ export const Platform = {
   isWeb: () => true,
 
   /**
+   * Always false — this is a web-only app, not an Electron desktop app.
+   */
+  isElectron: () => false,
+
+  /**
+   * Always false — this is a web-only app, not a native mobile app.
+   */
+  isNative: () => false,
+
+  /**
    * Returns the current platform name
    */
   getName: () => 'web',

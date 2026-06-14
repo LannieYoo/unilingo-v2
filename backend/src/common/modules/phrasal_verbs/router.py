@@ -49,3 +49,23 @@ def phrasal_verbs_health():
     result = service.health_check()
     return jsonify(result)
 
+
+@phrasal_verbs_bp.route("/api/translator/alternative-translations", methods=["POST"])
+def get_alternative_translations():
+    """유사 번역 표현 API"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON body required"}), 400
+
+    original = data.get("original", "").strip()
+    translated = data.get("translated", "").strip()
+    source_lang = data.get("source_lang", "ko")
+    target_lang = data.get("target_lang", "en")
+
+    if not original or not translated:
+        return jsonify({"error": "original and translated are required"}), 400
+
+    service = get_phrasal_verbs_service()
+    result = service.get_alternative_translations(original, translated, source_lang, target_lang)
+    return jsonify(result)
+

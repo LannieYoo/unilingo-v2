@@ -118,6 +118,22 @@ def create_app(config_name: str = None) -> Flask:
             engine = create_engine(db_uri, pool_pre_ping=True)
             Base.metadata.create_all(bind=engine)
             app.logger.info("Database tables created successfully")
+            
+            # Run column migrations for existing tables
+            from sqlalchemy import text, inspect
+            inspector = inspect(engine)
+            existing_columns = [c['name'] for c in inspector.get_columns('users')]
+            with engine.connect() as conn:
+                # Rename old cpu column to gpu if it exists
+                if 'daily_cpu_limit_minutes' in existing_columns:
+                    conn.execute(text("ALTER TABLE users RENAME COLUMN daily_cpu_limit_minutes TO daily_gpu_limit_minutes"))
+                    conn.commit()
+                    app.logger.info("Migration: Renamed daily_cpu_limit_minutes to daily_gpu_limit_minutes")
+                # Add gpu column if it doesn't exist (fresh install)
+                elif 'daily_gpu_limit_minutes' not in existing_columns:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN daily_gpu_limit_minutes INTEGER DEFAULT NULL"))
+                    conn.commit()
+                    app.logger.info("Migration: Added daily_gpu_limit_minutes column to users table")
         else:
             app.logger.warning("SUPABASE_DB_URI not configured. Skipping table creation.")
     except Exception as e:
