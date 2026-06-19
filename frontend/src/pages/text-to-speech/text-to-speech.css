@@ -916,14 +916,27 @@
   border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
-/* Action row: Attach btn + Model pills + View toggle + Play controls */
+/* Action row: Tools row + Play controls */
 .tts-action-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
   flex-shrink: 0;
   margin-bottom: 1rem;
-  flex-wrap: wrap;
+}
+
+.tts-tools-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.tts-tools-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .attach-image-btn-top {
@@ -950,10 +963,7 @@
 .button-group {
   display: flex;
   gap: 0.5rem;
-  flex-shrink: 0;
-  margin-left: auto;
-  flex: 1 1 auto;
-  min-width: 280px;
+  width: 100%;
 }
 
 .button-group .nav-btn,

@@ -715,45 +715,47 @@ function TextToSpeech() {
           </div>
 
           <div className="tts-action-row">
-            <button
-              className="attach-image-btn-top"
-              onClick={() => fileInputRef.current?.click()}
-              title="Attach images for OCR"
-            >
-              📷 Attach Images
-            </button>
-            {selectedLanguage !== targetLanguage && (
-              <div className="model-pills model-pills--action">
-                {TRANSLATION_MODELS.map(model => (
-                  <button
-                    key={model.id}
-                    className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
-                    onClick={() => setTranslationModel(model.id)}
-                    title={model.desc}
-                  >
-                    <span className="model-pill-emoji">{model.emoji}</span>
-                    <span className="model-pill-name">{model.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedLanguage !== targetLanguage && (
-              <div className="view-mode-toggle">
-                {[
-                  { id: 'highlight', label: 'Highlight' },
-                  { id: 'all', label: 'All' },
-                  { id: 'off', label: 'Off' },
-                ].map(mode => (
-                  <button
-                    key={mode.id}
-                    className={`view-mode-btn${translationViewMode === mode.id ? ' active' : ''}`}
-                    onClick={() => setTranslationViewMode(mode.id)}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="tts-tools-row">
+              <button
+                className="attach-image-btn-top"
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach images for OCR"
+              >
+                📷 Attach Images
+              </button>
+              {selectedLanguage !== targetLanguage && (
+                <div className="tts-tools-right">
+                  <div className="model-pills model-pills--action">
+                    {TRANSLATION_MODELS.map(model => (
+                      <button
+                        key={model.id}
+                        className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
+                        onClick={() => setTranslationModel(model.id)}
+                        title={model.desc}
+                      >
+                        <span className="model-pill-emoji">{model.emoji}</span>
+                        <span className="model-pill-name">{model.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="view-mode-toggle">
+                    {[
+                      { id: 'highlight', label: 'Highlight' },
+                      { id: 'all', label: 'All' },
+                      { id: 'off', label: 'Off' },
+                    ].map(mode => (
+                      <button
+                        key={mode.id}
+                        className={`view-mode-btn${translationViewMode === mode.id ? ' active' : ''}`}
+                        onClick={() => setTranslationViewMode(mode.id)}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="button-group">
               <button
                 onClick={handlePrevSentence}
