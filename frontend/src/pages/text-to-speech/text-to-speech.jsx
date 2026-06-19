@@ -32,11 +32,9 @@ function TextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [speechRate, setSpeechRate] = useState(1.0)
-  const [currentCharIndex, setCurrentCharIndex] = useState(0)
   const [isTranslating, setIsTranslating] = useState(false)
-  const [currentTranslatedText, setCurrentTranslatedText] = useState('')
-  const [highlightStart, setHighlightStart] = useState(0)
-  const [highlightEnd, setHighlightEnd] = useState(0)
+  const [highlightStart, setHighlightStart] = useState(-1)
+  const [highlightEnd, setHighlightEnd] = useState(-1)
   const [isRepeatMode, setIsRepeatMode] = useState(false)
   const [voiceWarning, setVoiceWarning] = useState(null)
   const [pastedImages, setPastedImages] = useState([])
@@ -48,6 +46,8 @@ function TextToSpeech() {
   const utteranceRef = useRef(null)
   const isRepeatModeRef = useRef(false)
   const fileInputRef = useRef(null)
+  const abortRef = useRef(false)
+  const speechRateRef = useRef(1.0)
   const nextImageId = useRef(0)
 
   const { trackUsage, isLimitExceeded } = useUsage()
@@ -310,137 +310,122 @@ function TextToSpeech() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 속도 변경 핸들러
-  const handleSpeedChange = (newRate) => {
-    setSpeechRate(newRate)
-    
-    // 재생 중이면 현재 위치부터 새로운 속도로 재시작
-    if (isSpeaking && window.speechSynthesis.speaking) {
-      const remainingText = currentTranslatedText.substring(currentCharIndex)
-      
-      if (remainingText.trim()) {
-        // 현재 재생 중단
-        window.speechSynthesis.cancel()
-        
-        // 남은 텍스트를 새로운 속도로 재생
-        speakText(remainingText, newRate, currentCharIndex)
+  // 문장 분리 함수
+  const splitSentences = (txt) => {
+    // 문장 단위로 분리 (., !, ? 뒤 공백 또는 줄바꾼)
+    const results = []
+    const regex = /[^.!?\n]+[.!?]*[\s]*/g
+    let match
+    while ((match = regex.exec(txt)) !== null) {
+      const s = match[0]
+      if (s.trim()) {
+        results.push({
+          text: s.trim(),
+          start: match.index,
+          end: match.index + s.trimEnd().length,
+        })
       }
     }
+    // 문장이 하나도 없으면 전체 텍스트를 하나의 문장으로
+    if (results.length === 0 && txt.trim()) {
+      results.push({ text: txt.trim(), start: 0, end: txt.trim().length })
+    }
+    return results
   }
 
-  // Target Language 변경 핸들러
-  const handleTargetLanguageChange = async (newTargetLang) => {
-    setTargetLanguage(newTargetLang)
-    
-    // 재생 중이면 현재 위치부터 새로운 언어로 재시작
-    if (isSpeaking && window.speechSynthesis.speaking) {
-      const remainingOriginalText = text.substring(currentCharIndex)
-      
-      if (remainingOriginalText.trim()) {
-        // 현재 재생 중단
-        window.speechSynthesis.cancel()
-        
-        // 남은 텍스트를 번역 (필요한 경우) - translateCode로 비교
-        let textToSpeak = remainingOriginalText
-        const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
-        const targetCode = TTS_LANGUAGES.find(l => l.code === newTargetLang)?.translateCode || newTargetLang
-        
-        if (sourceCode !== targetCode) {
-          textToSpeak = await translateText(remainingOriginalText, selectedLanguage, newTargetLang)
+  // 한 문장 TTS 재생 (Promise)
+  const speakSentence = (translatedText, rate, langCode) => {
+    return new Promise((resolve, reject) => {
+      if (!translatedText.trim()) { resolve(); return }
+
+      const utterance = new SpeechSynthesisUtterance(translatedText)
+      const voiceCode = TTS_LANGUAGES.find(l => l.code === langCode)?.voice || getVoiceCode(langCode)
+      utterance.lang = voiceCode
+
+      const voices = window.speechSynthesis.getVoices()
+      const matchingVoice = voices.find(v => v.lang === voiceCode)
+      if (matchingVoice) {
+        utterance.voice = matchingVoice
+        setVoiceWarning(null)
+      } else {
+        const lang = TTS_LANGUAGES.find(l => l.code === langCode) || getLanguageByCode(langCode)
+        setVoiceWarning({ language: lang?.name || langCode, code: voiceCode })
+      }
+
+      utterance.rate = rate
+      utterance.pitch = 1.0
+      utterance.volume = 1.0
+
+      utterance.onstart = () => {
+        utteranceRef.current = utterance
+      }
+      utterance.onend = () => {
+        utteranceRef.current = null
+        resolve()
+      }
+      utterance.onerror = (e) => {
+        utteranceRef.current = null
+        if (e.error === 'canceled' || e.error === 'interrupted') {
+          reject(new Error('canceled'))
+        } else {
+          resolve()
         }
-        
-        // 번역된 텍스트를 현재 속도와 새로운 언어로 재생
-        speakText(textToSpeak, speechRate, 0, newTargetLang)
       }
-    }
+
+      window.speechSynthesis.speak(utterance)
+    })
   }
 
-  // 텍스트 읽기 함수
-  const speakText = (textToSpeak, rate, startIndex = 0, langCode = targetLanguage) => {
-    if (!textToSpeak.trim()) return
+  // 문장별 번역 + TTS 실행 루프
+  const speakSentenceBysentence = async (sentences, langCode) => {
+    const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
+    const targetCode = TTS_LANGUAGES.find(l => l.code === langCode)?.translateCode || langCode
+    const needsTranslation = sourceCode !== targetCode
 
-    const utterance = new SpeechSynthesisUtterance(textToSpeak)
-    const voiceCode = TTS_LANGUAGES.find(l => l.code === langCode)?.voice || getVoiceCode(langCode)
-    utterance.lang = voiceCode
-    
-    // 브라우저에서 지원하는 음성 중 해당 언어에 맞는 음성 선택
-    const voices = window.speechSynthesis.getVoices()
-    const matchingVoice = voices.find(voice => voice.lang === voiceCode)
-    
-    if (matchingVoice) {
-      utterance.voice = matchingVoice
-      console.log('[TTS] Using voice:', matchingVoice.name, 'for lang:', voiceCode)
-      setVoiceWarning(null)
-    } else {
-      console.warn('[TTS] No matching voice found for:', voiceCode)
-      
-      // 언어 이름 가져오기
-      const lang = TTS_LANGUAGES.find(l => l.code === langCode) || getLanguageByCode(langCode)
-      const langName = lang?.name || langCode
-      
-      // 경고 메시지 설정
-      setVoiceWarning({
-        language: langName,
-        code: voiceCode
-      })
-    }
-    
-    utterance.rate = rate
-    utterance.pitch = 1.0
-    utterance.volume = 1.0
+    for (let i = 0; i < sentences.length; i++) {
+      if (abortRef.current) break
 
-    // 단어 경계 이벤트로 현재 위치 추적 및 하이라이트
-    utterance.onboundary = (event) => {
-      if (event.name === 'word') {
-        const currentIndex = startIndex + event.charIndex
-        setCurrentCharIndex(currentIndex)
-        
-        // 현재 단어의 끝 위치 계산 (다음 공백까지)
-        const remainingText = textToSpeak.substring(event.charIndex)
-        const wordMatch = remainingText.match(/^\S+/)
-        const wordLength = wordMatch ? wordMatch[0].length : 0
-        
-        setHighlightStart(currentIndex)
-        setHighlightEnd(currentIndex + wordLength)
+      const sentence = sentences[i]
+      // 현재 문장 형광펜
+      setHighlightStart(sentence.start)
+      setHighlightEnd(sentence.end)
+
+      let textToSpeak = sentence.text
+      if (needsTranslation) {
+        setIsTranslating(true)
+        textToSpeak = await translateText(sentence.text, selectedLanguage, langCode)
+        setIsTranslating(false)
+        if (abortRef.current) break
+      }
+
+      // TTS 사용량 추적
+      if (textToSpeak.length > 0) {
+        trackUsage(textToSpeak.length, 'tts').catch(() => {})
+      }
+
+      try {
+        await speakSentence(textToSpeak, speechRateRef.current, langCode)
+      } catch {
+        break // canceled
       }
     }
 
-    utterance.onstart = () => {
-      setIsSpeaking(true)
-      utteranceRef.current = utterance
-    }
-
-    utterance.onend = () => {
+    // 완료
+    if (!abortRef.current) {
+      setHighlightStart(-1)
+      setHighlightEnd(-1)
       setIsSpeaking(false)
-      setCurrentCharIndex(0)
-      setHighlightStart(0)
-      setHighlightEnd(0)
-      utteranceRef.current = null
-      
-      // 반복 모드가 켜져 있으면 다시 재생 (ref 사용하여 최신 값 참조)
+
       if (isRepeatModeRef.current) {
-        setTimeout(() => {
-          handleSpeak()
-        }, 500) // 0.5초 대기 후 재시작
+        setTimeout(() => handleSpeak(), 500)
       }
     }
-
-    utterance.onerror = () => {
-      setIsSpeaking(false)
-      setCurrentCharIndex(0)
-      setHighlightStart(0)
-      setHighlightEnd(0)
-      utteranceRef.current = null
-    }
-
-    window.speechSynthesis.speak(utterance)
   }
 
   const handleSpeak = async () => {
     if (!text.trim()) return
 
     if ('speechSynthesis' in window) {
-      // Pause 상태에서 Resume
       if (isPaused) {
         window.speechSynthesis.resume()
         setIsPaused(false)
@@ -448,7 +433,6 @@ function TextToSpeech() {
         return
       }
 
-      // 음성 목록 로드 대기 (브라우저에 따라 비동기로 로드됨)
       if (window.speechSynthesis.getVoices().length === 0) {
         await new Promise(resolve => {
           window.speechSynthesis.onvoiceschanged = resolve
@@ -456,29 +440,11 @@ function TextToSpeech() {
       }
 
       window.speechSynthesis.cancel()
-      setCurrentCharIndex(0)
-      
-      // 번역이 필요한 경우 (translateCode로 비교)
-      let textToSpeak = text
-      const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
-      const targetCode = TTS_LANGUAGES.find(l => l.code === targetLanguage)?.translateCode || targetLanguage
-      
-      if (sourceCode !== targetCode) {
-        textToSpeak = await translateText(text, selectedLanguage, targetLanguage)
-      }
-      
-      // 번역된 텍스트 저장
-      setCurrentTranslatedText(textToSpeak)
-      
-      // Track usage for TTS
-      const charCount = textToSpeak.length
-      if (charCount > 0) {
-        trackUsage(charCount, 'tts').catch(err => {
-          console.error('Failed to track TTS usage:', err)
-        })
-      }
-      
-      speakText(textToSpeak, speechRate, 0, targetLanguage)
+      abortRef.current = false
+      setIsSpeaking(true)
+
+      const sentences = splitSentences(text)
+      await speakSentenceBysentence(sentences, targetLanguage)
     } else {
       alert('This browser does not support speech synthesis.')
     }
@@ -494,18 +460,33 @@ function TextToSpeech() {
 
   const handleStop = () => {
     if ('speechSynthesis' in window) {
+      abortRef.current = true
       window.speechSynthesis.cancel()
       setIsSpeaking(false)
       setIsPaused(false)
-      setCurrentCharIndex(0)
-      setHighlightStart(0)
-      setHighlightEnd(0)
+      setHighlightStart(-1)
+      setHighlightEnd(-1)
+      setIsTranslating(false)
     }
   }
 
-  // 하이라이트된 텍스트 렌더링
+  // 속도 변경 — ref에 즉시 반영, 다음 문장부터 적용됨
+  const handleSpeedChange = (newRate) => {
+    setSpeechRate(newRate)
+    // speechRateRef는 useEffect에서 자동 동기화
+  }
+
+  // Target Language 변경 — 재생 중이면 중단 후 재시작
+  const handleTargetLanguageChange = (newTargetLang) => {
+    setTargetLanguage(newTargetLang)
+    if (isSpeaking) {
+      handleStop()
+    }
+  }
+
+  // 하이라이트된 텍스트 렌더링 (문장 단위)
   const renderHighlightedText = () => {
-    if (!isSpeaking || highlightStart === 0 || highlightEnd === 0) {
+    if (highlightStart < 0 || highlightEnd < 0) {
       return text
     }
 
@@ -521,6 +502,11 @@ function TextToSpeech() {
       </>
     )
   }
+
+  // speedRate ref 동기화
+  useEffect(() => {
+    speechRateRef.current = speechRate
+  }, [speechRate])
 
 
   // isRepeatMode 변경 시 ref 업데이트
