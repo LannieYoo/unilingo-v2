@@ -44,6 +44,7 @@ function TextToSpeech() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [imageLimitWarning, setImageLimitWarning] = useState(false)
   const [translationModel, setTranslationModel] = useState('google_direct')
+  const [usedProvider, setUsedProvider] = useState(null)
   const utteranceRef = useRef(null)
   const isRepeatModeRef = useRef(false)
   const fileInputRef = useRef(null)
@@ -96,6 +97,7 @@ function TextToSpeech() {
       if (response.ok) {
         const data = await response.json()
         if (data.translated_text && data.translated_text.trim()) {
+          setUsedProvider(data.provider || translationModel)
           setIsTranslating(false)
           return data.translated_text.trim()
         }
@@ -113,6 +115,7 @@ function TextToSpeech() {
             .join('')
             .trim()
           if (translated && translated.length > 0) {
+            setUsedProvider('google_direct')
             setIsTranslating(false)
             return translated
           }
@@ -578,23 +581,6 @@ function TextToSpeech() {
               </select>
             </div>
 
-            <div className="model-select-wrapper">
-              <label className="control-label">Translation Model</label>
-              <div className="model-pills">
-                {TRANSLATION_MODELS.map(model => (
-                  <button
-                    key={model.id}
-                    className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'madlad' ? ' model-pill--madlad' : model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
-                    onClick={() => setTranslationModel(model.id)}
-                    title={model.desc}
-                  >
-                    <span className="model-pill-emoji">{model.emoji}</span>
-                    <span className="model-pill-name">{model.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="speed-control-wrapper">
               <div className="speed-header">
                 <label htmlFor="speech-rate" className="control-label">
@@ -638,6 +624,24 @@ function TextToSpeech() {
             >
               📷 Attach Images
             </button>
+            <div className="model-pills model-pills--action">
+              {TRANSLATION_MODELS.map(model => (
+                <button
+                  key={model.id}
+                  className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'madlad' ? ' model-pill--madlad' : model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
+                  onClick={() => setTranslationModel(model.id)}
+                  title={model.desc}
+                >
+                  <span className="model-pill-emoji">{model.emoji}</span>
+                  <span className="model-pill-name">{model.name}</span>
+                </button>
+              ))}
+              {usedProvider && (
+                <span className={`tts-provider-badge tts-provider-badge--${usedProvider === 'madlad' ? 'madlad' : usedProvider === 'deepl' ? 'deepl' : 'google'}`}>
+                  {usedProvider === 'madlad' ? '✓ Lannie Server' : usedProvider === 'deepl' ? '✓ DeepL' : '✓ Google'}
+                </span>
+              )}
+            </div>
             <div className="button-group">
               <button
                 onClick={handleSpeak}
