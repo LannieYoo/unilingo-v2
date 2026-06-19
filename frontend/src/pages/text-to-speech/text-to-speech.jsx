@@ -563,7 +563,7 @@ function TextToSpeech() {
   // 하이라이트된 텍스트 렌더링 — translationViewMode에 따라 다르게
   const renderHighlightedText = () => {
     const sentences = sentencesRef.current
-    const hasSentences = sentences.length > 0 && (isSpeaking || isPaused || Object.keys(sentenceTranslations).length > 0)
+    const hasSentences = sentences.length > 0
     const needsTranslation = selectedLanguage !== targetLanguage
 
     // All 모드: 문장별로 번역 표시
@@ -611,6 +611,49 @@ function TextToSpeech() {
       </>
     )
   }
+
+  // All 모드 전환 시 전체 문장 즉시 번역
+  const translateAllSentences = async () => {
+    if (!text.trim() || selectedLanguage === targetLanguage) return
+
+    let sentences = sentencesRef.current
+    if (sentences.length === 0) {
+      sentences = splitSentences(text)
+      sentencesRef.current = sentences
+    }
+
+    // 이미 번역된 문장은 건너뜀
+    const untranslated = sentences
+      .map((s, i) => ({ idx: i, text: s.text }))
+      .filter(s => !sentenceTranslations[s.idx])
+
+    if (untranslated.length === 0) return
+
+    setIsTranslating(true)
+    try {
+      const results = await Promise.all(
+        untranslated.map(s =>
+          translateText(s.text, selectedLanguage, targetLanguage)
+            .then(translated => ({ idx: s.idx, translated }))
+        )
+      )
+      setSentenceTranslations(prev => {
+        const updated = { ...prev }
+        results.forEach(r => { updated[r.idx] = r.translated })
+        return updated
+      })
+    } catch (e) {
+      console.error('Bulk translation error:', e)
+    }
+    setIsTranslating(false)
+  }
+
+  // translationViewMode가 'all'로 바뀌면 즉시 번역 실행
+  useEffect(() => {
+    if (translationViewMode === 'all' && text.trim() && selectedLanguage !== targetLanguage) {
+      translateAllSentences()
+    }
+  }, [translationViewMode])
 
   // ref 동기화
   useEffect(() => {
