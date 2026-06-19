@@ -376,12 +376,32 @@ function TextToSpeech() {
     })
   }
 
-  // 문장별 번역 + TTS 실행 루프
+  // 문장별 번역 + TTS 실행 — 선행 번역(prefetch) 파이프라인
   const speakSentenceBysentence = async (sentences, langCode) => {
     const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
     const targetCode = TTS_LANGUAGES.find(l => l.code === langCode)?.translateCode || langCode
     const needsTranslation = sourceCode !== targetCode
 
+    // ── 1. 번역 prefetch: 모든 문장의 번역을 즉시 순차 시작 ──
+    //    각 문장에 대해 Promise를 미리 생성하고, 체이닝으로 순차 실행
+    //    TTS가 현재 문장을 읽는 동안 다음 문장들이 백그라운드에서 번역됨
+    const translationPromises = []
+
+    if (needsTranslation) {
+      let chain = Promise.resolve()
+      for (let i = 0; i < sentences.length; i++) {
+        const idx = i
+        const promise = (chain = chain.then(async () => {
+          if (abortRef.current) return sentences[idx].text
+          setIsTranslating(true)
+          const result = await translateText(sentences[idx].text, selectedLanguage, langCode)
+          return result
+        }))
+        translationPromises.push(promise)
+      }
+    }
+
+    // ── 2. 재생 루프: 번역이 준비된 문장부터 즉시 읽기 ──
     for (let i = 0; i < sentences.length; i++) {
       if (abortRef.current) break
 
@@ -390,10 +410,10 @@ function TextToSpeech() {
       setHighlightStart(sentence.start)
       setHighlightEnd(sentence.end)
 
+      // 번역 결과 가져오기 (이미 완료되었으면 즉시 반환)
       let textToSpeak = sentence.text
       if (needsTranslation) {
-        setIsTranslating(true)
-        textToSpeak = await translateText(sentence.text, selectedLanguage, langCode)
+        textToSpeak = await translationPromises[i]
         setIsTranslating(false)
         if (abortRef.current) break
       }
@@ -411,6 +431,7 @@ function TextToSpeech() {
     }
 
     // 완료
+    setIsTranslating(false)
     if (!abortRef.current) {
       setHighlightStart(-1)
       setHighlightEnd(-1)
