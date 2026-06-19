@@ -7,13 +7,28 @@ import { UsageIndicator } from '../../common/components/UsageIndicator'
 import { useLanguagePreferences, useAuthStore } from '../../modules/auth'
 import { createWorker } from 'tesseract.js'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+// TTS 전용 언어 목록 — 영어 통합
+const TTS_LANGUAGES = [
+  { code: 'en', name: 'English', voice: 'en-US', translateCode: 'en' },
+  { code: 'ko', name: 'Korean', voice: 'ko-KR', translateCode: 'ko' },
+  { code: 'zh', name: 'Chinese', voice: 'zh-CN', translateCode: 'zh' },
+]
+
+const TRANSLATION_MODELS = [
+  { id: 'madlad', name: 'MADLAD-400', emoji: '🤖', desc: 'Self-hosted AI' },
+  { id: 'deepl', name: 'DeepL', emoji: '💎', desc: 'Premium API' },
+  { id: 'google_direct', name: 'Google', emoji: '🌐', desc: 'Free API' },
+]
+
 const MAX_IMAGES_GUEST = 2
 const MAX_IMAGES_LOGGED_IN = 10
 
 function TextToSpeech() {
   const [text, setText] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState('en-US')
-  const [targetLanguage, setTargetLanguage] = useState('en-US')
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [targetLanguage, setTargetLanguage] = useState('en')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [speechRate, setSpeechRate] = useState(1.0)
@@ -28,6 +43,7 @@ function TextToSpeech() {
   const [ocrProgress, setOcrProgress] = useState({})
   const [isDragOver, setIsDragOver] = useState(false)
   const [imageLimitWarning, setImageLimitWarning] = useState(false)
+  const [translationModel, setTranslationModel] = useState('google_direct')
   const utteranceRef = useRef(null)
   const isRepeatModeRef = useRef(false)
   const fileInputRef = useRef(null)
@@ -46,33 +62,50 @@ function TextToSpeech() {
     // Settings targetLanguage(학습 언어) → TTS Source (입력)
     // Settings nativeLanguage(모국어) → TTS Target (출력)
     const findTTSCode = (translateCode) => {
-      const lang = LANGUAGES.find(l => l.translateCode === translateCode)
-      return lang?.code || 'en-US'
+      const lang = TTS_LANGUAGES.find(l => l.translateCode === translateCode)
+      return lang?.code || 'en'
     }
     
     setSelectedLanguage(findTTSCode(settingsTargetLang))
     setTargetLanguage(findTTSCode(nativeLanguage))
   }, [preferencesLoaded, nativeLanguage, settingsTargetLang])
 
-  // 번역 함수
+  // 번역 함수 — 백엔드 API 경유, 선택된 모델 사용
   const translateText = async (text, sourceLang, targetLang) => {
     if (!text.trim()) return text
     
-    // translateCode로 비교 (en-US, en-GB 등은 모두 'en'으로 변환됨)
-    const sourceCode = getTranslateCode(sourceLang)
-    const targetCode = getTranslateCode(targetLang)
+    const sourceCode = TTS_LANGUAGES.find(l => l.code === sourceLang)?.translateCode || sourceLang
+    const targetCode = TTS_LANGUAGES.find(l => l.code === targetLang)?.translateCode || targetLang
     
     if (sourceCode === targetCode) return text
 
     setIsTranslating(true)
     
     try {
-      // Google Translate API 사용
-      const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(text)}`
-      const response = await fetch(googleUrl)
+      const response = await fetch(`${API_URL}/api/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          source_lang: sourceCode,
+          target_lang: targetCode,
+          provider: translationModel,
+        }),
+      })
       
       if (response.ok) {
         const data = await response.json()
+        if (data.translated_text && data.translated_text.trim()) {
+          setIsTranslating(false)
+          return data.translated_text.trim()
+        }
+      }
+      
+      // Fallback: direct Google Translate
+      const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=${targetCode}&dt=t&q=${encodeURIComponent(text)}`
+      const gResponse = await fetch(googleUrl)
+      if (gResponse.ok) {
+        const data = await gResponse.json()
         if (data?.[0] && Array.isArray(data[0])) {
           const translated = data[0]
             .filter(item => item && Array.isArray(item) && item[0] && typeof item[0] === 'string')
@@ -83,19 +116,6 @@ function TextToSpeech() {
             setIsTranslating(false)
             return translated
           }
-        }
-      }
-      
-      // Fallback: MyMemory API
-      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`
-      const fallbackResponse = await fetch(myMemoryUrl)
-      
-      if (fallbackResponse.ok) {
-        const data = await fallbackResponse.json()
-        if (data.responseStatus === 200 && data.responseData?.translatedText) {
-          const translated = data.responseData.translatedText.trim()
-          setIsTranslating(false)
-          return translated
         }
       }
       
@@ -115,7 +135,9 @@ function TextToSpeech() {
     
     // 텍스트가 있으면 언어 자동 감지
     if (newText.trim()) {
-      const detectedLang = detectLanguage(newText)
+      let detectedLang = detectLanguage(newText)
+      // TTS_LANGUAGES 코드로 변환 (en-US -> en)
+      if (detectedLang === 'en-US') detectedLang = 'en'
       setSelectedLanguage(detectedLang)
       // target language도 source language와 같게 설정
       setTargetLanguage(detectedLang)
@@ -255,7 +277,8 @@ function TextToSpeech() {
           const separator = prev.trim() ? '\n' : ''
           const newText = prev + separator + trimmed
           // 언어 감지
-          const detectedLang = detectLanguage(newText)
+          let detectedLang = detectLanguage(newText)
+          if (detectedLang === 'en-US') detectedLang = 'en'
           setSelectedLanguage(detectedLang)
           setTargetLanguage(detectedLang)
           return newText
@@ -316,8 +339,8 @@ function TextToSpeech() {
         
         // 남은 텍스트를 번역 (필요한 경우) - translateCode로 비교
         let textToSpeak = remainingOriginalText
-        const sourceCode = getTranslateCode(selectedLanguage)
-        const targetCode = getTranslateCode(newTargetLang)
+        const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
+        const targetCode = TTS_LANGUAGES.find(l => l.code === newTargetLang)?.translateCode || newTargetLang
         
         if (sourceCode !== targetCode) {
           textToSpeak = await translateText(remainingOriginalText, selectedLanguage, newTargetLang)
@@ -334,7 +357,7 @@ function TextToSpeech() {
     if (!textToSpeak.trim()) return
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak)
-    const voiceCode = getVoiceCode(langCode)
+    const voiceCode = TTS_LANGUAGES.find(l => l.code === langCode)?.voice || getVoiceCode(langCode)
     utterance.lang = voiceCode
     
     // 브라우저에서 지원하는 음성 중 해당 언어에 맞는 음성 선택
@@ -349,7 +372,7 @@ function TextToSpeech() {
       console.warn('[TTS] No matching voice found for:', voiceCode)
       
       // 언어 이름 가져오기
-      const lang = getLanguageByCode(langCode)
+      const lang = TTS_LANGUAGES.find(l => l.code === langCode) || getLanguageByCode(langCode)
       const langName = lang?.name || langCode
       
       // 경고 메시지 설정
@@ -434,8 +457,8 @@ function TextToSpeech() {
       
       // 번역이 필요한 경우 (translateCode로 비교)
       let textToSpeak = text
-      const sourceCode = getTranslateCode(selectedLanguage)
-      const targetCode = getTranslateCode(targetLanguage)
+      const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
+      const targetCode = TTS_LANGUAGES.find(l => l.code === targetLanguage)?.translateCode || targetLanguage
       
       if (sourceCode !== targetCode) {
         textToSpeak = await translateText(text, selectedLanguage, targetLanguage)
@@ -535,7 +558,7 @@ function TextToSpeech() {
                 onChange={(e) => setSelectedLanguage(e.target.value)}
                 className="language-select"
               >
-                {LANGUAGES.map(lang => (
+                {TTS_LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code}>{lang.name}</option>
                 ))}
               </select>
@@ -549,10 +572,27 @@ function TextToSpeech() {
                 onChange={(e) => handleTargetLanguageChange(e.target.value)}
                 className="language-select"
               >
-                {LANGUAGES.map(lang => (
+                {TTS_LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code}>{lang.name}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="model-select-wrapper">
+              <label className="control-label">Translation Model</label>
+              <div className="model-pills">
+                {TRANSLATION_MODELS.map(model => (
+                  <button
+                    key={model.id}
+                    className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'madlad' ? ' model-pill--madlad' : model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
+                    onClick={() => setTranslationModel(model.id)}
+                    title={model.desc}
+                  >
+                    <span className="model-pill-emoji">{model.emoji}</span>
+                    <span className="model-pill-name">{model.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="speed-control-wrapper">
