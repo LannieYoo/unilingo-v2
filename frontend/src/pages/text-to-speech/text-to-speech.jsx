@@ -564,7 +564,12 @@ function TextToSpeech() {
     return (
       <>
         {before}
-        <span className="highlight-text" title={translatedTooltip || undefined}>{highlight}</span>
+        <span className="highlight-wrapper">
+          <span className="highlight-text">{highlight}</span>
+          {translatedTooltip && (
+            <span className="highlight-tooltip">{translatedTooltip}</span>
+          )}
+        </span>
         {after}
       </>
     )
