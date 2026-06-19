@@ -42,11 +42,17 @@ function TextToSpeech() {
   const [imageLimitWarning, setImageLimitWarning] = useState(false)
   const [translationModel, setTranslationModel] = useState('google_direct')
   const [usedProvider, setUsedProvider] = useState(null)
+  const [currentSentenceIdx, setCurrentSentenceIdx] = useState(-1)
+  const [translatedTooltip, setTranslatedTooltip] = useState('')
   const utteranceRef = useRef(null)
   const isRepeatModeRef = useRef(false)
   const fileInputRef = useRef(null)
   const abortRef = useRef(false)
   const speechRateRef = useRef(1.0)
+  const translationModelRef = useRef('google_direct')
+  const sentencesRef = useRef([])
+  const sentenceIdxRef = useRef(-1)
+  const skipToIdxRef = useRef(-1)
   const nextImageId = useRef(0)
 
   const { trackUsage, isLimitExceeded } = useUsage()
@@ -89,7 +95,7 @@ function TextToSpeech() {
           text,
           source_lang: sourceCode,
           target_lang: targetCode,
-          provider: translationModel,
+          provider: translationModelRef.current,
         }),
       })
       
@@ -375,49 +381,65 @@ function TextToSpeech() {
     })
   }
 
-  // 문장별 번역 + TTS 실행 — 선행 번역(prefetch) 파이프라인
+  // 문장별 번역 + TTS 실행 — 1-ahead prefetch (모델 변경 즉시 반영)
   const speakSentenceBysentence = async (sentences, langCode) => {
     const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
     const targetCode = TTS_LANGUAGES.find(l => l.code === langCode)?.translateCode || langCode
     const needsTranslation = sourceCode !== targetCode
 
-    // ── 1. 번역 prefetch: 모든 문장의 번역을 즉시 순차 시작 ──
-    //    각 문장에 대해 Promise를 미리 생성하고, 체이닝으로 순차 실행
-    //    TTS가 현재 문장을 읽는 동안 다음 문장들이 백그라운드에서 번역됨
-    const translationPromises = []
+    // 번역 캐시: index → translated text (1문장 앞서 번역)
+    const translationCache = new Map()
+    let prefetchIdx = 0
 
-    if (needsTranslation) {
-      let chain = Promise.resolve()
-      for (let i = 0; i < sentences.length; i++) {
-        const idx = i
-        const promise = (chain = chain.then(async () => {
-          if (abortRef.current) return sentences[idx].text
-          setIsTranslating(true)
-          const result = await translateText(sentences[idx].text, selectedLanguage, langCode)
-          return result
-        }))
-        translationPromises.push(promise)
-      }
+    // 다음 미번역 문장 1개를 백그라운드 번역
+    const prefetchNext = () => {
+      if (!needsTranslation || prefetchIdx >= sentences.length || abortRef.current) return null
+      const idx = prefetchIdx++
+      const promise = translateText(sentences[idx].text, selectedLanguage, langCode)
+        .then(result => { translationCache.set(idx, result); return result })
+      translationCache.set(idx, promise)
+      return promise
     }
 
-    // ── 2. 재생 루프: 번역이 준비된 문장부터 즉시 읽기 ──
-    for (let i = 0; i < sentences.length; i++) {
+    // 첫 문장 + 두 번째 문장 미리 번역 시작
+    if (needsTranslation) {
+      prefetchNext()
+      prefetchNext()
+    }
+
+    // 재생 루프
+    let i = 0
+    while (i < sentences.length) {
       if (abortRef.current) break
 
-      const sentence = sentences[i]
-      // 현재 문장 형광펜
-      setHighlightStart(sentence.start)
-      setHighlightEnd(sentence.end)
-
-      // 번역 결과 가져오기 (이미 완료되었으면 즉시 반환)
-      let textToSpeak = sentence.text
-      if (needsTranslation) {
-        textToSpeak = await translationPromises[i]
-        setIsTranslating(false)
-        if (abortRef.current) break
+      // skip 요청 처리 (prev/next)
+      if (skipToIdxRef.current >= 0) {
+        const skipTo = skipToIdxRef.current
+        skipToIdxRef.current = -1
+        i = Math.max(0, Math.min(skipTo, sentences.length - 1))
+        window.speechSynthesis.cancel()
       }
 
-      // TTS 사용량 추적
+      const sentence = sentences[i]
+      setHighlightStart(sentence.start)
+      setHighlightEnd(sentence.end)
+      setCurrentSentenceIdx(i)
+      sentenceIdxRef.current = i
+
+      let textToSpeak = sentence.text
+      if (needsTranslation) {
+        setIsTranslating(true)
+        const cached = translationCache.get(i)
+        textToSpeak = cached instanceof Promise ? await cached : (cached || sentence.text)
+        setIsTranslating(false)
+        setTranslatedTooltip(textToSpeak)
+        if (abortRef.current) break
+
+        prefetchNext()
+      } else {
+        setTranslatedTooltip('')
+      }
+
       if (textToSpeak.length > 0) {
         trackUsage(textToSpeak.length, 'tts').catch(() => {})
       }
@@ -425,16 +447,22 @@ function TextToSpeech() {
       try {
         await speakSentence(textToSpeak, speechRateRef.current, langCode)
       } catch {
-        break // canceled
+        // canceled — check if it was a skip or a real stop
+        if (skipToIdxRef.current >= 0) continue
+        break
       }
+      i++
     }
 
     // 완료
     setIsTranslating(false)
+    setTranslatedTooltip('')
     if (!abortRef.current) {
       setHighlightStart(-1)
       setHighlightEnd(-1)
       setIsSpeaking(false)
+      setCurrentSentenceIdx(-1)
+      sentenceIdxRef.current = -1
 
       if (isRepeatModeRef.current) {
         setTimeout(() => handleSpeak(), 500)
@@ -461,9 +489,11 @@ function TextToSpeech() {
 
       window.speechSynthesis.cancel()
       abortRef.current = false
+      skipToIdxRef.current = -1
       setIsSpeaking(true)
 
       const sentences = splitSentences(text)
+      sentencesRef.current = sentences
       await speakSentenceBysentence(sentences, targetLanguage)
     } else {
       alert('This browser does not support speech synthesis.')
@@ -481,13 +511,30 @@ function TextToSpeech() {
   const handleStop = () => {
     if ('speechSynthesis' in window) {
       abortRef.current = true
+      skipToIdxRef.current = -1
       window.speechSynthesis.cancel()
       setIsSpeaking(false)
       setIsPaused(false)
       setHighlightStart(-1)
       setHighlightEnd(-1)
       setIsTranslating(false)
+      setCurrentSentenceIdx(-1)
+      setTranslatedTooltip('')
+      sentenceIdxRef.current = -1
     }
+  }
+
+  // 이전/다음 문장 이동
+  const handlePrevSentence = () => {
+    if (!isSpeaking || sentenceIdxRef.current <= 0) return
+    skipToIdxRef.current = sentenceIdxRef.current - 1
+    window.speechSynthesis.cancel()
+  }
+
+  const handleNextSentence = () => {
+    if (!isSpeaking || sentenceIdxRef.current >= sentencesRef.current.length - 1) return
+    skipToIdxRef.current = sentenceIdxRef.current + 1
+    window.speechSynthesis.cancel()
   }
 
   // 속도 변경 — ref에 즉시 반영, 다음 문장부터 적용됨
@@ -504,7 +551,7 @@ function TextToSpeech() {
     }
   }
 
-  // 하이라이트된 텍스트 렌더링 (문장 단위)
+  // 하이라이트된 텍스트 렌더링 (문장 단위 + 번역 툴팁)
   const renderHighlightedText = () => {
     if (highlightStart < 0 || highlightEnd < 0) {
       return text
@@ -517,16 +564,19 @@ function TextToSpeech() {
     return (
       <>
         {before}
-        <span className="highlight-text">{highlight}</span>
+        <span className="highlight-text" title={translatedTooltip || undefined}>{highlight}</span>
         {after}
       </>
     )
   }
 
-  // speedRate ref 동기화
+  // ref 동기화
   useEffect(() => {
     speechRateRef.current = speechRate
   }, [speechRate])
+  useEffect(() => {
+    translationModelRef.current = translationModel
+  }, [translationModel])
 
 
   // isRepeatMode 변경 시 ref 업데이트
@@ -630,20 +680,30 @@ function TextToSpeech() {
             >
               📷 Attach Images
             </button>
-            <div className="model-pills model-pills--action">
-              {TRANSLATION_MODELS.map(model => (
-                <button
-                  key={model.id}
-                  className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'madlad' ? ' model-pill--madlad' : model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
-                  onClick={() => setTranslationModel(model.id)}
-                  title={model.desc}
-                >
-                  <span className="model-pill-emoji">{model.emoji}</span>
-                  <span className="model-pill-name">{model.name}</span>
-                </button>
-              ))}
-            </div>
+            {selectedLanguage !== targetLanguage && (
+              <div className="model-pills model-pills--action">
+                {TRANSLATION_MODELS.map(model => (
+                  <button
+                    key={model.id}
+                    className={`model-pill${translationModel === model.id ? ' active' : ''}${model.id === 'deepl' ? ' model-pill--deepl' : ' model-pill--google'}`}
+                    onClick={() => setTranslationModel(model.id)}
+                    title={model.desc}
+                  >
+                    <span className="model-pill-emoji">{model.emoji}</span>
+                    <span className="model-pill-name">{model.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="button-group">
+              <button
+                onClick={handlePrevSentence}
+                disabled={!isSpeaking || currentSentenceIdx <= 0}
+                className="nav-btn"
+                title="Previous sentence"
+              >
+                ⏮
+              </button>
               <button
                 onClick={handleSpeak}
                 disabled={(isSpeaking && !isPaused) || !text.trim() || isTranslating}
@@ -664,6 +724,14 @@ function TextToSpeech() {
                 className="stop-btn"
               >
                 ⏹ Stop
+              </button>
+              <button
+                onClick={handleNextSentence}
+                disabled={!isSpeaking || currentSentenceIdx >= sentencesRef.current.length - 1}
+                className="nav-btn"
+                title="Next sentence"
+              >
+                ⏭
               </button>
             </div>
           </div>

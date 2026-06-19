@@ -732,6 +732,37 @@
   font-weight: 600;
   color: #1e293b;
   animation: highlight-pulse 0.3s ease-in-out;
+  position: relative;
+}
+
+.highlight-text[title] {
+  cursor: help;
+  border-bottom: 1px dashed #b45309;
+}
+
+/* Sentence navigation buttons */
+.nav-btn {
+  padding: 0.5rem 0.65rem;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--border-radius);
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+  transform: translateY(-1px);
+}
+
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 @keyframes highlight-pulse {
