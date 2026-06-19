@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { LANG_MAP, SOURCE_LANGUAGES, TARGET_LANGUAGES } from '../_08_constants'
-import { useLanguagePreferences } from '../../auth'
+import { useLanguagePreferences, useAuthStore } from '../../auth'
 import { useGlossary } from '../../../shared/modules/glossary'
 import { useUsage } from '../../../common/contexts/UsageContext'
 
@@ -44,6 +44,7 @@ export function useTranslator() {
   const [sourceLang, setSourceLang] = useState('ko')
   const [targetLang, setTargetLang] = useState('en')
   const [isTranslating, setIsTranslating] = useState(false)
+  const [translationProvider, setTranslationProvider] = useState(null)
   
   // Track whether a translation is in progress to avoid race conditions
   const latestRequestIdRef = useRef(0)
@@ -60,6 +61,9 @@ export function useTranslator() {
 
   // Usage tracking hook
   const { trackUsage } = useUsage()
+
+  // Auth state — logged-in users get MADLAD provider
+  const { isAuthenticated } = useAuthStore()
 
   // Load language preferences from settings
   useEffect(() => {
@@ -157,7 +161,8 @@ export function useTranslator() {
           body: JSON.stringify({
             text: processedText,
             source_lang: sourceCode,
-            target_lang: targetCode
+            target_lang: targetCode,
+            ...(isAuthenticated ? { provider: 'madlad' } : {})
           }),
           signal: controller.signal
         })
@@ -167,7 +172,9 @@ export function useTranslator() {
           const data = await response.json()
           if (data.translated_text && data.translated_text.trim() && data.translated_text !== processedText) {
             translatedText = data.translated_text.trim()
-            console.log(`[Translator] Used provider: ${data.provider || 'backend'}`)
+            const usedProvider = data.provider || 'backend'
+            setTranslationProvider(usedProvider)
+            console.log(`[Translator] Used provider: ${usedProvider}`)
           }
         }
       } catch (e) {
@@ -231,7 +238,7 @@ export function useTranslator() {
         setIsTranslating(false)
       }
     }
-  }, [inputText, sourceLang, targetLang, preProcess, postProcess, trackUsage])
+  }, [inputText, sourceLang, targetLang, preProcess, postProcess, trackUsage, isAuthenticated])
 
   // 실시간 자동 번역 (debounce)
   useEffect(() => {
@@ -298,6 +305,7 @@ export function useTranslator() {
     targetLang,
     isTranslating,
     domain,
+    translationProvider,
     setInputText: handleInputChange,
     setInputTextRaw: setInputText,  // Raw setter without language detection (for voice input)
     setSourceLang: handleSourceLangChange,

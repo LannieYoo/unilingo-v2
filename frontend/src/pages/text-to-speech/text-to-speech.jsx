@@ -20,8 +20,6 @@ function TextToSpeech() {
   const [currentCharIndex, setCurrentCharIndex] = useState(0)
   const [isTranslating, setIsTranslating] = useState(false)
   const [currentTranslatedText, setCurrentTranslatedText] = useState('')
-  const [textareaHeight, setTextareaHeight] = useState(250)
-  const [isResizing, setIsResizing] = useState(false)
   const [highlightStart, setHighlightStart] = useState(0)
   const [highlightEnd, setHighlightEnd] = useState(0)
   const [isRepeatMode, setIsRepeatMode] = useState(false)
@@ -31,8 +29,6 @@ function TextToSpeech() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [imageLimitWarning, setImageLimitWarning] = useState(false)
   const utteranceRef = useRef(null)
-  const resizeStartY = useRef(0)
-  const resizeStartHeight = useRef(0)
   const isRepeatModeRef = useRef(false)
   const fileInputRef = useRef(null)
   const nextImageId = useRef(0)
@@ -500,13 +496,6 @@ function TextToSpeech() {
     )
   }
 
-  // Resize 핸들러
-  const handleResizeStart = (e) => {
-    e.preventDefault()
-    resizeStartY.current = e.clientY
-    resizeStartHeight.current = textareaHeight
-    setIsResizing(true)
-  }
 
   // isRepeatMode 변경 시 ref 업데이트
   useEffect(() => {
@@ -533,27 +522,6 @@ function TextToSpeech() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!isResizing) return
-
-    const handleResizeMove = (e) => {
-      const deltaY = e.clientY - resizeStartY.current
-      const newHeight = Math.min(Math.max(resizeStartHeight.current + deltaY, 200), 800)
-      setTextareaHeight(newHeight)
-    }
-
-    const handleResizeEnd = () => {
-      setIsResizing(false)
-    }
-
-    document.addEventListener('mousemove', handleResizeMove)
-    document.addEventListener('mouseup', handleResizeEnd)
-
-    return () => {
-      document.removeEventListener('mousemove', handleResizeMove)
-      document.removeEventListener('mouseup', handleResizeEnd)
-    }
-  }, [isResizing])
 
   return (
     <PageLayout title="Text to Speech">
@@ -622,28 +590,37 @@ function TextToSpeech() {
             </div>
           </div>
 
-          <div className="button-group">
+          <div className="tts-action-row">
             <button
-              onClick={handleSpeak}
-              disabled={(isSpeaking && !isPaused) || !text.trim() || isTranslating}
-              className="speak-btn"
+              className="attach-image-btn-top"
+              onClick={() => fileInputRef.current?.click()}
+              title="Attach images for OCR"
             >
-              {isTranslating ? '🔄 Translating...' : isPaused ? '▶ Resume' : isSpeaking ? '🔊 Playing...' : '▶ Play'}
+              📷 Attach Images
             </button>
-            <button
-              onClick={handlePause}
-              disabled={!isSpeaking || isPaused}
-              className="pause-btn"
-            >
-              ⏸ Pause
-            </button>
-            <button
-              onClick={handleStop}
-              disabled={!isSpeaking && !isPaused}
-              className="stop-btn"
-            >
-              ⏹ Stop
-            </button>
+            <div className="button-group">
+              <button
+                onClick={handleSpeak}
+                disabled={(isSpeaking && !isPaused) || !text.trim() || isTranslating}
+                className="speak-btn"
+              >
+                {isTranslating ? '🔄 Translating...' : isPaused ? '▶ Resume' : isSpeaking ? '🔊 Playing...' : '▶ Play'}
+              </button>
+              <button
+                onClick={handlePause}
+                disabled={!isSpeaking || isPaused}
+                className="pause-btn"
+              >
+                ⏸ Pause
+              </button>
+              <button
+                onClick={handleStop}
+                disabled={!isSpeaking && !isPaused}
+                className="stop-btn"
+              >
+                ⏹ Stop
+              </button>
+            </div>
           </div>
 
           {voiceWarning && (
@@ -697,6 +674,7 @@ function TextToSpeech() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            style={{ flex: 1, minHeight: 0 }}
           >
             {/* 이미지 썸네일 영역 */}
             {pastedImages.length > 0 && (
@@ -794,7 +772,7 @@ function TextToSpeech() {
               </div>
             )}
 
-            <div className="text-display-wrapper" style={{ height: `${textareaHeight}px` }}>
+            <div className="text-display-wrapper" style={{ flex: 1, minHeight: 0 }}>
               {isSpeaking ? (
                 <div className="text-display">
                   {renderHighlightedText()}
@@ -808,25 +786,7 @@ function TextToSpeech() {
                     : 'Enter text to convert to speech... (Paste images with Ctrl+V)'
                   }
                   className="input-textarea"
-                  style={{ height: `${textareaHeight}px` }}
                 />
-              )}
-            </div>
-            <div className="resize-handle-row">
-              <div 
-                className="resize-handle"
-                onMouseDown={handleResizeStart}
-              >
-                <div className="resize-handle-bar"></div>
-              </div>
-              {pastedImages.length === 0 && (
-                <button
-                  className="attach-image-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Attach images"
-                >
-                  📷 Attach Images
-                </button>
               )}
             </div>
             {/* 드래그 오버레이 */}

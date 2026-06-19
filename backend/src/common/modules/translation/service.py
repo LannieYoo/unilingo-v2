@@ -26,33 +26,35 @@ class TranslationService:
         self.cache = get_cache_service() if cache_enabled else None
         self.timeout_strategy = [5.0, 3.0, 1.0]
         self.deepl_api_key = os.getenv('DEEPL_API_KEY', '')
+        self.madlad_server_url = os.getenv('MADLAD_SERVER_URL', '')
         self.provider_health = {
+            'madlad': {'failures': 0, 'last_success': None},
             'deepl': {'failures': 0, 'last_success': None},
             'google_direct': {'failures': 0, 'last_success': None},
             'mymemory': {'failures': 0, 'last_success': None},
             'google_proxy': {'failures': 0, 'last_success': None}
         }
     
-    def translate(self, text: str, source_lang: str, target_lang: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
+    def translate(self, text: str, source_lang: str, target_lang: str, trace_id: Optional[str] = None, preferred_provider: Optional[str] = None) -> Dict[str, Any]:
         """텍스트 번역"""
         start_time = time.time()
         provider_attempts = []
         
-        logger.info(f"Translation: {source_lang}->{target_lang}, trace_id: {trace_id}")
+        logger.info(f"Translation: {source_lang}->{target_lang}, provider_pref: {preferred_provider}, trace_id: {trace_id}")
         
         if source_lang == target_lang:
             return self._build_result(text, source_lang, target_lang, 'none', start_time)
         
         cache_key = None
         if self.cache_enabled:
-            cache_key = self.cache.generate_key('translate', source=source_lang, target=target_lang, text=text[:100])
+            cache_key = self.cache.generate_key('translate', source=source_lang, target=target_lang, text=text[:100], provider=preferred_provider or 'auto')
             cached_result = self.cache.get(cache_key)
             if cached_result:
                 cached_result['cached'] = True
                 cached_result['processing_time'] = time.time() - start_time
                 return cached_result
 
-        providers = self._get_ordered_providers()
+        providers = self._get_ordered_providers(preferred_provider)
         
         for provider_name, provider_func in providers:
             success, result, attempts = self._try_provider_with_retry(provider_func, provider_name, text, source_lang, target_lang, trace_id)
@@ -112,10 +114,15 @@ class TranslationService:
             'error': error
         }
 
-    def _get_ordered_providers(self) -> List[Tuple[str, callable]]:
-        """상태 기반 제공자 순서 (DeepL 최우선)"""
+    def _get_ordered_providers(self, preferred_provider: Optional[str] = None) -> List[Tuple[str, callable]]:
+        """상태 기반 제공자 순서 (preferred_provider 최우선)"""
         providers = []
-        # DeepL is always first if API key is configured
+        
+        # MADLAD is available if server URL is configured
+        if self.madlad_server_url:
+            providers.append(('madlad', self._translate_madlad))
+        
+        # DeepL if API key is configured
         if self.deepl_api_key:
             providers.append(('deepl', self._translate_deepl))
         providers.extend([
@@ -123,12 +130,19 @@ class TranslationService:
             ('mymemory', self._translate_mymemory),
             ('google_proxy', self._translate_google_proxy)
         ])
+        
         def sort_key(provider_tuple):
             name = provider_tuple[0]
-            # DeepL always gets priority (lowest sort key)
+            # Preferred provider gets absolute priority
+            if preferred_provider and name == preferred_provider:
+                return (-2, 0)
+            # DeepL gets second priority
             if name == 'deepl':
                 return (-1, 0)
-            health = self.provider_health[name]
+            # MADLAD gets third priority (after DeepL when not preferred)
+            if name == 'madlad':
+                return (-0.5, 0)
+            health = self.provider_health.get(name, {'failures': 0, 'last_success': None})
             return (health['failures'], -(health['last_success'] or 0))
         return sorted(providers, key=sort_key)
     
@@ -162,6 +176,30 @@ class TranslationService:
                 attempts.append({'provider_name': provider_name, 'success': False, 'error_message': str(e), 'response_time': response_time, 'timeout_used': timeout})
                 break
         return False, None, attempts
+
+    # --- MADLAD-400 Self-hosted (GPU Server) ---
+    
+    def _translate_madlad(self, text: str, source_lang: str, target_lang: str, timeout: float = 8.0) -> Optional[str]:
+        """MADLAD-400 7B 자체 호스팅 서버 번역"""
+        if not self.madlad_server_url:
+            return None
+        
+        url = f'{self.madlad_server_url}/api/translate'
+        payload = {
+            'text': text,
+            'source_lang': source_lang,
+            'target_lang': target_lang,
+        }
+        
+        response = requests.post(url, json=payload, timeout=timeout)
+        response.raise_for_status()
+        data = response.json()
+        
+        translated = data.get('translated_text', '').strip()
+        if translated and translated != text:
+            logger.info(f"MADLAD translated in {data.get('processing_time', '?')}s")
+            return translated
+        return None
 
     # --- DeepL Free API (최우선) ---
     

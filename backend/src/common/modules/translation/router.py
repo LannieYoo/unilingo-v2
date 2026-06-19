@@ -29,6 +29,7 @@ def translate():
     text = data.get('text', '')
     source_lang = data.get('source_lang', '')
     target_lang = data.get('target_lang', '')
+    preferred_provider = data.get('provider', None)  # Optional: 'madlad', 'deepl', etc.
     
     if not text:
         return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': 'Missing required field: text', 'trace_id': trace_id}}), 400
@@ -46,7 +47,7 @@ def translate():
         return jsonify({'error': {'code': 'VALIDATION_ERROR', 'message': f'Invalid target_lang. Must be one of: {VALID_LANGS}', 'trace_id': trace_id}}), 400
     
     try:
-        result = translation_service.translate(text=text, source_lang=source_lang, target_lang=target_lang, trace_id=trace_id)
+        result = translation_service.translate(text=text, source_lang=source_lang, target_lang=target_lang, trace_id=trace_id, preferred_provider=preferred_provider)
         result['trace_id'] = trace_id
         
         # Track usage - for authenticated users or guests (by IP)
