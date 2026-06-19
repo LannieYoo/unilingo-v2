@@ -499,6 +499,12 @@ export function DictionaryView() {
                               {isFavorite ? 'star' : 'star_outline'}
                             </span>
                           </button>
+                          {!result.pronunciation && detectedLanguage === 'ko' && (
+                            <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'ko-KR')}>🔉</button>
+                          )}
+                          {!result.pronunciation && detectedLanguage === 'zh' && (
+                            <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'zh-CN')}>🔉</button>
+                          )}
                         </div>
                         {result.simpleTranslation && (
                           <div className="result-simple-translation">{result.simpleTranslation}</div>
@@ -551,12 +557,6 @@ export function DictionaryView() {
                             </>
                           )}
                         </div>
-                      )}
-                      {!result.pronunciation && detectedLanguage === 'zh' && (
-                        <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'zh-CN')}>🔉</button>
-                      )}
-                      {!result.pronunciation && detectedLanguage === 'ko' && (
-                        <button className="speaker-btn" onClick={() => playPronunciation(result.term || result.word, 'ko-KR')}>🔉</button>
                       )}
                     </div>
 
@@ -724,7 +724,7 @@ export function DictionaryView() {
 
             {/* Context Suggestions (LLM Lannie Server) */}
             {(isAuthenticated ? (contextSuggestions.length > 0 || contextLoading) : true) && (
-              <div className="ai-section">
+              <div className={`ai-section${contextLoading ? ' llm-loading' : ''}`}>
                 <div className="ai-section-header">
                   <span className="ai-badge phrasal-badge">🧠 LLM</span>
                   <span className="ai-section-title">Context Suggestions</span>
@@ -757,7 +757,7 @@ export function DictionaryView() {
 
             {/* Phrasal Verbs (RAG Server) */}
             {(isAuthenticated ? (phrasalVerbs.length > 0 || phrasalLoading) : true) && (
-              <div className="ai-section phrasal-section">
+              <div className={`ai-section phrasal-section${phrasalLoading ? ' llm-loading' : ''}`}>
                 <div className="ai-section-header">
                   <span className="ai-badge phrasal-badge">📖 LLM</span>
                   <span className="ai-section-title">Phrasal Verbs & Idioms</span>

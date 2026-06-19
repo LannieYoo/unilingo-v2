@@ -1,10 +1,14 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { PageLayout, PageBox } from '../../components/layout/PageLayout'
 import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage, getLanguageByCode } from '../../config/languages'
 import './text-to-speech.css'
 import { useUsage } from '../../common/hooks/useUsage'
 import { UsageIndicator } from '../../common/components/UsageIndicator'
-import { useLanguagePreferences } from '../../modules/auth'
+import { useLanguagePreferences, useAuthStore } from '../../modules/auth'
+import { createWorker } from 'tesseract.js'
+
+const MAX_IMAGES_GUEST = 2
+const MAX_IMAGES_LOGGED_IN = 10
 
 function TextToSpeech() {
   const [text, setText] = useState('')
@@ -22,12 +26,20 @@ function TextToSpeech() {
   const [highlightEnd, setHighlightEnd] = useState(0)
   const [isRepeatMode, setIsRepeatMode] = useState(false)
   const [voiceWarning, setVoiceWarning] = useState(null)
+  const [pastedImages, setPastedImages] = useState([])
+  const [ocrProgress, setOcrProgress] = useState({})
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [imageLimitWarning, setImageLimitWarning] = useState(false)
   const utteranceRef = useRef(null)
   const resizeStartY = useRef(0)
   const resizeStartHeight = useRef(0)
   const isRepeatModeRef = useRef(false)
+  const fileInputRef = useRef(null)
+  const nextImageId = useRef(0)
 
   const { trackUsage, isLimitExceeded } = useUsage()
+  const { isAuthenticated } = useAuthStore()
+  const maxImages = isAuthenticated ? MAX_IMAGES_LOGGED_IN : MAX_IMAGES_GUEST
 
   // Settings 언어 설정 적용
   const { nativeLanguage, targetLanguage: settingsTargetLang, isLoaded: preferencesLoaded } = useLanguagePreferences()
@@ -113,6 +125,168 @@ function TextToSpeech() {
       setTargetLanguage(detectedLang)
     }
   }
+
+  // === 이미지 붙여넣기 / 드래그앤드롭 / 업로드 ===
+  const addImages = useCallback((files) => {
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length === 0) return
+
+    setPastedImages(prev => {
+      const remaining = maxImages - prev.length
+      if (remaining <= 0) {
+        if (!isAuthenticated) {
+          setImageLimitWarning(true)
+        }
+        return prev
+      }
+
+      const toAdd = imageFiles.slice(0, remaining)
+      if (toAdd.length < imageFiles.length && !isAuthenticated) {
+        setImageLimitWarning(true)
+      }
+
+      const newImages = toAdd.map(file => {
+        const id = nextImageId.current++
+        return {
+          id,
+          file,
+          url: URL.createObjectURL(file),
+          status: 'ready',
+          extractedText: '',
+        }
+      })
+      return [...prev, ...newImages]
+    })
+  }, [maxImages, isAuthenticated])
+
+  // 클립보드 붙여넣기 핸들러
+  const handlePaste = useCallback((e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    const imageFiles = []
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) imageFiles.push(file)
+      }
+    }
+    if (imageFiles.length > 0) {
+      e.preventDefault()
+      addImages(imageFiles)
+    }
+  }, [addImages])
+
+  // 드래그앤드롭 핸들러
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    if (e.dataTransfer?.files) {
+      addImages(e.dataTransfer.files)
+    }
+  }, [addImages])
+
+  // 파일 선택 핸들러
+  const handleFileSelect = useCallback((e) => {
+    if (e.target.files) {
+      addImages(e.target.files)
+    }
+    e.target.value = '' // reset for re-upload of same file
+  }, [addImages])
+
+  // 이미지 제거
+  const removeImage = useCallback((id) => {
+    setPastedImages(prev => {
+      const img = prev.find(i => i.id === id)
+      if (img) URL.revokeObjectURL(img.url)
+      return prev.filter(i => i.id !== id)
+    })
+    setOcrProgress(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }, [])
+
+  // 모든 이미지 제거
+  const removeAllImages = useCallback(() => {
+    pastedImages.forEach(img => URL.revokeObjectURL(img.url))
+    setPastedImages([])
+    setOcrProgress({})
+  }, [pastedImages])
+
+  // 단일 이미지 OCR
+  const ocrSingleImage = useCallback(async (imageItem) => {
+    setPastedImages(prev =>
+      prev.map(img => img.id === imageItem.id ? { ...img, status: 'processing' } : img)
+    )
+    setOcrProgress(prev => ({ ...prev, [imageItem.id]: 0 }))
+
+    try {
+      const worker = await createWorker('eng+kor', 1, {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            setOcrProgress(prev => ({ ...prev, [imageItem.id]: Math.round(m.progress * 100) }))
+          }
+        },
+      })
+
+      const { data: { text: extractedText } } = await worker.recognize(imageItem.file)
+      await worker.terminate()
+
+      const trimmed = extractedText.trim()
+      setPastedImages(prev =>
+        prev.map(img => img.id === imageItem.id ? { ...img, status: 'done', extractedText: trimmed } : img)
+      )
+      setOcrProgress(prev => ({ ...prev, [imageItem.id]: 100 }))
+
+      // 추출된 텍스트를 textarea에 추가
+      if (trimmed) {
+        setText(prev => {
+          const separator = prev.trim() ? '\n' : ''
+          const newText = prev + separator + trimmed
+          // 언어 감지
+          const detectedLang = detectLanguage(newText)
+          setSelectedLanguage(detectedLang)
+          setTargetLanguage(detectedLang)
+          return newText
+        })
+      }
+    } catch (err) {
+      console.error('OCR Error:', err)
+      setPastedImages(prev =>
+        prev.map(img => img.id === imageItem.id ? { ...img, status: 'error' } : img)
+      )
+    }
+  }, [])
+
+  // 모든 이미지 OCR 실행
+  const ocrAllImages = useCallback(async () => {
+    const readyImages = pastedImages.filter(img => img.status === 'ready')
+    for (const img of readyImages) {
+      await ocrSingleImage(img)
+    }
+  }, [pastedImages, ocrSingleImage])
+
+  // 컴포넌트 언마운트 시 objectURL 정리
+  useEffect(() => {
+    return () => {
+      pastedImages.forEach(img => URL.revokeObjectURL(img.url))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 속도 변경 핸들러
   const handleSpeedChange = (newRate) => {
@@ -517,7 +691,109 @@ function TextToSpeech() {
             </div>
           )}
 
-          <div className="input-section">
+          <div
+            className={`input-section${isDragOver ? ' drag-over' : ''}`}
+            onPaste={handlePaste}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {/* 이미지 썸네일 영역 */}
+            {pastedImages.length > 0 && (
+              <div className="pasted-images-area">
+                <div className="pasted-images-header">
+                  <span className="pasted-images-title">
+                    📷 Images ({pastedImages.length})
+                  </span>
+                  <div className="pasted-images-actions">
+                    {pastedImages.some(img => img.status === 'ready') && (
+                      <button
+                        className="ocr-extract-all-btn"
+                        onClick={ocrAllImages}
+                        title="Extract text from all images"
+                      >
+                        🔍 Extract All Text
+                      </button>
+                    )}
+                    <button
+                      className="images-clear-btn"
+                      onClick={removeAllImages}
+                      title="Remove all images"
+                    >
+                      ✕ Clear All
+                    </button>
+                  </div>
+                </div>
+                <div className="pasted-images-grid">
+                  {pastedImages.map(img => (
+                    <div key={img.id} className={`pasted-image-card ${img.status}`}>
+                      <div className="pasted-image-thumb-wrapper">
+                        <img src={img.url} alt="Pasted" className="pasted-image-thumb" />
+                        {img.status === 'processing' && (
+                          <div className="ocr-overlay">
+                            <div className="ocr-spinner"></div>
+                            <span className="ocr-progress-text">
+                              {ocrProgress[img.id] ?? 0}%
+                            </span>
+                          </div>
+                        )}
+                        {img.status === 'done' && (
+                          <div className="ocr-done-badge">✓</div>
+                        )}
+                        {img.status === 'error' && (
+                          <div className="ocr-error-badge">✗</div>
+                        )}
+                      </div>
+                      <div className="pasted-image-actions">
+                        {img.status === 'ready' && (
+                          <button
+                            className="ocr-btn"
+                            onClick={() => ocrSingleImage(img)}
+                            title="Extract text (OCR)"
+                          >
+                            🔍
+                          </button>
+                        )}
+                        <button
+                          className="remove-image-btn"
+                          onClick={() => removeImage(img.id)}
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {/* 이미지 추가 버튼 (제한에 안 걸릴 때만 표시) */}
+                  {pastedImages.length < maxImages && (
+                    <button
+                      className="add-image-card"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Add images"
+                    >
+                      <span className="add-image-icon">+</span>
+                      <span className="add-image-label">Add</span>
+                    </button>
+                  )}
+                </div>
+                {/* 비로그인 이미지 제한 안내 */}
+                {imageLimitWarning && !isAuthenticated && (
+                  <div className="image-limit-warning">
+                    <span className="image-limit-warning-icon">🔒</span>
+                    <span className="image-limit-warning-text">
+                      You can attach up to {MAX_IMAGES_GUEST} images as a guest. Please sign in to attach up to {MAX_IMAGES_LOGGED_IN} images.
+                    </span>
+                    <button
+                      className="image-limit-warning-close"
+                      onClick={() => setImageLimitWarning(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="text-display-wrapper" style={{ height: `${textareaHeight}px` }}>
               {isSpeaking ? (
                 <div className="text-display">
@@ -527,18 +803,50 @@ function TextToSpeech() {
                 <textarea
                   value={text}
                   onChange={handleTextChange}
-                  placeholder="Enter text to convert to speech..."
+                  placeholder={pastedImages.length > 0
+                    ? 'Images attached. Click 🔍 to extract text, or type here...'
+                    : 'Enter text to convert to speech... (Paste images with Ctrl+V)'
+                  }
                   className="input-textarea"
                   style={{ height: `${textareaHeight}px` }}
                 />
               )}
             </div>
-            <div 
-              className="resize-handle"
-              onMouseDown={handleResizeStart}
-            >
-              <div className="resize-handle-bar"></div>
+            <div className="resize-handle-row">
+              <div 
+                className="resize-handle"
+                onMouseDown={handleResizeStart}
+              >
+                <div className="resize-handle-bar"></div>
+              </div>
+              {pastedImages.length === 0 && (
+                <button
+                  className="attach-image-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach images"
+                >
+                  📷 Attach Images
+                </button>
+              )}
             </div>
+            {/* 드래그 오버레이 */}
+            {isDragOver && (
+              <div className="drag-overlay">
+                <div className="drag-overlay-content">
+                  <span className="drag-overlay-icon">📷</span>
+                  <span className="drag-overlay-text">Drop images here</span>
+                </div>
+              </div>
+            )}
+            {/* 숨겨진 파일 입력 */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
           </div>
         </PageBox>
         

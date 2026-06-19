@@ -54,6 +54,7 @@ export function TranslatorView() {
   const [focusMode, setFocusMode] = useState(false)
   const [sttMode, setSttMode] = useState('local') // 'local' | 'server'
   const [showSttModeHelp, setShowSttModeHelp] = useState(false)
+  const [copySuccess, setCopySuccess] = useState(false)
 
   // Alternative translations (유사 표현)
   const [showAlternatives, setShowAlternatives] = useState(false)
@@ -508,6 +509,18 @@ export function TranslatorView() {
       stop()
     } else {
       speak(outputText, ttsLang)
+    }
+  }
+
+  // Copy output text to clipboard
+  const handleCopyOutput = async () => {
+    if (!outputText?.trim()) return
+    try {
+      await navigator.clipboard.writeText(outputText)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error('Copy failed:', err)
     }
   }
 
@@ -981,56 +994,83 @@ export function TranslatorView() {
               )}
             </div>
           )}
-          <div
-            ref={outputTextareaRef}
-            className={`translator-textarea translator-textarea--output translator-output-lines ${conversationMode ? 'conversation-mode' : ''}`}
-          >
-            {outputText ? (() => {
-              const outLines = outputText.split('\n')
-              const inLines = inputText ? inputText.split('\n') : []
-              return outLines.map((line, i) => {
-                if (!line.trim()) return <div key={i} className="translator-output-empty-line">&nbsp;</div>
-                const srcLine = inLines[i] || ''
-                const lineAlts = alternatives[i] || []
-                const isAltLoading = altLoading[i]
+          <div className="translator-textarea-container">
+            <div
+              ref={outputTextareaRef}
+              className={`translator-textarea translator-textarea--output translator-output-lines ${conversationMode ? 'conversation-mode' : ''}`}
+            >
+              {outputText ? (() => {
+                const outLines = outputText.split('\n')
+                const inLines = inputText ? inputText.split('\n') : []
+                return outLines.map((line, i) => {
+                  if (!line.trim()) return <div key={i} className="translator-output-empty-line">&nbsp;</div>
+                  const srcLine = inLines[i] || ''
+                  const lineAlts = alternatives[i] || []
+                  const isAltLoading = altLoading[i]
 
-                return (
-                  <div key={i} className="translator-output-line-group">
-                    <div className="translator-output-line">
-                      <span className="translator-output-line-text">{line}</span>
-                      {isAuthenticated && srcLine.trim() && (
-                        <button
-                          className={`translator-line-save-btn ${savedSentences.has(i) ? 'saved' : ''}`}
-                          onClick={() => handleSaveSentence(srcLine, line, i)}
-                          disabled={savingSentenceIdx === i || savedSentences.has(i)}
-                          title={savedSentences.has(i) ? 'Saved' : 'Save this sentence'}
-                        >
-                          <span className="material-symbols-outlined">
-                            {savedSentences.has(i) ? 'bookmark' : 'bookmark_add'}
-                          </span>
-                        </button>
+                  return (
+                    <div key={i} className="translator-output-line-group">
+                      <div className="translator-output-line">
+                        <span className="translator-output-line-text">{line}</span>
+                        {isAuthenticated && srcLine.trim() && (
+                          <button
+                            className={`translator-line-save-btn ${savedSentences.has(i) ? 'saved' : ''}`}
+                            onClick={() => handleSaveSentence(srcLine, line, i)}
+                            disabled={savingSentenceIdx === i || savedSentences.has(i)}
+                            title={savedSentences.has(i) ? 'Saved' : 'Save this sentence'}
+                          >
+                            <span className="material-symbols-outlined">
+                              {savedSentences.has(i) ? 'bookmark' : 'bookmark_add'}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                      {showAlternatives && lineAlts.length > 0 && (
+                        <div className="translator-alt-cards">
+                          {lineAlts.map((alt, j) => (
+                            <div key={j} className="translator-alt-card">
+                              <span className="translator-alt-card-text">{alt.text}</span>
+                              {alt.nuance && <span className="translator-alt-card-nuance">{alt.nuance}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {showAlternatives && isAltLoading && (
+                        <div className="translator-alt-loading">
+                          <span className="translator-alt-spinner" /> Generating alternative translations...
+                        </div>
                       )}
                     </div>
-                    {showAlternatives && lineAlts.length > 0 && (
-                      <div className="translator-alt-cards">
-                        {lineAlts.map((alt, j) => (
-                          <div key={j} className="translator-alt-card">
-                            <span className="translator-alt-card-text">{alt.text}</span>
-                            {alt.nuance && <span className="translator-alt-card-nuance">{alt.nuance}</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {showAlternatives && isAltLoading && (
-                      <div className="translator-alt-loading">
-                        <span className="translator-alt-spinner" /> Generating alternative translations...
-                      </div>
-                    )}
-                  </div>
-                )
-              })
-            })() : (
-              <span className="translator-output-placeholder">Translation result will appear here...</span>
+                  )
+                })
+              })() : (
+                <span className="translator-output-placeholder">Translation result will appear here...</span>
+              )}
+            </div>
+            {/* Output action buttons — top-right, same as input box */}
+            {outputText && (
+              <>
+                <button
+                  onClick={handleCopyOutput}
+                  className={`translator-copy-btn ${copySuccess ? 'copied' : ''}`}
+                  title={copySuccess ? 'Copied!' : 'Copy translation'}
+                >
+                  <span className="material-symbols-outlined">
+                    {copySuccess ? 'check' : 'content_copy'}
+                  </span>
+                </button>
+                {isTTSSupported && (
+                  <button
+                    onClick={handleSpeakTarget}
+                    className={`translator-speak-btn ${isSpeaking && currentLang === getVoiceCode(targetLang) ? 'speaking' : ''}`}
+                    title={isSpeaking && currentLang === getVoiceCode(targetLang) ? 'Stop' : 'Listen'}
+                  >
+                    <span className="material-symbols-outlined">
+                      {isSpeaking && currentLang === getVoiceCode(targetLang) ? 'stop_circle' : 'volume_up'}
+                    </span>
+                  </button>
+                )}
+              </>
             )}
           </div>
           <div
@@ -1057,17 +1097,6 @@ export function TranslatorView() {
           >
             <div className="translator-resize-handle-bar" />
           </div>
-          {outputText && isTTSSupported && (
-            <button
-              onClick={handleSpeakTarget}
-              className={`translator-speak-btn translator-speak-btn--output ${isSpeaking && currentLang === getVoiceCode(targetLang) ? 'speaking' : ''}`}
-              title={isSpeaking && currentLang === getVoiceCode(targetLang) ? 'Stop' : 'Listen'}
-            >
-              <span className="material-symbols-outlined">
-                {isSpeaking && currentLang === getVoiceCode(targetLang) ? 'stop_circle' : 'volume_up'}
-              </span>
-            </button>
-          )}
         </div>
 
         {/* Guest character counter - below output section */}

@@ -354,7 +354,11 @@ export function useDictionary() {
       if (res.ok) {
         const data = await res.json()
         if (data.translated_text && data.translated_text.trim() && data.translated_text !== text) {
-          return data.translated_text.trim()
+          const cleaned = data.translated_text.trim()
+          // Validate: must contain at least one Latin letter (reject garbage like '????')
+          if (/[a-zA-Z]/.test(cleaned)) {
+            return cleaned
+          }
         }
       }
     } catch (e) {
@@ -421,10 +425,31 @@ export function useDictionary() {
       console.log('[Dictionary Hook] Looking up:', englishWord)
 
       // Free Dictionary API 호출 (자동완성과 같은 빠른 소스)
-      const dictResponse = await fetch(
+      let dictResponse = await fetch(
         `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(englishWord)}`,
         { signal }
       )
+
+      // If lookup fails and englishWord is multi-word (e.g. "I feel unsettled"),
+      // try individual words in reverse order (last word is usually the key word)
+      if (!dictResponse.ok && englishWord.includes(' ')) {
+        const words = englishWord.split(/\s+/).filter(w => w.length > 2)
+        // Try last word first (usually the meaningful adjective/verb)
+        for (let i = words.length - 1; i >= 0; i--) {
+          const candidate = words[i].replace(/[^a-zA-Z]/g, '')
+          if (!candidate) continue
+          console.log('[Dictionary Hook] Retrying with word:', candidate)
+          const retryResponse = await fetch(
+            `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(candidate)}`,
+            { signal }
+          )
+          if (retryResponse.ok) {
+            dictResponse = retryResponse
+            englishWord = candidate
+            break
+          }
+        }
+      }
 
       if (!dictResponse.ok) {
         const result = [{ word: wordToSearch, translation: `"${wordToSearch}" - 검색 결과를 찾을 수 없습니다.`, isPhrase: true }]

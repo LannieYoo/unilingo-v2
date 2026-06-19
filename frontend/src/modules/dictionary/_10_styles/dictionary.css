@@ -1519,11 +1519,35 @@
 }
 
 .ai-section {
+  position: relative;
+  overflow: hidden;
   padding: 1rem 1.25rem;
   background: linear-gradient(135deg, #f0f9ff, #eff6ff);
   border: 1.5px solid #93c5fd;
   border-radius: 12px;
   animation: ai-fade-in 0.3s ease-out;
+}
+
+/* LLM loading progress bar — thin sliding bar at top of box */
+.ai-section.llm-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3b82f6, #6366f1, transparent);
+  border-radius: 12px 12px 0 0;
+  animation: llm-bar-slide 1.4s ease-in-out infinite;
+}
+
+.ai-section.phrasal-section.llm-loading::after {
+  background: linear-gradient(90deg, transparent, #10b981, #059669, transparent);
+}
+
+@keyframes llm-bar-slide {
+  0% { left: -40%; }
+  100% { left: 100%; }
 }
 
 @keyframes ai-fade-in {
