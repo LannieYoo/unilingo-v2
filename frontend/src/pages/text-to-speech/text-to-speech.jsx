@@ -25,9 +25,9 @@ const MAX_IMAGES_GUEST = 2
 const MAX_IMAGES_LOGGED_IN = 10
 
 function TextToSpeech() {
-  const [text, setText] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
-  const [targetLanguage, setTargetLanguage] = useState('en')
+  const [text, setText] = useState(() => sessionStorage.getItem('tts_text') || '')
+  const [selectedLanguage, setSelectedLanguage] = useState(() => sessionStorage.getItem('tts_source_lang') || 'en')
+  const [targetLanguage, setTargetLanguage] = useState(() => sessionStorage.getItem('tts_target_lang') || 'en')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [speechRate, setSpeechRate] = useState(1.0)
@@ -44,6 +44,8 @@ function TextToSpeech() {
   const [usedProvider, setUsedProvider] = useState(null)
   const [currentSentenceIdx, setCurrentSentenceIdx] = useState(-1)
   const [translatedTooltip, setTranslatedTooltip] = useState('')
+  const [translationViewMode, setTranslationViewMode] = useState('highlight')
+  const [sentenceTranslations, setSentenceTranslations] = useState({})
   const utteranceRef = useRef(null)
   const isRepeatModeRef = useRef(false)
   const fileInputRef = useRef(null)
@@ -140,15 +142,16 @@ function TextToSpeech() {
   const handleTextChange = (e) => {
     const newText = e.target.value
     setText(newText)
+    sessionStorage.setItem('tts_text', newText)
     
     // 텍스트가 있으면 언어 자동 감지
     if (newText.trim()) {
       let detectedLang = detectLanguage(newText)
-      // TTS_LANGUAGES 코드로 변환 (en-US -> en)
       if (detectedLang === 'en-US') detectedLang = 'en'
       setSelectedLanguage(detectedLang)
-      // target language도 source language와 같게 설정
+      sessionStorage.setItem('tts_source_lang', detectedLang)
       setTargetLanguage(detectedLang)
+      sessionStorage.setItem('tts_target_lang', detectedLang)
     }
   }
 
@@ -433,6 +436,8 @@ function TextToSpeech() {
         textToSpeak = cached instanceof Promise ? await cached : (cached || sentence.text)
         setIsTranslating(false)
         setTranslatedTooltip(textToSpeak)
+        // 번역 결과 저장 (All 모드용)
+        setSentenceTranslations(prev => ({ ...prev, [i]: textToSpeak }))
         if (abortRef.current) break
 
         prefetchNext()
@@ -463,6 +468,7 @@ function TextToSpeech() {
       setIsSpeaking(false)
       setCurrentSentenceIdx(-1)
       sentenceIdxRef.current = -1
+      // sentenceTranslations는 유지 (재생 완료 후에도 All 모드에서 볼 수 있도록)
 
       if (isRepeatModeRef.current) {
         setTimeout(() => handleSpeak(), 500)
@@ -491,6 +497,7 @@ function TextToSpeech() {
       abortRef.current = false
       skipToIdxRef.current = -1
       setIsSpeaking(true)
+      setSentenceTranslations({})
 
       const sentences = splitSentences(text)
       sentencesRef.current = sentences
@@ -520,6 +527,7 @@ function TextToSpeech() {
       setIsTranslating(false)
       setCurrentSentenceIdx(-1)
       setTranslatedTooltip('')
+      setSentenceTranslations({})
       sentenceIdxRef.current = -1
     }
   }
@@ -546,13 +554,40 @@ function TextToSpeech() {
   // Target Language 변경 — 재생/일시정지 중이면 중단
   const handleTargetLanguageChange = (newTargetLang) => {
     setTargetLanguage(newTargetLang)
+    sessionStorage.setItem('tts_target_lang', newTargetLang)
     if (isSpeaking || isPaused) {
       handleStop()
     }
   }
 
-  // 하이라이트된 텍스트 렌더링 (문장 단위 + 번역 툴팁)
+  // 하이라이트된 텍스트 렌더링 — translationViewMode에 따라 다르게
   const renderHighlightedText = () => {
+    const sentences = sentencesRef.current
+    const hasSentences = sentences.length > 0 && (isSpeaking || isPaused || Object.keys(sentenceTranslations).length > 0)
+    const needsTranslation = selectedLanguage !== targetLanguage
+
+    // All 모드: 문장별로 번역 표시
+    if (translationViewMode === 'all' && hasSentences && needsTranslation) {
+      return (
+        <>
+          {sentences.map((sentence, idx) => {
+            const sentText = text.substring(sentence.start, sentence.end)
+            const isActive = idx === currentSentenceIdx
+            const translation = sentenceTranslations[idx]
+            return (
+              <span key={idx} className="highlight-wrapper">
+                <span className={isActive ? 'highlight-text' : undefined}>{sentText}</span>
+                {translation && (
+                  <span className={`highlight-tooltip${isActive ? ' highlight-tooltip--active' : ''}`}>{translation}</span>
+                )}
+              </span>
+            )
+          })}
+        </>
+      )
+    }
+
+    // Highlight 모드 또는 Off 모드
     if (highlightStart < 0 || highlightEnd < 0) {
       return text
     }
@@ -561,13 +596,15 @@ function TextToSpeech() {
     const highlight = text.substring(highlightStart, highlightEnd)
     const after = text.substring(highlightEnd)
 
+    const showTooltip = translationViewMode === 'highlight' && translatedTooltip && needsTranslation
+
     return (
       <>
         {before}
         <span className="highlight-wrapper">
           <span className="highlight-text">{highlight}</span>
-          {translatedTooltip && (
-            <span className="highlight-tooltip">{translatedTooltip}</span>
+          {showTooltip && (
+            <span className="highlight-tooltip highlight-tooltip--active">{translatedTooltip}</span>
           )}
         </span>
         {after}
@@ -696,6 +733,23 @@ function TextToSpeech() {
                   >
                     <span className="model-pill-emoji">{model.emoji}</span>
                     <span className="model-pill-name">{model.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {selectedLanguage !== targetLanguage && (
+              <div className="view-mode-toggle">
+                {[
+                  { id: 'highlight', label: 'Highlight' },
+                  { id: 'all', label: 'All' },
+                  { id: 'off', label: 'Off' },
+                ].map(mode => (
+                  <button
+                    key={mode.id}
+                    className={`view-mode-btn${translationViewMode === mode.id ? ' active' : ''}`}
+                    onClick={() => setTranslationViewMode(mode.id)}
+                  >
+                    {mode.label}
                   </button>
                 ))}
               </div>

@@ -796,6 +796,47 @@
   cursor: not-allowed;
 }
 
+/* Translation view mode toggle */
+.view-mode-toggle {
+  display: flex;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.view-mode-btn {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-mode-btn + .view-mode-btn {
+  border-left: 1.5px solid #e2e8f0;
+}
+
+.view-mode-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.view-mode-btn.active {
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Active tooltip (currently playing sentence) */
+.highlight-tooltip--active {
+  border-left: 3px solid #3b82f6;
+}
+
 @keyframes highlight-pulse {
   0% {
     background: linear-gradient(120deg, #fef08a 0%, #fde047 100%);
