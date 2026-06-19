@@ -115,31 +115,29 @@ class TranslationService:
         }
 
     def _get_ordered_providers(self, preferred_provider: Optional[str] = None) -> List[Tuple[str, callable]]:
-        """상태 기반 제공자 순서 (preferred_provider 최우선)"""
-        providers = []
+        """상태 기반 제공자 순서 (preferred_provider 지정 시 해당 제공자만 사용)"""
+        provider_map = {}
         
-        # MADLAD is available if server URL is configured
+        # Build available providers map
         if self.madlad_server_url:
-            providers.append(('madlad', self._translate_madlad))
-        
-        # DeepL if API key is configured
+            provider_map['madlad'] = self._translate_madlad
         if self.deepl_api_key:
-            providers.append(('deepl', self._translate_deepl))
-        providers.extend([
-            ('google_direct', self._translate_google_direct),
-            ('mymemory', self._translate_mymemory),
-            ('google_proxy', self._translate_google_proxy)
-        ])
+            provider_map['deepl'] = self._translate_deepl
+        provider_map['google_direct'] = self._translate_google_direct
+        provider_map['mymemory'] = self._translate_mymemory
+        provider_map['google_proxy'] = self._translate_google_proxy
+        
+        # 명시적으로 provider를 지정한 경우 → 해당 제공자만 사용 (fallback 없음)
+        if preferred_provider and preferred_provider in provider_map:
+            return [(preferred_provider, provider_map[preferred_provider])]
+        
+        # provider 미지정 → 기존 우선순위 폴백 체인
+        providers = list(provider_map.items())
         
         def sort_key(provider_tuple):
             name = provider_tuple[0]
-            # Preferred provider gets absolute priority
-            if preferred_provider and name == preferred_provider:
-                return (-2, 0)
-            # DeepL gets second priority
             if name == 'deepl':
                 return (-1, 0)
-            # MADLAD gets third priority (after DeepL when not preferred)
             if name == 'madlad':
                 return (-0.5, 0)
             health = self.provider_health.get(name, {'failures': 0, 'last_success': None})
@@ -179,7 +177,7 @@ class TranslationService:
 
     # --- MADLAD-400 Self-hosted (GPU Server) ---
     
-    def _translate_madlad(self, text: str, source_lang: str, target_lang: str, timeout: float = 8.0) -> Optional[str]:
+    def _translate_madlad(self, text: str, source_lang: str, target_lang: str, timeout: float = 15.0) -> Optional[str]:
         """MADLAD-400 7B 자체 호스팅 서버 번역"""
         if not self.madlad_server_url:
             return None

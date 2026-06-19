@@ -497,10 +497,10 @@ function TextToSpeech() {
     // speechRateRef는 useEffect에서 자동 동기화
   }
 
-  // Target Language 변경 — 재생 중이면 중단 후 재시작
+  // Target Language 변경 — 재생/일시정지 중이면 중단
   const handleTargetLanguageChange = (newTargetLang) => {
     setTargetLanguage(newTargetLang)
-    if (isSpeaking) {
+    if (isSpeaking || isPaused) {
       handleStop()
     }
   }
