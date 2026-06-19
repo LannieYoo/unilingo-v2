@@ -52,20 +52,20 @@ export function DeeplStatusIndicator() {
   }
 
   const colorClasses = {
-    green: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300',
-    yellow: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300',
-    red: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300',
+    green: 'bg-indigo-50/70 dark:bg-indigo-900/15 border-indigo-200/60 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-300',
+    yellow: 'bg-amber-50/70 dark:bg-amber-900/15 border-amber-200/60 dark:border-amber-800/40 text-amber-600 dark:text-amber-300',
+    red: 'bg-red-50/70 dark:bg-red-900/15 border-red-200/60 dark:border-red-800/40 text-red-600 dark:text-red-300',
   };
 
   return (
-    <div className={`deepl-status-indicator p-3 border rounded-lg ${colorClasses[statusColor]}`}>
+    <div className={`deepl-status-indicator p-3 border rounded-xl backdrop-blur-sm ${colorClasses[statusColor]}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">
           <span className="material-symbols-outlined text-base">check_circle</span>
           <span>Using DeepL (Premium Quality)</span>
         </div>
         {usage_info && (
-          <div className="text-xs">
+          <div className="text-xs opacity-75">
             {usage_info.remaining.toLocaleString()} / {usage_info.limit.toLocaleString()} chars left
           </div>
         )}

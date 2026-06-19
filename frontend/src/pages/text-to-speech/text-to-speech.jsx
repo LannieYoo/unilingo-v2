@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { PageLayout, PageBox } from '../../components/layout/PageLayout'
 import { LANGUAGES, getTranslateCode, getVoiceCode, detectLanguage, getLanguageByCode } from '../../config/languages'
+import { tokenizeWithDifficulty } from './commonWords'
 import './text-to-speech.css'
 import { useUsage } from '../../common/hooks/useUsage'
 import { UsageIndicator } from '../../common/components/UsageIndicator'
@@ -56,6 +57,8 @@ function TextToSpeech() {
   const sentenceIdxRef = useRef(-1)
   const skipToIdxRef = useRef(-1)
   const nextImageId = useRef(0)
+  const [wordPopup, setWordPopup] = useState(null) // { word, x, y, translation, usPhonetic, ukPhonetic, loading }
+  const [isEditing, setIsEditing] = useState(true) // true = textarea, false = read-only display
 
   const { trackUsage, isLimitExceeded } = useUsage()
   const { isAuthenticated } = useAuthStore()
@@ -560,6 +563,76 @@ function TextToSpeech() {
     }
   }
 
+  // 단어 클릭 — 번역 + 발음 팝업
+  const handleWordClick = async (word, event) => {
+    event.stopPropagation()
+    const rect = event.target.getBoundingClientRect()
+    const container = event.target.closest('.text-display, .text-display-wrapper')
+    const containerRect = container?.getBoundingClientRect() || { left: 0, top: 0 }
+
+    setWordPopup({
+      word,
+      x: rect.left - containerRect.left,
+      y: rect.bottom - containerRect.top + 4,
+      translation: null,
+      usPhonetic: null,
+      ukPhonetic: null,
+      loading: true,
+    })
+
+    // Fetch translation + pronunciation in parallel
+    const cleanWord = word.replace(/[^a-zA-Z'-]/g, '').toLowerCase()
+    const [transResult, dictResult] = await Promise.allSettled([
+      translateText(cleanWord, selectedLanguage, targetLanguage),
+      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    ])
+
+    const translation = transResult.status === 'fulfilled' ? transResult.value : cleanWord
+    let usPhonetic = null, ukPhonetic = null
+    if (dictResult.status === 'fulfilled' && dictResult.value?.[0]?.phonetics) {
+      for (const p of dictResult.value[0].phonetics) {
+        if (!p.text) continue
+        const audio = (p.audio || '').toLowerCase()
+        if (audio.includes('-us') || audio.includes('us.mp3')) {
+          usPhonetic = p.text
+        } else if (audio.includes('-uk') || audio.includes('uk.mp3')) {
+          ukPhonetic = p.text
+        } else if (!usPhonetic) {
+          usPhonetic = p.text
+        }
+      }
+      if (!ukPhonetic && dictResult.value[0].phonetic) {
+        ukPhonetic = dictResult.value[0].phonetic
+      }
+    }
+
+    setWordPopup(prev => prev?.word === word ? {
+      ...prev, translation, usPhonetic, ukPhonetic, loading: false
+    } : prev)
+  }
+
+  // 텍스트를 단어별로 렌더링 (어려운 단어 클릭 가능)
+  const renderWords = (str, extraClass) => {
+    const tokens = tokenizeWithDifficulty(str)
+    return tokens.map((t, i) => {
+      if (!t.isWord) return <span key={i}>{t.text}</span>
+      if (t.isDifficult) {
+        return (
+          <span
+            key={i}
+            className={`word-difficult${extraClass ? ' ' + extraClass : ''}`}
+            onClick={(e) => handleWordClick(t.text, e)}
+          >
+            {t.text}
+          </span>
+        )
+      }
+      return <span key={i}>{t.text}</span>
+    })
+  }
+
   // 하이라이트된 텍스트 렌더링 — translationViewMode에 따라 다르게
   const renderHighlightedText = () => {
     const sentences = sentencesRef.current
@@ -576,7 +649,7 @@ function TextToSpeech() {
             const translation = sentenceTranslations[idx]
             return (
               <span key={idx} className="highlight-wrapper">
-                <span className={isActive ? 'highlight-text' : undefined}>{sentText}</span>
+                <span className={isActive ? 'highlight-text' : undefined}>{renderWords(sentText)}</span>
                 {translation && (
                   <span className={`highlight-tooltip${isActive ? ' highlight-tooltip--active' : ''}`}>{translation}</span>
                 )}
@@ -589,7 +662,7 @@ function TextToSpeech() {
 
     // Highlight 모드 또는 Off 모드
     if (highlightStart < 0 || highlightEnd < 0) {
-      return text
+      return renderWords(text)
     }
 
     const before = text.substring(0, highlightStart)
@@ -600,14 +673,14 @@ function TextToSpeech() {
 
     return (
       <>
-        {before}
+        {renderWords(before)}
         <span className="highlight-wrapper">
-          <span className="highlight-text">{highlight}</span>
+          <span className="highlight-text">{renderWords(highlight)}</span>
           {showTooltip && (
             <span className="highlight-tooltip highlight-tooltip--active">{translatedTooltip}</span>
           )}
         </span>
-        {after}
+        {renderWords(after)}
       </>
     )
   }
@@ -989,21 +1062,64 @@ function TextToSpeech() {
               </div>
             )}
 
-            <div className="text-display-wrapper" style={{ flex: 1, minHeight: 0 }}>
-              {isSpeaking ? (
-                <div className="text-display">
+            <div className="text-display-wrapper" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+              {(!isEditing && text.trim()) || isSpeaking ? (
+                <div
+                  className="text-display"
+                  onClick={() => setWordPopup(null)}
+                  onDoubleClick={() => { if (!isSpeaking) setIsEditing(true) }}
+                  title={!isSpeaking ? 'Double-click to edit' : undefined}
+                >
                   {renderHighlightedText()}
                 </div>
               ) : (
                 <textarea
                   value={text}
                   onChange={handleTextChange}
+                  onBlur={() => { if (text.trim()) setIsEditing(false) }}
                   placeholder={pastedImages.length > 0
                     ? 'Images attached. Click 🔍 to extract text, or type here...'
                     : 'Enter text to convert to speech... (Paste images with Ctrl+V)'
                   }
                   className="input-textarea"
+                  autoFocus={isEditing && text.trim()}
                 />
+              )}
+              {/* Word popup */}
+              {wordPopup && (
+                <div
+                  className="word-popup"
+                  style={{ left: Math.min(wordPopup.x, 400), top: wordPopup.y }}
+                >
+                  <div className="word-popup-header">
+                    <span className="word-popup-word">{wordPopup.word}</span>
+                    <button className="word-popup-close" onClick={() => setWordPopup(null)}>✕</button>
+                  </div>
+                  {wordPopup.loading ? (
+                    <div className="word-popup-loading">Loading...</div>
+                  ) : (
+                    <>
+                      {wordPopup.translation && (
+                        <div className="word-popup-translation">{wordPopup.translation}</div>
+                      )}
+                      <div className="word-popup-phonetics">
+                        {wordPopup.usPhonetic && (
+                          <span className="word-popup-phonetic">
+                            <span className="word-popup-flag">🇺🇸</span> {wordPopup.usPhonetic}
+                          </span>
+                        )}
+                        {wordPopup.ukPhonetic && (
+                          <span className="word-popup-phonetic">
+                            <span className="word-popup-flag">🇬🇧</span> {wordPopup.ukPhonetic}
+                          </span>
+                        )}
+                        {!wordPopup.usPhonetic && !wordPopup.ukPhonetic && (
+                          <span className="word-popup-no-phonetic">No pronunciation available</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
             {/* 드래그 오버레이 */}

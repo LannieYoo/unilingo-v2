@@ -33,7 +33,7 @@
   font-size: 2rem;
   margin-bottom: 0.75rem;
   text-align: center;
-  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #334155 40%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -82,18 +82,25 @@
 
 /* 페이지 박스 */
 .page-layout__box {
-  background: #ffffff;
-  border: 1px solid rgba(59, 130, 246, 0.12);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 4px 24px -4px rgba(59, 130, 246, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px -2px rgba(0, 0, 0, 0.06);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   color: #1e293b;
 }
 
 .page-layout__box:hover {
-  box-shadow: 0 8px 32px -4px rgba(59, 130, 246, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
-  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.06),
+    0 8px 24px -4px rgba(0, 0, 0, 0.08);
+  border-color: rgba(148, 163, 184, 0.3);
+  transform: translateY(-1px);
 }
 
 .page-layout__box--no-padding {
@@ -406,7 +413,7 @@
    다크 모드 - PageLayout
    ======================================== */
 .dark .page-layout__title {
-  background: linear-gradient(135deg, #e2e8f0 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 40%, #60a5fa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -417,15 +424,22 @@
 }
 
 .dark .page-layout__box {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: rgba(15, 31, 58, 0.75);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border-color: rgba(30, 58, 100, 0.3);
   color: #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    0 4px 16px -2px rgba(0, 0, 0, 0.2);
 }
 
 .dark .page-layout__box:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 8px 24px -4px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
 }
 
 .dark .page-layout__footer {

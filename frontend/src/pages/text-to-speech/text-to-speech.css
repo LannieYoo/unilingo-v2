@@ -1241,3 +1241,103 @@
   }
 }
 
+/* ===== Clickable Difficult Words ===== */
+.word-difficult {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #94a3b8;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.word-difficult:hover {
+  color: #1e293b;
+  text-decoration-color: #475569;
+}
+
+/* Word popup */
+.word-popup {
+  position: absolute;
+  z-index: 100;
+  min-width: 200px;
+  max-width: 320px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  animation: word-popup-in 0.15s ease-out;
+}
+
+@keyframes word-popup-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.word-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.word-popup-word {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.word-popup-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.word-popup-close:hover {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.word-popup-translation {
+  font-size: 0.92rem;
+  color: #334155;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.word-popup-phonetics {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.word-popup-phonetic {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.word-popup-flag {
+  font-size: 0.75rem;
+  margin-right: 4px;
+}
+
+.word-popup-no-phonetic {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.word-popup-loading {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  padding: 4px 0;
+}
