@@ -62,7 +62,7 @@ export function useTranslator() {
   // Usage tracking hook
   const { trackUsage } = useUsage()
 
-  // Auth state — logged-in users get MADLAD provider
+  // Auth state
   const { isAuthenticated } = useAuthStore()
 
   // Load language preferences from settings
@@ -162,7 +162,7 @@ export function useTranslator() {
             text: processedText,
             source_lang: sourceCode,
             target_lang: targetCode,
-            ...(isAuthenticated ? { provider: 'madlad' } : {})
+            ...(isAuthenticated ? { provider: 'deepl' } : {})
           }),
           signal: controller.signal
         })

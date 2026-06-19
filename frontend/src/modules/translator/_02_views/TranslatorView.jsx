@@ -1075,8 +1075,8 @@ export function TranslatorView() {
             )}
             {/* Provider badge */}
             {outputText && translationProvider && (
-              <span className={`translator-provider-badge translator-provider-badge--${translationProvider === 'madlad' ? 'madlad' : translationProvider === 'deepl' ? 'deepl' : 'google'}`}>
-                {translationProvider === 'madlad' ? '🤖 MADLAD-400' : translationProvider === 'deepl' ? '💎 DeepL' : translationProvider === 'google_direct' || translationProvider === 'google_proxy' ? '🌐 Google' : `⚡ ${translationProvider}`}
+              <span className={`translator-provider-badge translator-provider-badge--${translationProvider === 'deepl' ? 'deepl' : 'google'}`}>
+                {translationProvider === 'deepl' ? '💎 DeepL' : translationProvider === 'google_direct' || translationProvider === 'google_proxy' ? '🌐 Google' : `⚡ ${translationProvider}`}
               </span>
             )}
           </div>
