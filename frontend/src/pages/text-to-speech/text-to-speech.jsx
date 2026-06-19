@@ -17,7 +17,6 @@ const TTS_LANGUAGES = [
 ]
 
 const TRANSLATION_MODELS = [
-  { id: 'madlad', name: 'MADLAD-400', emoji: '🤖', desc: 'Self-hosted AI' },
   { id: 'deepl', name: 'DeepL', emoji: '💎', desc: 'Premium API' },
   { id: 'google_direct', name: 'Google', emoji: '🌐', desc: 'Free API' },
 ]
@@ -643,11 +642,6 @@ function TextToSpeech() {
                   <span className="model-pill-name">{model.name}</span>
                 </button>
               ))}
-              {usedProvider && (
-                <span className={`tts-provider-badge tts-provider-badge--${usedProvider === 'madlad' ? 'madlad' : usedProvider === 'deepl' ? 'deepl' : 'google'}`}>
-                  {usedProvider === 'madlad' ? '✓ Lannie Server' : usedProvider === 'deepl' ? '✓ DeepL' : '✓ Google'}
-                </span>
-              )}
             </div>
             <div className="button-group">
               <button

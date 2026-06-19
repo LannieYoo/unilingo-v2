@@ -154,9 +154,11 @@ class TranslationService:
                 self.provider_health[provider_name]['failures'] += 1
     
     def _try_provider_with_retry(self, provider_func: callable, provider_name: str, text: str, source_lang: str, target_lang: str, trace_id: Optional[str]) -> Tuple[bool, Optional[str], List[Dict]]:
-        """재시도 로직으로 제공자 시도"""
+        """재시도 로직으로 제공자 시도 (MADLAD는 긴 타임아웃 사용)"""
         attempts = []
-        for timeout in self.timeout_strategy:
+        # MADLAD는 GPU 추론이라 긴 타임아웃 필요
+        timeouts = [15.0, 10.0] if provider_name == 'madlad' else self.timeout_strategy
+        for timeout in timeouts:
             attempt_start = time.time()
             try:
                 translated_text = provider_func(text, source_lang, target_lang, timeout)
