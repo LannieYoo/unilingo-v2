@@ -71,9 +71,8 @@ frontend/electron/models/*.onnx
 frontend/electron/models/*.tar.bz2
 frontend/electron/models/*.txt
 
-# sherpa-onnx WASM build files (large binaries, download during setup)
-frontend/public/sherpa-onnx-wasm-main-vad-asr.data
-frontend/public/sherpa-onnx-wasm-main-vad-asr.wasm
+# sherpa-onnx WASM build files (large binaries tracked by Git LFS)
+# .data and .wasm are tracked via Git LFS (see .gitattributes)
 frontend/public/sherpa-onnx-wasm-main-vad-asr.worker.js
 frontend/public/*.tar.bz2
 
