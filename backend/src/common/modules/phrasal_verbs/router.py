@@ -69,3 +69,24 @@ def get_alternative_translations():
     result = service.get_alternative_translations(original, translated, source_lang, target_lang)
     return jsonify(result)
 
+
+@phrasal_verbs_bp.route("/api/tts/summarize", methods=["POST"])
+def summarize_text():
+    """AI text summarization via RAG server Qwen"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON body required"}), 400
+
+    text = data.get("text", "").strip()
+    target_lang = data.get("target_lang", "ko")
+
+    if not text:
+        return jsonify({"error": "text is required"}), 400
+
+    if len(text) < 20:
+        return jsonify({"error": "Text too short to summarize"}), 400
+
+    service = get_phrasal_verbs_service()
+    result = service.summarize_text(text, target_lang)
+    return jsonify(result)
+

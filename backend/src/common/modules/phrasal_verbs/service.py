@@ -7,6 +7,7 @@ Phrasal Verbs Service - RAG 서버 프록시 + 캐싱
 import os
 import time
 import logging
+import hashlib
 import requests
 from typing import Dict, Any, Optional, List
 
@@ -127,6 +128,47 @@ class PhrasalVerbsService:
         except Exception as e:
             logger.error(f"RAG alt-translations error: {e}")
             return {"alternatives": [], "source": "error"}
+
+    def summarize_text(self, text: str, target_lang: str = "ko") -> Dict[str, Any]:
+        """Summarize text using RAG server's Qwen model"""
+        text = text.strip()
+        if not text:
+            return {"summary": "", "source": "none"}
+
+        # Cache key: hash of text + target_lang
+        hash_input = f"{text}:{target_lang}"
+        cache_key = f"sum:{hashlib.sha256(hash_input.encode()).hexdigest()[:16]}"
+        cached = _cache.get(cache_key)
+        if cached and time.time() - cached["ts"] < 3600:  # 1 hour TTL
+            result = cached["data"].copy()
+            result["cached"] = True
+            return result
+
+        try:
+            url = f"{RAG_SERVER_URL}/api/summarize"
+            resp = requests.post(url, json={
+                "text": text,
+                "target_lang": target_lang,
+            }, timeout=RAG_TIMEOUT)
+
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("summary"):
+                    _cache[cache_key] = {"data": data, "ts": time.time()}
+                return data
+            else:
+                logger.warning(f"RAG summarize returned {resp.status_code}")
+                return {"summary": "", "source": "error"}
+
+        except requests.exceptions.ConnectionError:
+            logger.warning(f"RAG server not reachable at {RAG_SERVER_URL}")
+            return {"summary": "", "source": "unreachable"}
+        except requests.exceptions.Timeout:
+            logger.warning("RAG summarize timeout")
+            return {"summary": "", "source": "timeout"}
+        except Exception as e:
+            logger.error(f"RAG summarize error: {e}")
+            return {"summary": "", "source": "error"}
 
     def health_check(self) -> Dict[str, Any]:
         """RAG 서버 상태 확인"""
