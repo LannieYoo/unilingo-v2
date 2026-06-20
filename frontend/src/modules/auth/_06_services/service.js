@@ -13,22 +13,113 @@ const api = axios.create({
   },
 });
 
-// Response interceptor to handle 401 errors globally
+// Token refresh queue management for automatic retry on 401
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Response interceptor: auto-refresh token and retry on 401
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Check if it's a 401 error (token expired)
-    if (error.response?.status === 401) {
-      // Import auth store dynamically to avoid circular dependency
-      import('../_05_stores/authStore').then(({ useAuthStore }) => {
-        const store = useAuthStore.getState();
-        // Only trigger token expired if user was authenticated
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 403 NOT_APPROVED — admin revoked approval mid-session
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.error?.code === 'NOT_APPROVED'
+    ) {
+      const { useAuthStore } = await import('../_05_stores/authStore');
+      const store = useAuthStore.getState();
+      // Fetch user info for display in the modal, then block access
+      store.setTokens(null);
+      useAuthStore.setState({
+        isAuthenticated: false,
+        isAdmin: false,
+        pendingApproval: true,
+      });
+      return Promise.reject(error);
+    }
+
+    // Only handle 401, skip already-retried or auth endpoint requests
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/google')
+    ) {
+      return Promise.reject(error);
+    }
+
+    // If already refreshing, queue this request and wait
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then((token) => {
+        originalRequest.headers['Authorization'] = `Bearer ${token}`;
+        return api(originalRequest);
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      const { useAuthStore } = await import('../_05_stores/authStore');
+      const store = useAuthStore.getState();
+      const refreshToken = store.tokens?.refresh_token;
+
+      if (!refreshToken) {
         if (store.isAuthenticated) {
           store.handleTokenExpired();
         }
+        processQueue(error);
+        return Promise.reject(error);
+      }
+
+      // Attempt token refresh (calls /auth/refresh which is excluded from interception)
+      const response = await api.post(AUTH_ENDPOINTS.REFRESH, {
+        refresh_token: refreshToken,
       });
+      const newTokens = response.data;
+
+      if (newTokens?.access_token) {
+        // Update store with new tokens
+        store.setTokens(newTokens);
+        processQueue(null, newTokens.access_token);
+
+        // Retry original request with new token
+        originalRequest.headers['Authorization'] = `Bearer ${newTokens.access_token}`;
+        return api(originalRequest);
+      }
+
+      store.handleTokenExpired();
+      processQueue(error);
+      return Promise.reject(error);
+    } catch (refreshError) {
+      const { useAuthStore } = await import('../_05_stores/authStore');
+      const store = useAuthStore.getState();
+
+      if (refreshError.response?.data?.error?.code === 'SESSION_EXPIRED') {
+        store.handleSessionExpired();
+      } else if (store.isAuthenticated) {
+        store.handleTokenExpired();
+      }
+      processQueue(refreshError);
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
     }
-    return Promise.reject(error);
   }
 );
 

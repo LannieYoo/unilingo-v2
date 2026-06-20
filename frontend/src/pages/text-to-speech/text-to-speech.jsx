@@ -57,8 +57,30 @@ function TextToSpeech() {
   const sentenceIdxRef = useRef(-1)
   const skipToIdxRef = useRef(-1)
   const nextImageId = useRef(0)
-  const [wordPopup, setWordPopup] = useState(null) // { word, x, y, translation, usPhonetic, ukPhonetic, loading }
+  const [wordPopup, setWordPopup] = useState(null) // { word, x, y, translation, usPhonetic, ukPhonetic, usAudio, ukAudio, loading }
   const [isEditing, setIsEditing] = useState(true) // true = textarea, false = read-only display
+  const [compactLines, setCompactLines] = useState(false)
+  const originalTextRef = useRef(null) // stores text before compact-lines transformation
+  const [copyFeedback, setCopyFeedback] = useState(false)
+  const [summaryModal, setSummaryModal] = useState({ open: false, loading: false, content: '', error: '' })
+  const [summaryCopied, setSummaryCopied] = useState(false)
+
+  // Display settings — font size, line height, translation font size
+  const DEFAULT_FONT_SIZE = 16
+  const DEFAULT_LINE_HEIGHT = 1.6
+  const DEFAULT_TRANSLATION_FONT_SIZE = 13
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = sessionStorage.getItem('tts_font_size')
+    return saved ? parseFloat(saved) : DEFAULT_FONT_SIZE
+  })
+  const [lineHeight, setLineHeight] = useState(() => {
+    const saved = sessionStorage.getItem('tts_line_height')
+    return saved ? parseFloat(saved) : DEFAULT_LINE_HEIGHT
+  })
+  const [translationFontSize, setTranslationFontSize] = useState(() => {
+    const saved = sessionStorage.getItem('tts_trans_font_size')
+    return saved ? parseFloat(saved) : DEFAULT_TRANSLATION_FONT_SIZE
+  })
 
   const { trackUsage, isLimitExceeded } = useUsage()
   const { isAuthenticated } = useAuthStore()
@@ -563,6 +585,25 @@ function TextToSpeech() {
     }
   }
 
+  // 단어 발음 재생 (오디오 URL 또는 SpeechSynthesis 폴백)
+  const speakWord = (word, audioUrl) => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl)
+      audio.play().catch(() => {
+        // 오디오 재생 실패 시 SpeechSynthesis 폴백
+        const utterance = new SpeechSynthesisUtterance(word)
+        utterance.lang = 'en-US'
+        utterance.rate = 0.9
+        window.speechSynthesis.speak(utterance)
+      })
+    } else {
+      const utterance = new SpeechSynthesisUtterance(word)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      window.speechSynthesis.speak(utterance)
+    }
+  }
+
   // 단어 클릭 — 번역 + 발음 팝업
   const handleWordClick = async (word, event) => {
     event.stopPropagation()
@@ -577,6 +618,8 @@ function TextToSpeech() {
       translation: null,
       usPhonetic: null,
       ukPhonetic: null,
+      usAudio: null,
+      ukAudio: null,
       loading: true,
     })
 
@@ -590,17 +633,20 @@ function TextToSpeech() {
     ])
 
     const translation = transResult.status === 'fulfilled' ? transResult.value : cleanWord
-    let usPhonetic = null, ukPhonetic = null
+    let usPhonetic = null, ukPhonetic = null, usAudio = null, ukAudio = null
     if (dictResult.status === 'fulfilled' && dictResult.value?.[0]?.phonetics) {
       for (const p of dictResult.value[0].phonetics) {
-        if (!p.text) continue
-        const audio = (p.audio || '').toLowerCase()
-        if (audio.includes('-us') || audio.includes('us.mp3')) {
-          usPhonetic = p.text
-        } else if (audio.includes('-uk') || audio.includes('uk.mp3')) {
-          ukPhonetic = p.text
-        } else if (!usPhonetic) {
-          usPhonetic = p.text
+        const audioUrl = p.audio || ''
+        const audioLower = audioUrl.toLowerCase()
+        if (audioLower.includes('-us') || audioLower.includes('us.mp3')) {
+          if (!usPhonetic && p.text) usPhonetic = p.text
+          if (!usAudio && audioUrl) usAudio = audioUrl
+        } else if (audioLower.includes('-uk') || audioLower.includes('uk.mp3')) {
+          if (!ukPhonetic && p.text) ukPhonetic = p.text
+          if (!ukAudio && audioUrl) ukAudio = audioUrl
+        } else {
+          if (!usPhonetic && p.text) usPhonetic = p.text
+          if (!usAudio && audioUrl) usAudio = audioUrl
         }
       }
       if (!ukPhonetic && dictResult.value[0].phonetic) {
@@ -609,8 +655,115 @@ function TextToSpeech() {
     }
 
     setWordPopup(prev => prev?.word === word ? {
-      ...prev, translation, usPhonetic, ukPhonetic, loading: false
+      ...prev, translation, usPhonetic, ukPhonetic, usAudio, ukAudio, loading: false
     } : prev)
+  }
+
+  // Display settings 핸들러
+  const handleFontSizeChange = (delta) => {
+    setFontSize(prev => {
+      const next = Math.min(28, Math.max(12, prev + delta))
+      sessionStorage.setItem('tts_font_size', next)
+      return next
+    })
+  }
+
+  const handleLineHeightChange = (delta) => {
+    setLineHeight(prev => {
+      const next = Math.min(3.0, Math.max(1.0, parseFloat((prev + delta).toFixed(1))))
+      sessionStorage.setItem('tts_line_height', next)
+      return next
+    })
+  }
+
+  const handleTranslationFontSizeChange = (delta) => {
+    setTranslationFontSize(prev => {
+      const next = Math.min(22, Math.max(10, prev + delta))
+      sessionStorage.setItem('tts_trans_font_size', next)
+      return next
+    })
+  }
+
+  const handleResetDisplaySettings = () => {
+    setFontSize(DEFAULT_FONT_SIZE)
+    setLineHeight(DEFAULT_LINE_HEIGHT)
+    setTranslationFontSize(DEFAULT_TRANSLATION_FONT_SIZE)
+    sessionStorage.removeItem('tts_font_size')
+    sessionStorage.removeItem('tts_line_height')
+    sessionStorage.removeItem('tts_trans_font_size')
+  }
+
+  const handleClearContent = () => {
+    if (!text.trim()) return
+    if (window.confirm('Are you sure you want to clear all content?')) {
+      handleStop()
+      setText('')
+      setIsEditing(true)
+      setSentenceTranslations({})
+      sentencesRef.current = []
+      sessionStorage.removeItem('tts_text')
+      setCompactLines(false)
+      originalTextRef.current = null
+    }
+  }
+
+  const handleToggleCompactLines = () => {
+    if (!compactLines) {
+      // Collapse: store original, then compact
+      originalTextRef.current = text
+      const compacted = text.replace(/(\r?\n){2,}/g, '\n')
+      setText(compacted)
+      sessionStorage.setItem('tts_text', compacted)
+      setCompactLines(true)
+    } else {
+      // Restore original
+      if (originalTextRef.current !== null) {
+        setText(originalTextRef.current)
+        sessionStorage.setItem('tts_text', originalTextRef.current)
+      }
+      originalTextRef.current = null
+      setCompactLines(false)
+    }
+  }
+
+  const handleCopyText = async () => {
+    if (!text.trim()) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyFeedback(true)
+      setTimeout(() => setCopyFeedback(false), 1500)
+    } catch (err) {
+      console.error('Copy failed:', err)
+    }
+  }
+
+  const handleSummarize = async () => {
+    if (!text.trim()) return
+    if (!isAuthenticated) {
+      setSummaryModal({ open: true, loading: false, content: '', error: 'sign_in_required' })
+      return
+    }
+    setSummaryModal({ open: true, loading: true, content: '', error: '' })
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || ''
+      const res = await fetch(`${apiUrl}/api/tts/summarize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, target_lang: targetLanguage })
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `Server error (${res.status})`)
+      }
+      const data = await res.json()
+      if (data.summary) {
+        setSummaryModal({ open: true, loading: false, content: data.summary, error: '' })
+      } else {
+        setSummaryModal({ open: true, loading: false, content: '', error: data.source === 'unreachable' ? 'AI server is currently unavailable. Please try again later.' : 'Failed to generate summary.' })
+      }
+    } catch (err) {
+      setSummaryModal({ open: true, loading: false, content: '', error: err.message || 'Failed to generate summary.' })
+    }
   }
 
   // 텍스트를 단어별로 렌더링 (어려운 단어 클릭 가능)
@@ -651,7 +804,7 @@ function TextToSpeech() {
               <span key={idx} className="highlight-wrapper">
                 <span className={isActive ? 'highlight-text' : undefined}>{renderWords(sentText)}</span>
                 {translation && (
-                  <span className={`highlight-tooltip${isActive ? ' highlight-tooltip--active' : ''}`}>{translation}</span>
+                  <span className={`highlight-tooltip${isActive ? ' highlight-tooltip--active' : ''}`} style={{ fontSize: `${translationFontSize}px` }}>{translation}</span>
                 )}
               </span>
             )
@@ -677,7 +830,7 @@ function TextToSpeech() {
         <span className="highlight-wrapper">
           <span className="highlight-text">{renderWords(highlight)}</span>
           {showTooltip && (
-            <span className="highlight-tooltip highlight-tooltip--active">{translatedTooltip}</span>
+            <span className="highlight-tooltip highlight-tooltip--active" style={{ fontSize: `${translationFontSize}px` }}>{translatedTooltip}</span>
           )}
         </span>
         {renderWords(after)}
@@ -764,6 +917,7 @@ function TextToSpeech() {
 
 
   return (
+    <>
     <PageLayout title="Text to Speech">
       <PageBox flex>
           <div className="tts-controls-wrapper">
@@ -1063,12 +1217,102 @@ function TextToSpeech() {
             )}
 
             <div className="text-display-wrapper" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+              {/* Text display toolbar — font size, line height, translation size, reset, clear */}
+              <div className="text-display-toolbar">
+                <div className="toolbar-group">
+                  <span className="toolbar-label">Aa</span>
+                  <button
+                    className="toolbar-btn"
+                    onClick={() => handleFontSizeChange(-1)}
+                    disabled={fontSize <= 12}
+                    title="Decrease font size"
+                  >−</button>
+                  <span className="toolbar-value">{fontSize}px</span>
+                  <button
+                    className="toolbar-btn"
+                    onClick={() => handleFontSizeChange(1)}
+                    disabled={fontSize >= 28}
+                    title="Increase font size"
+                  >+</button>
+                </div>
+                <div className="toolbar-divider"></div>
+                <div className="toolbar-group">
+                  <span className="toolbar-label">↕</span>
+                  <button
+                    className="toolbar-btn"
+                    onClick={() => handleLineHeightChange(-0.2)}
+                    disabled={lineHeight <= 1.0}
+                    title="Decrease line spacing"
+                  >−</button>
+                  <span className="toolbar-value">{lineHeight.toFixed(1)}</span>
+                  <button
+                    className="toolbar-btn"
+                    onClick={() => handleLineHeightChange(0.2)}
+                    disabled={lineHeight >= 3.0}
+                    title="Increase line spacing"
+                  >+</button>
+                </div>
+                {selectedLanguage !== targetLanguage && (
+                  <>
+                    <div className="toolbar-divider"></div>
+                    <div className="toolbar-group">
+                      <span className="toolbar-label" title="Translation text size">Trans</span>
+                      <button
+                        className="toolbar-btn"
+                        onClick={() => handleTranslationFontSizeChange(-1)}
+                        disabled={translationFontSize <= 10}
+                        title="Decrease translation font size"
+                      >−</button>
+                      <span className="toolbar-value">{translationFontSize}px</span>
+                      <button
+                        className="toolbar-btn"
+                        onClick={() => handleTranslationFontSizeChange(1)}
+                        disabled={translationFontSize >= 22}
+                        title="Increase translation font size"
+                      >+</button>
+                    </div>
+                  </>
+                )}
+                <div className="toolbar-spacer"></div>
+                <button
+                  className={`toolbar-btn toolbar-compact-btn has-tooltip${compactLines ? ' active' : ''}`}
+                  onClick={handleToggleCompactLines}
+                  data-tooltip={compactLines ? 'Restore original line breaks' : 'Collapse blank lines'}
+                  disabled={!text.trim()}
+                >¶</button>
+                <button
+                  className="toolbar-btn toolbar-reset-btn has-tooltip"
+                  onClick={handleResetDisplaySettings}
+                  data-tooltip="Reset to defaults"
+                  disabled={fontSize === DEFAULT_FONT_SIZE && lineHeight === DEFAULT_LINE_HEIGHT && translationFontSize === DEFAULT_TRANSLATION_FONT_SIZE}
+                >↺</button>
+                <button
+                  className="toolbar-btn toolbar-clear-btn has-tooltip"
+                  onClick={handleClearContent}
+                  data-tooltip="Clear all content"
+                  disabled={!text.trim()}
+                >🗑</button>
+                <div className="toolbar-divider"></div>
+                <button
+                  className={`toolbar-btn toolbar-copy-btn has-tooltip${copyFeedback ? ' copied' : ''}`}
+                  onClick={handleCopyText}
+                  data-tooltip={copyFeedback ? 'Copied!' : 'Copy text'}
+                  disabled={!text.trim()}
+                >{copyFeedback ? '✓' : '📋'}</button>
+                <button
+                  className="toolbar-btn toolbar-summarize-btn has-tooltip"
+                  onClick={handleSummarize}
+                  data-tooltip="AI Summarize (via Lannie Server)"
+                  disabled={!text.trim() || text.trim().length < 20}
+                >✨</button>
+              </div>
               {(!isEditing && text.trim()) || isSpeaking ? (
                 <div
                   className="text-display"
                   onClick={() => setWordPopup(null)}
                   onDoubleClick={() => { if (!isSpeaking) setIsEditing(true) }}
                   title={!isSpeaking ? 'Double-click to edit' : undefined}
+                  style={{ fontSize: `${fontSize}px`, lineHeight: lineHeight }}
                 >
                   {renderHighlightedText()}
                 </div>
@@ -1083,6 +1327,7 @@ function TextToSpeech() {
                   }
                   className="input-textarea"
                   autoFocus={isEditing && text.trim()}
+                  style={{ fontSize: `${fontSize}px`, lineHeight: lineHeight }}
                 />
               )}
               {/* Word popup */}
@@ -1105,16 +1350,53 @@ function TextToSpeech() {
                       <div className="word-popup-phonetics">
                         {wordPopup.usPhonetic && (
                           <span className="word-popup-phonetic">
-                            <span className="word-popup-flag">🇺🇸</span> {wordPopup.usPhonetic}
+                            <span className="word-popup-flag">
+                              <svg width="16" height="12" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="60" height="30" fill="#B22234" />
+                                <path d="M0,3.46h60M0,6.92h60M0,10.38h60M0,13.84h60M0,17.3h60M0,20.76h60M0,24.22h60M0,27.68h60" stroke="#fff" strokeWidth="2.3" />
+                                <rect width="24" height="17.3" fill="#3C3B6E" />
+                                <g fill="#fff">
+                                  <g id="wp-s5"><g id="wp-s4"><path id="wp-s" d="M3,2.3L3.3,3.3L2.4,2.8h1.2L2.7,3.3z" /><use href="#wp-s" x="6" /><use href="#wp-s" x="12" /><use href="#wp-s" x="18" /></g><use href="#wp-s4" y="4.6" /></g>
+                                  <use href="#wp-s5" y="9.2" /><use href="#wp-s4" y="2.3" />
+                                </g>
+                              </svg>
+                            </span>
+                            {wordPopup.usPhonetic}
+                            <button
+                              className="word-popup-speak-btn"
+                              onClick={(e) => { e.stopPropagation(); speakWord(wordPopup.word, wordPopup.usAudio) }}
+                              title="Play US pronunciation"
+                            >🔊</button>
                           </span>
                         )}
                         {wordPopup.ukPhonetic && (
                           <span className="word-popup-phonetic">
-                            <span className="word-popup-flag">🇬🇧</span> {wordPopup.ukPhonetic}
+                            <span className="word-popup-flag">
+                              <svg width="16" height="12" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="60" height="30" fill="#012169" />
+                                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+                                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
+                                <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+                                <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
+                              </svg>
+                            </span>
+                            {wordPopup.ukPhonetic}
+                            <button
+                              className="word-popup-speak-btn"
+                              onClick={(e) => { e.stopPropagation(); speakWord(wordPopup.word, wordPopup.ukAudio) }}
+                              title="Play UK pronunciation"
+                            >🔊</button>
                           </span>
                         )}
                         {!wordPopup.usPhonetic && !wordPopup.ukPhonetic && (
-                          <span className="word-popup-no-phonetic">No pronunciation available</span>
+                          <span className="word-popup-phonetic">
+                            <span className="word-popup-no-phonetic">No phonetic</span>
+                            <button
+                              className="word-popup-speak-btn"
+                              onClick={(e) => { e.stopPropagation(); speakWord(wordPopup.word, null) }}
+                              title="Play pronunciation"
+                            >🔊</button>
+                          </span>
                         )}
                       </div>
                     </>
@@ -1148,6 +1430,75 @@ function TextToSpeech() {
           <UsageIndicator usageType="tts" label="Text to Speech" />
         </div>
     </PageLayout>
+
+
+      {/* AI Summary Modal */}
+      {summaryModal.open && (
+        <div className="summary-modal-overlay" onClick={() => setSummaryModal(prev => ({ ...prev, open: false }))}>
+          <div className="summary-modal" onClick={e => e.stopPropagation()}>
+            <div className="summary-modal-header">
+              <span className="summary-modal-title">✨ AI Summary</span>
+              <div className="summary-modal-actions">
+                {summaryModal.content && !summaryModal.loading && !summaryModal.error && (
+                  <>
+                    <button
+                      className={`summary-action-btn${summaryCopied ? ' copied' : ''}`}
+                      onClick={() => {
+                        const plain = summaryModal.content.replace(/\*\*(.*?)\*\*/g, '$1')
+                        navigator.clipboard.writeText(plain)
+                        setSummaryCopied(true)
+                        setTimeout(() => setSummaryCopied(false), 1500)
+                      }}
+                      title="Copy to clipboard"
+                    >{summaryCopied ? '✓ Copied' : '📋 Copy'}</button>
+                    <button
+                      className="summary-action-btn"
+                      onClick={() => {
+                        const plain = summaryModal.content.replace(/\*\*(.*?)\*\*/g, '$1')
+                        const bom = '\uFEFF'
+                        const blob = new Blob([bom + plain], { type: 'text/plain;charset=utf-8' })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = `summary_${new Date().toISOString().slice(0,10)}.txt`
+                        a.click()
+                        URL.revokeObjectURL(url)
+                      }}
+                      title="Download as text file"
+                    >💾 Save</button>
+                  </>
+                )}
+                <button className="summary-modal-close" onClick={() => setSummaryModal(prev => ({ ...prev, open: false }))}>✕</button>
+              </div>
+            </div>
+            <div className="summary-modal-body">
+              {summaryModal.loading ? (
+                <div className="summary-modal-loading">
+                  <div className="summary-spinner"></div>
+                  <span>Generating summary...</span>
+                </div>
+              ) : summaryModal.error === 'sign_in_required' ? (
+                <div className="summary-modal-auth">
+                  <span className="summary-auth-icon">🔒</span>
+                  <p>Please sign in to use AI Summarize.</p>
+                  <p className="summary-auth-sub">This feature uses our AI server and is available for logged-in users only.</p>
+                </div>
+              ) : summaryModal.error ? (
+                <div className="summary-modal-error">
+                  <span className="summary-error-icon">⚠</span>
+                  <p>{summaryModal.error}</p>
+                </div>
+              ) : (
+                <div className="summary-modal-content" dangerouslySetInnerHTML={{ __html: summaryModal.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
+              )}
+            </div>
+            {summaryModal.content && !summaryModal.loading && !summaryModal.error && (
+              <div className="summary-modal-footer">Made by Lannie Server · Qwen</div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

@@ -7,7 +7,7 @@ const REFRESH_BEFORE_EXPIRY = 10 * 60 * 1000; // Refresh 10 minutes before expir
 const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // Consider inactive after 30 minutes
 
 export function TokenRefreshManager() {
-  const { tokens, isAuthenticated, refreshToken, handleTokenExpired } = useAuthStore();
+  const { tokens, isAuthenticated, refreshToken, handleTokenExpired, _rehydrationValidating } = useAuthStore();
   const lastActivityRef = useRef(Date.now());
   const checkIntervalRef = useRef(null);
 
@@ -37,13 +37,23 @@ export function TokenRefreshManager() {
     if (!isAuthenticated || !tokens?.access_token) return;
 
     const checkAndRefreshToken = async () => {
+      // Skip if rehydration validation is in progress to prevent race condition
+      if (useAuthStore.getState()._rehydrationValidating) {
+        console.log('[TokenRefresh] Skipping — rehydration validation in progress');
+        return;
+      }
+
       const now = Date.now();
       const lastActivity = lastActivityRef.current;
       const timeSinceActivity = now - lastActivity;
 
       // Decode token to get expiry time
       try {
-        const tokenParts = tokens.access_token.split('.');
+        // Re-read latest tokens from store (not from closure)
+        const latestTokens = useAuthStore.getState().tokens;
+        if (!latestTokens?.access_token) return;
+
+        const tokenParts = latestTokens.access_token.split('.');
         if (tokenParts.length !== 3) return;
 
         const payload = JSON.parse(atob(tokenParts[1]));
@@ -77,13 +87,14 @@ export function TokenRefreshManager() {
       }
     };
 
-    // Initial check
-    checkAndRefreshToken();
+    // Initial check (delayed to allow rehydration validation to complete)
+    const initialTimeout = setTimeout(checkAndRefreshToken, 1000);
 
     // Set up periodic checks
     checkIntervalRef.current = setInterval(checkAndRefreshToken, TOKEN_CHECK_INTERVAL);
 
     return () => {
+      clearTimeout(initialTimeout);
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
       }

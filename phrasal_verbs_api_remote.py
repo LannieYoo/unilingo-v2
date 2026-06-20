@@ -497,6 +497,103 @@ async def get_alternative_translations(req: dict):
 
     return result
 
+# ── Text Summarization ──────────────────────────────────
+def _build_summarize_prompt(text: str, target_lang: str) -> str:
+    lang_names = {"ko": "Korean", "zh": "Chinese", "en": "English", "ja": "Japanese", "es": "Spanish", "fr": "French", "de": "German"}
+    tgt_name = lang_names.get(target_lang, target_lang)
+
+    return f"""/no_think
+You are an expert summarizer. Summarize the following text in {tgt_name}.
+
+Rules:
+1. Write the summary in {tgt_name} language only.
+2. Keep the summary concise but cover all key points.
+3. Wrap the most important sentences or phrases in double asterisks like **this is important**.
+4. Use clear paragraph breaks for readability.
+5. Do NOT include any JSON, code blocks, or markdown headers.
+6. Write in natural, fluent {tgt_name}.
+
+Text to summarize:
+\"\"\"
+{text}
+\"\"\""""
+
+
+async def _call_ollama_summarize(text: str, target_lang: str) -> str:
+    """Ollama로 텍스트 요약 생성"""
+    prompt = _build_summarize_prompt(text, target_lang)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": f"You are a professional text summarizer. Always respond in the requested language. Use **double asterisks** to highlight key points."},
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.3,
+            "num_predict": 4096,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            if not raw_response and thinking:
+                raw_response = thinking
+            # Strip any <think> tags
+            raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
+            logger.info(f"Summarize RAW (len={len(raw_response)}): {raw_response[:500]}")
+            return raw_response
+
+    except Exception as e:
+        logger.error(f"Summarize error: {e}")
+        return ""
+
+
+@app.post("/api/summarize")
+async def summarize_text(req: dict):
+    """텍스트 요약 API"""
+    text = req.get("text", "").strip()
+    target_lang = req.get("target_lang", "ko")
+
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    if len(text) < 20:
+        raise HTTPException(status_code=400, detail="Text too short to summarize")
+
+    start_time = time.time()
+
+    # Cache key
+    cache_key = hashlib.md5(f"sum:{text[:500]}:{target_lang}".encode()).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    summary = await _call_ollama_summarize(text, target_lang)
+
+    result = {
+        "summary": summary,
+        "source": "ollama",
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if summary:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
 
 if __name__ == "__main__":
     import uvicorn

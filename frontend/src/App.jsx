@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import Layout from './components/layout/layout'
@@ -14,7 +14,8 @@ import { DictionaryView, DictionaryHistoryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
 
 // Auth module
-import { useAuthStore, useAuth, SessionExpiredModal, SettingsView, TokenRefreshManager } from './modules/auth'
+import { useAuth, SessionExpiredModal, SettingsView, TokenRefreshManager } from './modules/auth'
+import { useAuthStore } from './modules/auth'
 
 // Usage Context
 import { UsageProvider } from './common/contexts/UsageContext'
@@ -187,15 +188,138 @@ function AuthCallback() {
   return <Navigate to="/" replace />;
 }
 
-function AppContent() {
-  const { tokens, fetchUser } = useAuthStore();
+// Pending Approval Modal - shown when user is authenticated via Google but not approved by admin
+function PendingApprovalModal() {
+  const { pendingApproval, user, clearError } = useAuthStore();
+  const adminEmail = 'laniyoo613@gmail.com';
 
-  // Initialize auth state on app load
-  useEffect(() => {
-    if (tokens?.access_token) {
-      fetchUser();
-    }
-  }, []);
+  if (!pendingApproval) return null;
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      zIndex: 9999,
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-primary, #ffffff)',
+        borderRadius: '16px',
+        padding: '2.5rem',
+        maxWidth: '420px',
+        width: '90%',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        animation: 'modalFadeIn 0.3s ease-out',
+      }}>
+        {/* Icon */}
+        <div style={{
+          width: '72px',
+          height: '72px',
+          borderRadius: '50%',
+          backgroundColor: '#f0f9ff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.25rem',
+        }}>
+          <span style={{ fontSize: '36px' }}>⏳</span>
+        </div>
+        
+        {/* Title */}
+        <h2 style={{
+          fontSize: '1.25rem',
+          fontWeight: '700',
+          color: 'var(--text-primary, #1a1a1a)',
+          marginBottom: '0.5rem',
+        }}>
+          Approval Pending
+        </h2>
+        
+        {/* User info */}
+        {user && (
+          <p style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-tertiary, #9ca3af)',
+            marginBottom: '1rem',
+          }}>
+            {user.name} ({user.email})
+          </p>
+        )}
+        
+        {/* Message */}
+        <p style={{
+          fontSize: '0.95rem',
+          color: 'var(--text-secondary, #6b7280)',
+          lineHeight: '1.6',
+          marginBottom: '1.5rem',
+        }}>
+          Your account has been registered but requires administrator approval before you can use the service.
+        </p>
+        
+        {/* OK button */}
+        <button 
+          onClick={() => {
+            clearError();
+            window.location.href = '/';
+          }}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '12px 16px',
+            backgroundColor: '#3b82f6',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '0.95rem',
+            fontWeight: '600',
+            transition: 'background-color 0.2s',
+            marginBottom: '0.75rem',
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+        >
+          OK
+        </button>
+        
+        {/* Contact link */}
+        <a 
+          href={`mailto:${adminEmail}?subject=[UniLingo] Account Approval Request&body=Hello,%0A%0AI would like to request account approval for UniLingo.%0A%0AName: ${user?.name || ''}%0AEmail: ${user?.email || ''}`}
+          style={{
+            fontSize: '0.75rem',
+            color: 'var(--text-tertiary, #9ca3af)',
+            textDecoration: 'none',
+            transition: 'color 0.2s',
+          }}
+          onMouseOver={(e) => e.target.style.color = '#6b7280'}
+          onMouseOut={(e) => e.target.style.color = '#9ca3af'}
+        >
+          Contact administrator: {adminEmail}
+        </a>
+      </div>
+      
+      <style>{`
+        @keyframes modalFadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function AppContent() {
+  // Token validation on app load is handled by authStore's onRehydrateStorage callback.
+  // Zustand v5 persist does async rehydration, so useEffect with [] would capture
+  // tokens as null before rehydration completes.
 
   return (
     <Router>
@@ -240,9 +364,11 @@ function App() {
         <TokenRefreshManager />
         <AppContent />
         <SessionExpiredModal />
+        <PendingApprovalModal />
       </UsageProvider>
     </GoogleOAuthProvider>
   )
 }
 
 export default App
+

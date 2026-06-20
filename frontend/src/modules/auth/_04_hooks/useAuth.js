@@ -17,20 +17,13 @@ export function useAuth() {
     error,
     login: storeLogin,
     logout,
-    fetchUser,
     clearError,
     setLoading,
   } = useAuthStore();
 
-  // Initialize auth state on mount
-  useEffect(() => {
-    if (tokens?.access_token) {
-      // Always fetch user data on mount to ensure we have latest info
-      if (!user || !user.user_level || user.is_approved === undefined) {
-        fetchUser();
-      }
-    }
-  }, [tokens?.access_token, user, fetchUser]);
+  // Note: Initial auth validation is handled by AppContent's useEffect
+  // which calls fetchUser() unconditionally on mount. The response interceptor
+  // handles automatic token refresh and retry on 401.
 
   // Handle OAuth callback on page load
   useEffect(() => {

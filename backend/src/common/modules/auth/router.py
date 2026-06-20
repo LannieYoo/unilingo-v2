@@ -60,6 +60,9 @@ def get_optional_user():
             user = auth_service.get_user_by_id(payload.user_id)
             if not user or not user.is_active:
                 return None
+            # Non-admin users must be approved
+            if not _is_admin_user(user.email) and not user.is_approved:
+                return None
             if not _is_admin_user(user.email):
                 if payload.token_version != user.token_version:
                     return None
@@ -88,6 +91,9 @@ def login_required(f):
                     return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found'}}), 401
                 if not user.is_active:
                     return jsonify({'error': {'code': 'USER_INACTIVE', 'message': 'User is inactive'}}), 403
+                # Non-admin users must be approved
+                if not _is_admin_user(user.email) and not user.is_approved:
+                    return jsonify({'error': {'code': 'NOT_APPROVED', 'message': 'Your account is pending administrator approval.'}}), 403
                 if not _is_admin_user(user.email):
                     if payload.token_version != user.token_version:
                         return jsonify({'error': {'code': 'SESSION_EXPIRED', 'message': '다른 기기에서 로그인되어 현재 세션이 만료되었습니다.'}}), 401
@@ -151,6 +157,9 @@ def token_required(f):
                     return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found'}}), 401
                 if not user.is_active:
                     return jsonify({'error': {'code': 'USER_INACTIVE', 'message': 'User is inactive'}}), 403
+                # Non-admin users must be approved
+                if not _is_admin_user(user.email) and not user.is_approved:
+                    return jsonify({'error': {'code': 'NOT_APPROVED', 'message': 'Your account is pending administrator approval.'}}), 403
                 # Check token_version for all users to enforce single session
                 if payload.token_version != user.token_version:
                     return jsonify({'error': {'code': 'SESSION_EXPIRED', 'message': 'Your session has expired because you logged in from another device.'}}), 401
@@ -221,7 +230,7 @@ def google_callback():
             finally:
                 loop.close()
             return jsonify({
-                'user': {'id': user.id, 'email': user.email, 'name': user.name, 'avatar_url': user.avatar_url, 'is_active': user.is_active, 'created_at': user.created_at.isoformat() if user.created_at else None, 'last_login_at': user.last_login_at.isoformat() if user.last_login_at else None},
+                'user': {'id': user.id, 'email': user.email, 'name': user.name, 'avatar_url': user.avatar_url, 'is_active': user.is_active, 'is_approved': user.is_approved, 'user_level': user.user_level, 'created_at': user.created_at.isoformat() if user.created_at else None, 'last_login_at': user.last_login_at.isoformat() if user.last_login_at else None},
                 'tokens': {'access_token': tokens.access_token, 'refresh_token': tokens.refresh_token, 'token_type': tokens.token_type, 'expires_in': tokens.expires_in},
                 'trace_id': trace_id,
             }), 200

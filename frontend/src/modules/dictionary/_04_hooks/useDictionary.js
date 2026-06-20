@@ -6,7 +6,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { detectLanguage } from '../_07_utils'
 import { DEFAULT_TARGET_LANG, DIRECTIONS } from '../_08_constants'
-import { useAuthStore, useLanguagePreferences } from '../../auth'
+import useAuthStore from '../../auth/_05_stores/authStore'
+import { useLanguagePreferences } from '../../auth'
 import { authService } from '../../auth/_06_services'
 import { useUsage } from '../../../common/contexts/UsageContext'
 
@@ -53,16 +54,20 @@ export function useDictionary() {
   // 페이지 로드 시 데이터베이스에서 즐겨찾기만 불러오기
   useEffect(() => {
     const loadFavorites = async () => {
-      console.log('[Dictionary] Loading favorites, user:', user, 'token:', !!tokens?.access_token)
-      if (user && tokens?.access_token) {
+      // Always read latest tokens from store to avoid stale closure
+      const latestState = useAuthStore.getState()
+      const latestTokens = latestState.tokens
+      const latestUser = latestState.user
+
+      if (latestUser && latestTokens?.access_token) {
         try {
-          const data = await authService.getDictionaryLogs(tokens.access_token, 50)
-          console.log('[Dictionary] Loaded logs:', data)
+          const data = await authService.getDictionaryLogs(latestTokens.access_token, 50)
+
           if (data.logs && data.logs.length > 0) {
             // 즐겨찾기만 필터링
             const favoriteItems = data.logs
               .filter(log => {
-                console.log('[Dictionary] Log:', log.search_word, 'is_favorite:', log.is_favorite)
+
                 return log.is_favorite
               })
               .map(log => {
@@ -811,18 +816,31 @@ export function useDictionary() {
 
   // 즐겨찾기 토글 (DB에 저장)
   const toggleFavorite = useCallback(async () => {
-    if (!user || !tokens?.access_token) return null
+    // Always read latest state from store to avoid stale React closure
+    const latestState = useAuthStore.getState()
+    const currentUser = latestState.user
+    const currentTokens = latestState.tokens
+
+    if (!currentUser || !currentTokens?.access_token) {
+
+      return null
+    }
     
     try {
       // 현재 검색 결과 가져오기
-      if (!searchTerm || results.length === 0) return null
+      if (!searchTerm || results.length === 0) {
+
+        return null
+      }
       
       const fromLang = detectedLanguage || 'en'
       const toLang = targetLang
       
       // 이미 저장된 로그가 있으면 토글
       if (currentLogId) {
-        const response = await authService.toggleDictionaryFavorite(tokens.access_token, currentLogId)
+
+        const response = await authService.toggleDictionaryFavorite(currentTokens.access_token, currentLogId)
+
         const newFavoriteState = response.log.is_favorite
         setIsFavorite(newFavoriteState)
         
@@ -856,6 +874,7 @@ export function useDictionary() {
         return newFavoriteState
       } else {
         // 새로 저장
+
         // Extract simple_translation from results or use suggestion translation
         const resultSummary = window.__lastSuggestionTranslation || 
           (results && results.length > 0 && results[0].simpleTranslation 
@@ -865,20 +884,23 @@ export function useDictionary() {
         // Clear the temporary translation
         delete window.__lastSuggestionTranslation
         
-        const response = await authService.createDictionaryLog(tokens.access_token, {
+        const response = await authService.createDictionaryLog(currentTokens.access_token, {
           search_word: searchTerm,
           source_lang: fromLang,
           target_lang: toLang,
           search_results: results,
           result_summary: resultSummary
         })
+
         
         if (response.log && response.log.id) {
           const logId = response.log.id
           setCurrentLogId(logId)
           
-          // 즐겨찾기 토글
-          const toggleResponse = await authService.toggleDictionaryFavorite(tokens.access_token, logId)
+          // 즐겨찾기 토글 (re-read tokens in case interceptor refreshed during createDictionaryLog)
+          const latestTokensForToggle = useAuthStore.getState().tokens
+          const toggleResponse = await authService.toggleDictionaryFavorite(latestTokensForToggle.access_token, logId)
+
           const newFavoriteState = toggleResponse.log.is_favorite
           setIsFavorite(newFavoriteState)
           
@@ -896,6 +918,8 @@ export function useDictionary() {
           }
           
           return newFavoriteState
+        } else {
+
         }
       }
     } catch (error) {

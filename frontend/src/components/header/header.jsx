@@ -31,10 +31,8 @@ function Header() {
     { path: '/speech-to-recording', label: 'Recording', name: 'recording' },
   ]
 
-  // Add Admin menu item for admin users
-  const allMenuItems = isAdmin
-    ? [...menuItems, { path: '/admin', label: '⚙️ Admin', name: 'admin' }]
-    : menuItems;
+  // Admin page accessible via direct URL only
+  const allMenuItems = menuItems;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)

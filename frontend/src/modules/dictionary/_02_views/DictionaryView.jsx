@@ -246,12 +246,7 @@ export function DictionaryView() {
     const word = results[0]?.englishWord || results[0]?.term || results[0]?.word
     if (!word || !/^[a-zA-Z\s]+$/.test(word)) return
 
-    // Only for English target
-    if (!targetLang.startsWith('en')) {
-      setPhrasalVerbs([])
-      setContextSuggestions([])
-      return
-    }
+    // Line 247 already ensures the word is English (Latin alphabet only)
 
     const apiUrl = import.meta.env.VITE_API_URL || ''
     const controller = new AbortController()
@@ -262,7 +257,7 @@ export function DictionaryView() {
       setPhrasalLoading(true)
       try {
         const pvRes = await fetch(
-          `${apiUrl}/api/dictionary/phrasal-verbs?word=${encodeURIComponent(word)}&target_lang=ko`,
+          `${apiUrl}/api/dictionary/phrasal-verbs?word=${encodeURIComponent(word)}&target_lang=${targetLang}`,
           { signal: controller.signal }
         )
         const pvData = pvRes.ok ? await pvRes.json() : null
