@@ -18,6 +18,8 @@ services:
         value: https://unilingo-backend.onrender.com
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false  # Dashboard에서 수동 설정
+      - key: VITE_WHISPER_SERVER_URL
+        value: https://slighted-scoured-nanny.ngrok-free.dev
 
   # 백엔드 웹 서비스 (Flask)
   - type: web
@@ -54,6 +56,8 @@ services:
         sync: false
       - key: DEEPL_API_KEY
         sync: false
+      - key: RAG_SERVER_URL
+        value: https://slighted-scoured-nanny.ngrok-free.dev
       - key: PYTHON_VERSION
         value: "3.11.6"
       - key: PYTHONPATH

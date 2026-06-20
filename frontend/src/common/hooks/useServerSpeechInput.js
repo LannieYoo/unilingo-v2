@@ -17,8 +17,10 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 const SAMPLE_RATE = 16000
 const CHUNK_DURATION_S = 3  // Send audio every 3 seconds
 const CHUNK_SIZE = SAMPLE_RATE * CHUNK_DURATION_S
-// Server URL — RAG Linux server
-const SERVER_URL = 'http://192.168.1.150:8200'
+// Server URL — Whisper STT server
+// Production: ngrok tunnel to Lannie Server (set VITE_WHISPER_SERVER_URL)
+// Development: direct access to Lannie Server
+const SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
 
 export function useServerSpeechInput({ language = 'en-US', onResult, continuous = false }) {
   const [isListening, setIsListening] = useState(false)
