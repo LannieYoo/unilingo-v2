@@ -1513,9 +1513,8 @@ function TextToSpeech() {
               {(!isEditing && text.trim()) || isSpeaking ? (
                 <div
                   className="text-display"
-                  onClick={() => setWordPopup(null)}
-                  onDoubleClick={() => { if (!isSpeaking) setIsEditing(true) }}
-                  title={!isSpeaking ? 'Double-click to edit' : undefined}
+                  onClick={(e) => { setWordPopup(null); if (!isSpeaking) setIsEditing(true) }}
+                  title={!isSpeaking ? 'Click to edit' : undefined}
                   style={{ fontSize: `${fontSize}px`, lineHeight: lineHeight }}
                 >
                   {renderHighlightedText()}
