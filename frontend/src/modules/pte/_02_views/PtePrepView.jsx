@@ -361,14 +361,31 @@ function ImpactStars({ level }) {
 
 /* ─── Practice Mock Modal ─── */
 function PracticeMockModal({ isOpen, onClose, item, color }) {
+  const [isFullscreen, setIsFullscreen] = useState(false)
   if (!isOpen || !item) return null
 
+  const handleClose = () => {
+    setIsFullscreen(false)
+    onClose()
+  }
+
   return (
-    <div className="pte-modal-overlay" onClick={onClose}>
-      <div className="pte-practice-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="pte-modal__close" onClick={onClose}>
-          <span className="material-symbols-outlined">close</span>
-        </button>
+    <div className={`pte-modal-overlay ${isFullscreen ? 'pte-modal-overlay--fullscreen' : ''}`}>
+      <div className={`pte-practice-modal ${isFullscreen ? 'pte-practice-modal--fullscreen' : ''}`}>
+        <div className="pte-modal__actions">
+          <button
+            className="pte-modal__action-btn"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          >
+            <span className="material-symbols-outlined">
+              {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+            </span>
+          </button>
+          <button className="pte-modal__action-btn" onClick={handleClose} title="Close">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
 
         {/* Header */}
         <div className="pte-practice-modal__header" style={{ '--practice-color': color }}>
