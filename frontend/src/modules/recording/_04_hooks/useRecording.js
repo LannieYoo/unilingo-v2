@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react'
+import { useAuthStore } from '../../auth'
 
 export function useRecording() {
   const [isRecording, setIsRecording] = useState(false)
@@ -66,9 +67,24 @@ export function useRecording() {
   }, [isRecording, startRecording, stopRecording])
 
   const downloadRecording = useCallback((recording) => {
+    const { user } = useAuthStore.getState()
+    const userId = user?.email ? user.email.split('@')[0] : (user?.name || 'guest')
+    
+    const d = new Date(recording.timestamp)
+    const pad = (num) => String(num).padStart(2, '0')
+    const yyyy = d.getFullYear()
+    const mm = pad(d.getMonth() + 1)
+    const dd = pad(d.getDate())
+    const hh = pad(d.getHours())
+    const min = pad(d.getMinutes())
+    const ss = pad(d.getSeconds())
+    const dateStr = `${yyyy}${mm}${dd}_${hh}${min}${ss}`
+
+    const filename = `${userId}_${dateStr}.webm`
+
     const a = document.createElement('a')
     a.href = recording.url
-    a.download = `recording_${recording.timestamp.slice(0, 19).replace(/:/g, '-')}.webm`
+    a.download = filename
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

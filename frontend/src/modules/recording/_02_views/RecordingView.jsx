@@ -85,6 +85,10 @@ export function RecordingView() {
           )}
         </div>
       </PageBox>
+      <div className="recording-disclaimer">
+        <span className="material-symbols-outlined recording-disclaimer__icon">info</span>
+        <span>Recordings are saved locally only and are never uploaded to the server.</span>
+      </div>
     </PageLayout>
   )
 }
