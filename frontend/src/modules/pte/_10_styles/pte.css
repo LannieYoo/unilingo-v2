@@ -907,3 +907,204 @@
   }
 }
 
+/* ─── Read Aloud Practice ─── */
+.pte-ra-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+  flex: 1;
+}
+
+.pte-ra-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
+
+.pte-ra-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.pte-ra-counter {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.pte-ra-text-box {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--text-color);
+  font-weight: 500;
+  text-align: left;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.pte-ra-timer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.pte-ra-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.pte-ra-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pte-ra-status-badge--preparing {
+  background: #fef3c7;
+  color: #d97706;
+}
+.dark .pte-ra-status-badge--preparing {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.pte-ra-status-badge--recording {
+  background: #fee2e2;
+  color: #dc2626;
+  animation: pte-pulse-bg 1.5s infinite;
+}
+.dark .pte-ra-status-badge--recording {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.pte-ra-status-badge--completed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.dark .pte-ra-status-badge--completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+@keyframes pte-pulse-bg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.pte-ra-timer-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.pte-ra-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.pte-ra-progress-bar-fill {
+  height: 100%;
+  transition: width 1s linear;
+  border-radius: 999px;
+}
+
+.pte-ra-actions-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.pte-ra-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.pte-ra-btn--primary {
+  background: var(--btn-color, #6366f1);
+  color: #fff;
+}
+.pte-ra-btn--primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--btn-color, #6366f1) 30%, transparent);
+}
+
+.pte-ra-btn--secondary {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+.pte-ra-btn--secondary:hover {
+  background: var(--bg-tertiary);
+  border-color: color-mix(in srgb, var(--text-muted) 40%, var(--border-color));
+}
+
+.pte-ra-audio-player {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.pte-ra-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.dark .pte-ra-notice {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.pte-ra-notice-icon {
+  font-size: 1.1rem !important;
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+

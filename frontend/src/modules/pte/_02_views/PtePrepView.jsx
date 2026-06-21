@@ -3,8 +3,10 @@
  * PTE Core 시험 준비 메인 뷰
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
+import { useRecording } from '../../recording'
+import readAloudQuestions from '../_01_data/read_aloud_questions.json'
 import '../_10_styles/pte.css'
 
 /* ─── Translations ─── */
@@ -359,6 +361,209 @@ function ImpactStars({ level }) {
   )
 }
 
+/* ─── Read Aloud Practice ─── */
+function ReadAloudPractice({ color, onClose }) {
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [status, setStatus] = useState('preparing') // 'preparing', 'recording', 'completed'
+  const [timeLeft, setTimeLeft] = useState(35) // prep: 35s, recording: 40s
+  
+  const timerRef = useRef(null)
+  const { isRecording, recordings, startRecording, stopRecording, downloadRecording } = useRecording()
+  
+  const currentQuestion = readAloudQuestions[currentIdx]
+
+  // Timer loop
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current)
+
+    if (status === 'preparing') {
+      setTimeLeft(35)
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current)
+            startRecording()
+            setStatus('recording')
+            return 40
+          }
+          return prev - 1
+        })
+      }, 1000)
+    } else if (status === 'recording') {
+      setTimeLeft(40)
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current)
+            stopRecording()
+            setStatus('completed')
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [status, currentIdx])
+
+  // Stop recording if the component unmounts while recording is active
+  useEffect(() => {
+    return () => {
+      if (isRecording) {
+        stopRecording()
+      }
+    }
+  }, [isRecording, stopRecording])
+
+  const handleStartRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    startRecording()
+    setStatus('recording')
+  }
+
+  const handleStopRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    stopRecording()
+    setStatus('completed')
+  }
+
+  const handleRetry = () => {
+    if (isRecording) stopRecording()
+    setStatus('preparing')
+  }
+
+  const handleNext = () => {
+    if (currentIdx < readAloudQuestions.length - 1) {
+      setCurrentIdx((prev) => prev + 1)
+      setStatus('preparing')
+    }
+  }
+
+  const latestRecording = recordings[recordings.length - 1]
+
+  // Progress percentage
+  const maxTime = status === 'preparing' ? 35 : 40
+  const progressPercent = ((maxTime - timeLeft) / maxTime) * 100
+  const progressColor = status === 'preparing' ? '#f59e0b' : '#ef4444'
+
+  return (
+    <div className="pte-ra-container">
+      <div className="pte-ra-header">
+        <h4 className="pte-ra-title">{currentQuestion?.title || 'Read Aloud Task'}</h4>
+        <span className="pte-ra-counter">Question {currentIdx + 1} of {readAloudQuestions.length}</span>
+      </div>
+
+      {/* Text Box to read */}
+      <div className="pte-ra-text-box">
+        {currentQuestion?.text}
+      </div>
+
+      {/* Status & Timer Card */}
+      <div className="pte-ra-timer-wrap">
+        <div className="pte-ra-status-row">
+          <span className={`pte-ra-status-badge pte-ra-status-badge--${status}`}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>
+              {status === 'preparing' ? 'hourglass_empty' : status === 'recording' ? 'mic' : 'check_circle'}
+            </span>
+            {status === 'preparing' ? 'Preparing' : status === 'recording' ? 'Recording' : 'Completed'}
+          </span>
+          <span className="pte-ra-timer-text">
+            {status === 'preparing' && `Beginning in ${timeLeft}s`}
+            {status === 'recording' && `Recording: ${timeLeft}s remaining`}
+            {status === 'completed' && 'Recording finished'}
+          </span>
+        </div>
+
+        {status !== 'completed' && (
+          <div className="pte-ra-progress-bar-bg">
+            <div 
+              className="pte-ra-progress-bar-fill" 
+              style={{ 
+                width: `${progressPercent}%`, 
+                backgroundColor: progressColor 
+              }}
+            />
+          </div>
+        )}
+
+        {status === 'completed' && latestRecording && (
+          <audio className="pte-ra-audio-player" src={latestRecording.url} controls />
+        )}
+
+        {/* Action Controls */}
+        <div className="pte-ra-actions-row">
+          {status === 'preparing' && (
+            <button 
+              className="pte-ra-btn pte-ra-btn--primary" 
+              style={{ '--btn-color': color }}
+              onClick={handleStartRecording}
+            >
+              <span className="material-symbols-outlined">mic</span>
+              Start Recording Now
+            </button>
+          )}
+
+          {status === 'recording' && (
+            <button 
+              className="pte-ra-btn pte-ra-btn--primary" 
+              style={{ '--btn-color': '#dc2626' }}
+              onClick={handleStopRecording}
+            >
+              <span className="material-symbols-outlined">stop</span>
+              Stop & Save
+            </button>
+          )}
+
+          {status === 'completed' && (
+            <>
+              {latestRecording && (
+                <button 
+                  className="pte-ra-btn pte-ra-btn--primary" 
+                  style={{ '--btn-color': '#16a34a' }}
+                  onClick={() => downloadRecording(latestRecording)}
+                >
+                  <span className="material-symbols-outlined">download</span>
+                  Download Recording
+                </button>
+              )}
+              <button className="pte-ra-btn pte-ra-btn--secondary" onClick={handleRetry}>
+                <span className="material-symbols-outlined">refresh</span>
+                Retry
+              </button>
+              {currentIdx < readAloudQuestions.length - 1 ? (
+                <button 
+                  className="pte-ra-btn pte-ra-btn--primary" 
+                  style={{ '--btn-color': color }}
+                  onClick={handleNext}
+                >
+                  <span className="material-symbols-outlined">arrow_forward</span>
+                  Next Question
+                </button>
+              ) : (
+                <button className="pte-ra-btn pte-ra-btn--secondary" onClick={onClose}>
+                  <span className="material-symbols-outlined">done_all</span>
+                  Finish Practice
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Security/Local Storage disclaimer */}
+      <div className="pte-ra-notice">
+        <span className="material-symbols-outlined pte-ra-notice-icon">lock</span>
+        <div>
+          <strong>안전한 로컬 전용 저장:</strong> 녹음된 오디오 파일은 브라우저 메모리에 임시 보관되며 서버로 일체 전송되지 않습니다. 다운로드 시 파일명은 자동으로 아이디와 현재 시각초로 지정되어 저장됩니다.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ─── Practice Mock Modal ─── */
 function PracticeMockModal({ isOpen, onClose, item, color }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -413,12 +618,16 @@ function PracticeMockModal({ isOpen, onClose, item, color }) {
             </div>
           </div>
 
-          {/* Coming Soon placeholder */}
-          <div className="pte-practice-modal__placeholder">
-            <span className="material-symbols-outlined pte-practice-modal__placeholder-icon" style={{ color }}>construction</span>
-            <h3>Practice Questions Coming Soon</h3>
-            <p>We are preparing real PTE Core practice questions for this section. Check back soon!</p>
-          </div>
+          {/* Conditional rendering for RA vs other types */}
+          {item.abbr === 'RA' ? (
+            <ReadAloudPractice color={color} onClose={handleClose} />
+          ) : (
+            <div className="pte-practice-modal__placeholder">
+              <span className="material-symbols-outlined pte-practice-modal__placeholder-icon" style={{ color }}>construction</span>
+              <h3>Practice Questions Coming Soon</h3>
+              <p>We are preparing real PTE Core practice questions for this section. Check back soon!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -507,12 +716,14 @@ export function PtePrepView() {
       <PteInfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
 
       {/* Practice modal */}
-      <PracticeMockModal
-        isOpen={!!practiceItem}
-        onClose={() => setPracticeItem(null)}
-        item={practiceItem}
-        color={activeTabData?.color}
-      />
+      {!!practiceItem && (
+        <PracticeMockModal
+          isOpen={true}
+          onClose={() => setPracticeItem(null)}
+          item={practiceItem}
+          color={activeTabData?.color}
+        />
+      )}
 
       {/* Tabs */}
       <div className="pte-tabs">
