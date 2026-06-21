@@ -7,9 +7,135 @@ import { useState } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import '../_10_styles/pte.css'
 
+/* ─── Translations ─── */
+const MODAL_LANGS = [
+  { code: 'en', label: 'EN', flag: '🇺🇸' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+]
+
+const MODAL_I18N = {
+  en: {
+    title: 'What is PTE Core?',
+    overviewTitle: 'Overview',
+    overviewBody: (
+      <>
+        <strong>PTE Core (Pearson Test of English Core)</strong> is a computer-based English
+        proficiency test developed by Pearson, designed specifically for
+        <strong> Canadian immigration</strong> purposes. It is recognized by IRCC
+        (Immigration, Refugees and Citizenship Canada) for PR, work permits (including PGWP),
+        and citizenship applications.
+      </>
+    ),
+    format: <><strong>Format:</strong> 100% computer-based, AI-scored</>,
+    duration: <><strong>Duration:</strong> ~2 hours</>,
+    results: <><strong>Results:</strong> Typically within 2 business days</>,
+    validity: <><strong>Validity:</strong> 2 years from the test date</>,
+    whenTitle: 'When Do You Need PTE Core?',
+    pgwp: 'Post-Graduation Work Permit — CLB 5 for college/polytechnic graduates, CLB 7 for university graduates (since Nov 2024)',
+    pr: 'Permanent Residency (Express Entry) — CLB 7+ recommended',
+    citizen: 'Canadian Citizenship — CLB 4+ minimum',
+    clbTitle: 'CLB Score Conversion',
+    clbNote: 'PGWP: College/Polytechnic = CLB 5, University = CLB 7 (L ≥ 39, R ≥ 42, W ≥ 51, S ≥ 51 for CLB 5)',
+    costTitle: 'Cost & Registration',
+    costFee: <><strong>Test Fee:</strong> CAD $350 (Canada, as of 2025)</>,
+    costReports: <><strong>Score Reports:</strong> Unlimited, free of charge</>,
+    costReschedule: <><strong>Reschedule:</strong> Free if done 48+ hours before the test</>,
+    costRetake: <><strong>Retake Interval:</strong> Minimum 5 days between attempts</>,
+    costNote: (
+      <>Register at <a href="https://www.pearsonpte.com" target="_blank" rel="noopener noreferrer">pearsonpte.com</a>. Make sure to select <strong>PTE Core</strong> (not PTE Academic).</>
+    ),
+    structTitle: 'Exam Structure',
+    part1: 'Speaking & Writing',
+    part1Detail: 'Read Aloud, Repeat Sentence, Describe Image, Respond to a Situation, Answer Short Question, Summarize Written Text, Write Email',
+    part2: 'Reading',
+    part2Detail: 'Fill in the Blanks, Multiple Choice, Reorder Paragraphs',
+    part3: 'Listening',
+    part3Detail: 'Summarize Spoken Text, Fill in the Blanks, Highlight Incorrect Words, Write from Dictation',
+    disclaimer: 'Information is based on IRCC (Immigration, Refugees and Citizenship Canada) regulations effective as of November 2024. Fees and exam policies reflect 2025 standards. Please verify the latest official requirements at canada.ca before submitting any application.',
+  },
+  ko: {
+    title: 'PTE Core란?',
+    overviewTitle: '개요',
+    overviewBody: (
+      <>
+        <strong>PTE Core (Pearson Test of English Core)</strong>는 Pearson에서 개발한 컴퓨터 기반 영어 능력 시험으로,
+        <strong> 캐나다 이민</strong> 전용으로 설계되었습니다. IRCC(캐나다 이민·난민·시민권부)에서
+        영주권(PR), 워크퍼밋(PGWP 포함), 시민권 신청 시 영어 능력 증명으로 인정합니다.
+      </>
+    ),
+    format: <><strong>형식:</strong> 100% 컴퓨터 기반, AI 채점</>,
+    duration: <><strong>시간:</strong> 약 2시간</>,
+    results: <><strong>결과:</strong> 보통 2영업일 이내 발표</>,
+    validity: <><strong>유효기간:</strong> 시험일로부터 2년</>,
+    whenTitle: 'PTE Core가 필요한 경우',
+    pgwp: '졸업 후 취업비자(PGWP) — 컬리지/폴리텍 졸업 CLB 5, 대학교 졸업 CLB 7 (2024년 11월부터)',
+    pr: '영주권 (Express Entry) — CLB 7 이상 권장',
+    citizen: '캐나다 시민권 — 최소 CLB 4 이상',
+    clbTitle: 'CLB 점수 환산표',
+    clbNote: 'PGWP: 컬리지/폴리텍 = CLB 5, 대학교 = CLB 7 (CLB 5 기준: L ≥ 39, R ≥ 42, W ≥ 51, S ≥ 51)',
+    costTitle: '비용 및 등록',
+    costFee: <><strong>응시료:</strong> CAD $350 (캐나다 기준, 2025년)</>,
+    costReports: <><strong>성적표 발송:</strong> 무제한 무료</>,
+    costReschedule: <><strong>일정 변경:</strong> 48시간 전까지 무료</>,
+    costRetake: <><strong>재시험 간격:</strong> 최소 5일</>,
+    costNote: (
+      <><a href="https://www.pearsonpte.com" target="_blank" rel="noopener noreferrer">pearsonpte.com</a>에서 등록하세요. 반드시 <strong>PTE Core</strong>를 선택하세요 (PTE Academic이 아님).</>
+    ),
+    structTitle: '시험 구조',
+    part1: 'Speaking & Writing',
+    part1Detail: 'Read Aloud, Repeat Sentence, Describe Image, Respond to a Situation, Answer Short Question, Summarize Written Text, Write Email',
+    part2: 'Reading',
+    part2Detail: 'Fill in the Blanks, Multiple Choice, Reorder Paragraphs',
+    part3: 'Listening',
+    part3Detail: 'Summarize Spoken Text, Fill in the Blanks, Highlight Incorrect Words, Write from Dictation',
+    disclaimer: '본 정보는 2024년 11월 시행된 IRCC(캐나다 이민부) 규정을 기준으로 작성되었습니다. 시험 비용 및 정책은 2025년 기준입니다. 신청 전에 반드시 공식 IRCC 웹사이트(canada.ca)에서 최신 요건을 교차 확인하시기 바랍니다.',
+  },
+  zh: {
+    title: '什么是PTE Core？',
+    overviewTitle: '概述',
+    overviewBody: (
+      <>
+        <strong>PTE Core（培生核心英语考试）</strong>是由培生集团开发的计算机化英语能力考试，
+        专为<strong>加拿大移民</strong>设计。获得IRCC（加拿大移民、难民和公民部）认可，
+        可用于永久居留（PR）、工作许可（包括PGWP）和公民身份申请。
+      </>
+    ),
+    format: <><strong>形式：</strong>100%计算机考试，AI评分</>,
+    duration: <><strong>时长：</strong>约2小时</>,
+    results: <><strong>成绩：</strong>通常2个工作日内出分</>,
+    validity: <><strong>有效期：</strong>考试日起2年</>,
+    whenTitle: '何时需要PTE Core？',
+    pgwp: '毕业后工作许可（PGWP）— 学院/理工毕业CLB 5，大学毕业CLB 7（2024年11月起）',
+    pr: '永久居留权（快速通道）— 建议CLB 7+',
+    citizen: '加拿大公民身份 — 最低CLB 4',
+    clbTitle: 'CLB分数对照表',
+    clbNote: 'PGWP：学院/理工 = CLB 5，大学 = CLB 7（CLB 5标准：L ≥ 39, R ≥ 42, W ≥ 51, S ≥ 51）',
+    costTitle: '费用与报名',
+    costFee: <><strong>考试费：</strong>CAD $350（加拿大，2025年）</>,
+    costReports: <><strong>成绩单：</strong>无限免费发送</>,
+    costReschedule: <><strong>改期：</strong>48小时前免费</>,
+    costRetake: <><strong>重考间隔：</strong>最少5天</>,
+    costNote: (
+      <>请在 <a href="https://www.pearsonpte.com" target="_blank" rel="noopener noreferrer">pearsonpte.com</a> 注册。务必选择 <strong>PTE Core</strong>（非PTE Academic）。</>
+    ),
+    structTitle: '考试结构',
+    part1: 'Speaking & Writing（口语和写作）',
+    part1Detail: 'Read Aloud, Repeat Sentence, Describe Image, Respond to a Situation, Answer Short Question, Summarize Written Text, Write Email',
+    part2: 'Reading（阅读）',
+    part2Detail: 'Fill in the Blanks, Multiple Choice, Reorder Paragraphs',
+    part3: 'Listening（听力）',
+    part3Detail: 'Summarize Spoken Text, Fill in the Blanks, Highlight Incorrect Words, Write from Dictation',
+    disclaimer: '本信息基于 2024年11月 生效的 IRCC（加拿大移民局）最新规定。考试费用及政策为 2025年 标准。申请前请务必在加拿大官方网站 (canada.ca) 核实最新要求。',
+  },
+}
+
 /* ─── PTE Core Info Modal ─── */
 function PteInfoModal({ isOpen, onClose }) {
+  const [lang, setLang] = useState('en')
   if (!isOpen) return null
+
+  const t = MODAL_I18N[lang]
 
   return (
     <div className="pte-modal-overlay" onClick={onClose}>
@@ -22,50 +148,58 @@ function PteInfoModal({ isOpen, onClose }) {
           <div className="pte-modal__icon-wrap">
             <span className="material-symbols-outlined pte-modal__icon">school</span>
           </div>
-          <h2 className="pte-modal__title">What is PTE Core?</h2>
+          <h2 className="pte-modal__title">{t.title}</h2>
+        </div>
+
+        {/* Language toggle */}
+        <div className="pte-modal__lang-toggle">
+          {MODAL_LANGS.map((l) => (
+            <button
+              key={l.code}
+              className={`pte-modal__lang-btn ${lang === l.code ? 'pte-modal__lang-btn--active' : ''}`}
+              onClick={() => setLang(l.code)}
+            >
+              <span className="pte-modal__lang-flag">{l.flag}</span>
+              {l.label}
+            </button>
+          ))}
         </div>
 
         <div className="pte-modal__body">
           {/* Overview */}
           <section className="pte-modal__section">
-            <h3>Overview</h3>
-            <p>
-              <strong>PTE Core (Pearson Test of English Core)</strong> is a computer-based English
-              proficiency test developed by Pearson, designed specifically for
-              <strong> Canadian immigration</strong> purposes. It is recognized by IRCC
-              (Immigration, Refugees and Citizenship Canada) for PR, work permits (including PGWP),
-              and citizenship applications.
-            </p>
+            <h3>{t.overviewTitle}</h3>
+            <p>{t.overviewBody}</p>
             <ul>
-              <li><strong>Format:</strong> 100% computer-based, AI-scored</li>
-              <li><strong>Duration:</strong> ~2 hours</li>
-              <li><strong>Results:</strong> Typically within 2 business days</li>
-              <li><strong>Validity:</strong> 2 years from the test date</li>
+              <li>{t.format}</li>
+              <li>{t.duration}</li>
+              <li>{t.results}</li>
+              <li>{t.validity}</li>
             </ul>
           </section>
 
           {/* When do you need it */}
           <section className="pte-modal__section">
-            <h3>When Do You Need PTE Core?</h3>
+            <h3>{t.whenTitle}</h3>
             <div className="pte-modal__use-cases">
               <div className="pte-modal__use-case">
                 <span className="pte-modal__use-badge pte-modal__use-badge--pgwp">PGWP</span>
-                <span>Post-Graduation Work Permit — CLB 5 required for 1-year programs, CLB 7 for 3-year programs</span>
+                <span>{t.pgwp}</span>
               </div>
               <div className="pte-modal__use-case">
                 <span className="pte-modal__use-badge pte-modal__use-badge--pr">PR</span>
-                <span>Permanent Residency (Express Entry) — CLB 7+ recommended</span>
+                <span>{t.pr}</span>
               </div>
               <div className="pte-modal__use-case">
                 <span className="pte-modal__use-badge pte-modal__use-badge--citizen">Citizenship</span>
-                <span>Canadian Citizenship — CLB 4+ minimum</span>
+                <span>{t.citizen}</span>
               </div>
             </div>
           </section>
 
           {/* CLB Conversion */}
           <section className="pte-modal__section">
-            <h3>CLB Score Conversion</h3>
+            <h3>{t.clbTitle}</h3>
             <div className="pte-modal__table-wrap">
               <table className="pte-modal__table">
                 <thead>
@@ -101,55 +235,58 @@ function PteInfoModal({ isOpen, onClose }) {
             </div>
             <p className="pte-modal__note">
               <span className="material-symbols-outlined" style={{ fontSize: '1rem', verticalAlign: 'middle' }}>info</span>{' '}
-              PGWP minimum: CLB 5 — L ≥ 39, R ≥ 42, W ≥ 51, S ≥ 51
+              {t.clbNote}
             </p>
           </section>
 
           {/* Cost */}
           <section className="pte-modal__section">
-            <h3>Cost & Registration</h3>
+            <h3>{t.costTitle}</h3>
             <ul>
-              <li><strong>Test Fee:</strong> CAD $350 (Canada, as of 2025)</li>
-              <li><strong>Score Reports:</strong> Unlimited, free of charge</li>
-              <li><strong>Reschedule:</strong> Free if done 48+ hours before the test</li>
-              <li><strong>Retake Interval:</strong> Minimum 5 days between attempts</li>
+              <li>{t.costFee}</li>
+              <li>{t.costReports}</li>
+              <li>{t.costReschedule}</li>
+              <li>{t.costRetake}</li>
             </ul>
-            <p className="pte-modal__note">
-              Register at <a href="https://www.pearsonpte.com" target="_blank" rel="noopener noreferrer">pearsonpte.com</a>.
-              Make sure to select <strong>PTE Core</strong> (not PTE Academic).
-            </p>
+            <p className="pte-modal__note">{t.costNote}</p>
           </section>
 
           {/* Exam Structure */}
           <section className="pte-modal__section">
-            <h3>Exam Structure</h3>
+            <h3>{t.structTitle}</h3>
             <div className="pte-modal__structure">
               <div className="pte-modal__part">
                 <span className="pte-modal__part-num">Part 1</span>
                 <div>
-                  <strong>Speaking & Writing</strong>
+                  <strong>{t.part1}</strong>
                   <span className="pte-modal__part-time">~50–67 min</span>
-                  <div className="pte-modal__part-detail">Read Aloud, Repeat Sentence, Describe Image, Respond to a Situation, Answer Short Question, Summarize Written Text, Write Email</div>
+                  <div className="pte-modal__part-detail">{t.part1Detail}</div>
                 </div>
               </div>
               <div className="pte-modal__part">
                 <span className="pte-modal__part-num">Part 2</span>
                 <div>
-                  <strong>Reading</strong>
+                  <strong>{t.part2}</strong>
                   <span className="pte-modal__part-time">~27–38 min</span>
-                  <div className="pte-modal__part-detail">Fill in the Blanks, Multiple Choice, Reorder Paragraphs</div>
+                  <div className="pte-modal__part-detail">{t.part2Detail}</div>
                 </div>
               </div>
               <div className="pte-modal__part">
                 <span className="pte-modal__part-num">Part 3</span>
                 <div>
-                  <strong>Listening</strong>
+                  <strong>{t.part3}</strong>
                   <span className="pte-modal__part-time">~30–37 min</span>
-                  <div className="pte-modal__part-detail">Summarize Spoken Text, Fill in the Blanks, Highlight Incorrect Words, Write from Dictation</div>
+                  <div className="pte-modal__part-detail">{t.part3Detail}</div>
                 </div>
               </div>
             </div>
           </section>
+
+          {/* Disclaimer */}
+          <div className="pte-modal__disclaimer">
+            <span className="material-symbols-outlined pte-modal__disclaimer-icon">info</span>
+            <p>{t.disclaimer}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -222,8 +359,57 @@ function ImpactStars({ level }) {
   )
 }
 
+/* ─── Practice Mock Modal ─── */
+function PracticeMockModal({ isOpen, onClose, item, color }) {
+  if (!isOpen || !item) return null
+
+  return (
+    <div className="pte-modal-overlay" onClick={onClose}>
+      <div className="pte-practice-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="pte-modal__close" onClick={onClose}>
+          <span className="material-symbols-outlined">close</span>
+        </button>
+
+        {/* Header */}
+        <div className="pte-practice-modal__header" style={{ '--practice-color': color }}>
+          <span className="pte-card__abbr pte-practice-modal__abbr" style={{ background: color }}>{item.abbr}</span>
+          <div>
+            <h2 className="pte-practice-modal__title">{item.name}</h2>
+            <p className="pte-practice-modal__subtitle">{item.desc}</p>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="pte-practice-modal__body">
+          <div className="pte-practice-modal__instructions">
+            <div className="pte-practice-modal__instruction-row">
+              <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color }}>timer</span>
+              <span><strong>Time:</strong> {item.time}</span>
+            </div>
+            <div className="pte-practice-modal__instruction-row">
+              <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color }}>target</span>
+              <span><strong>Skills Assessed:</strong> {item.skills.join(' + ')}</span>
+            </div>
+            <div className="pte-practice-modal__instruction-row">
+              <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color: '#f59e0b' }}>lightbulb</span>
+              <span><strong>Tip:</strong> {item.tip}</span>
+            </div>
+          </div>
+
+          {/* Coming Soon placeholder */}
+          <div className="pte-practice-modal__placeholder">
+            <span className="material-symbols-outlined pte-practice-modal__placeholder-icon" style={{ color }}>construction</span>
+            <h3>Practice Questions Coming Soon</h3>
+            <p>We are preparing real PTE Core practice questions for this section. Check back soon!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ─── Question Type Card ─── */
-function QuestionCard({ item, color }) {
+function QuestionCard({ item, color, onPractice }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
@@ -262,6 +448,17 @@ function QuestionCard({ item, color }) {
             <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#f59e0b' }}>lightbulb</span>
             <span>{item.tip}</span>
           </div>
+          <button
+            className="pte-card__practice-btn"
+            style={{ '--btn-color': color }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onPractice(item)
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>play_circle</span>
+            Start Practice
+          </button>
         </div>
       )}
     </div>
@@ -273,6 +470,7 @@ function QuestionCard({ item, color }) {
 export function PtePrepView() {
   const [activeTab, setActiveTab] = useState('speaking-writing')
   const [showInfo, setShowInfo] = useState(false)
+  const [practiceItem, setPracticeItem] = useState(null)
 
   const activeTabData = TABS.find(t => t.id === activeTab)
   const questions = QUESTION_TYPES[activeTab] || []
@@ -290,6 +488,14 @@ export function PtePrepView() {
 
       {/* Info modal */}
       <PteInfoModal isOpen={showInfo} onClose={() => setShowInfo(false)} />
+
+      {/* Practice modal */}
+      <PracticeMockModal
+        isOpen={!!practiceItem}
+        onClose={() => setPracticeItem(null)}
+        item={practiceItem}
+        color={activeTabData?.color}
+      />
 
       {/* Tabs */}
       <div className="pte-tabs">
@@ -327,6 +533,7 @@ export function PtePrepView() {
                 key={item.abbr}
                 item={item}
                 color={activeTabData?.color}
+                onPractice={setPracticeItem}
               />
             ))}
           </div>

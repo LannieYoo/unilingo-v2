@@ -86,7 +86,6 @@ function Header() {
                 onClick={closeMenu}
               >
                 {item.label}
-                {item.name === 'pteCore' && <span className="pte-nav-new">NEW</span>}
               </Link>
             </Fragment>
           ))}
@@ -173,7 +172,6 @@ function Header() {
                   onClick={closeMenu}
                 >
                   {item.label}
-                  {item.name === 'pteCore' && <span className="pte-nav-new" style={{ marginLeft: '0.5rem' }}>NEW</span>}
                 </Link>
               ))}
               
