@@ -925,8 +925,50 @@ function TextToSpeech() {
       }
     }
 
+    // Join broken paragraph lines:
+    // If a line doesn't end with sentence-ending punctuation and the next non-empty line
+    // starts with a lowercase letter or continues naturally, join them.
+    const joined = []
+    for (let j = 0; j < cleaned.length; j++) {
+      const line = cleaned[j]
+
+      if (!line) {
+        // Empty line = paragraph break
+        joined.push('')
+        continue
+      }
+
+      if (joined.length > 0 && joined[joined.length - 1] !== '') {
+        const prevLine = joined[joined.length - 1]
+        const lastChar = prevLine.slice(-1)
+        const firstChar = line[0]
+        
+        // Join if previous line doesn't end with sentence/paragraph-ending punctuation
+        // and current line starts with lowercase, digit, or certain continuation chars
+        const endsWithTerminator = /[.!?:"\u201D\u2019]$/.test(prevLine)
+        const startsWithContinuation = /^[a-z\d,;"\u201C\u2018(]/.test(line)
+        
+        if (!endsWithTerminator && startsWithContinuation) {
+          // Join with previous line
+          joined[joined.length - 1] = prevLine + ' ' + line
+          continue
+        }
+        // Also join if previous line ends mid-word (no space + punctuation pattern)
+        if (!endsWithTerminator && /^[A-Z]/.test(firstChar) && !/[.!?:;]$/.test(lastChar)) {
+          // Uppercase start after non-terminated line could be a name continuation
+          // Only join if the previous line is short (likely a wrapped line, not a heading)
+          if (prevLine.length < 80) {
+            joined[joined.length - 1] = prevLine + ' ' + line
+            continue
+          }
+        }
+      }
+
+      joined.push(line)
+    }
+
     // Remove leading/trailing empty lines and collapse multiple blank lines
-    return cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+    return joined.join('\n').replace(/\n{3,}/g, '\n\n').trim()
   }
 
   const handleCleanText = () => {
