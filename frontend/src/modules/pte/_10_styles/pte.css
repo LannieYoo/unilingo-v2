@@ -2208,7 +2208,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
+  height: 32px;
+  padding: 0 0.6rem;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background: var(--bg-tertiary);
@@ -2217,6 +2218,7 @@
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .pte-ra-shadow-mode-btn--active {
@@ -2234,30 +2236,29 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding-left: 0.625rem;
-  border-left: 2px solid var(--border-color);
+  margin-left: auto;
 }
 
 .pte-ra-shadow-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
-  padding: 0.25rem 0.35rem;
-  border-radius: 5px;
-  font-size: 0.6rem;
+  height: 32px;
+  padding: 0 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid var(--border-color);
   transition: all 0.15s ease;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .pte-ra-shadow-action-btn--play {
   background: #6366f1;
   color: #fff;
   border-color: #6366f1;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.65rem;
   font-weight: 700;
 }
 .pte-ra-shadow-action-btn--play:hover {
@@ -2268,8 +2269,6 @@
   background: #f59e0b;
   color: #fff;
   border-color: #f59e0b;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.65rem;
   font-weight: 700;
 }
 .pte-ra-shadow-action-btn--pause:hover {
@@ -2363,7 +2362,9 @@
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0.25rem 0.5rem;
+  height: 32px;
+  padding: 0 0.35rem;
+  box-sizing: border-box;
 }
 
 .pte-ra-shadow-speed-btn {
