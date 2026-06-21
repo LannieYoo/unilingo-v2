@@ -345,20 +345,115 @@ function TextToSpeech() {
 
   // 문장 분리 함수
   const splitSentences = (txt) => {
-    // 문장 단위로 분리 (., !, ? 뒤 공백 또는 줄바꾼)
     const results = []
-    const regex = /[^.!?\n]+[.!?]*[\s]*/g
-    let match
-    while ((match = regex.exec(txt)) !== null) {
-      const s = match[0]
-      if (s.trim()) {
-        results.push({
-          text: s.trim(),
-          start: match.index,
-          end: match.index + s.trimEnd().length,
-        })
+    // Known abbreviations that should NOT trigger sentence splits
+    const abbreviations = new Set([
+      'mr', 'mrs', 'ms', 'dr', 'prof', 'sr', 'jr', 'st', 'ave', 'blvd',
+      'gen', 'gov', 'sgt', 'cpl', 'pvt', 'capt', 'lt', 'col', 'maj',
+      'dept', 'univ', 'assn', 'bros', 'inc', 'ltd', 'co', 'corp',
+      'vs', 'etc', 'approx', 'appt', 'apt', 'est', 'min', 'max',
+      'misc', 'tech', 'temp', 'vol', 'no',
+      'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+      'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
+      'fig', 'eq', 'ref', 'sec', 'ch', 'pt',
+    ])
+
+    let i = 0
+    let sentenceStart = 0
+
+    while (i < txt.length) {
+      const ch = txt[i]
+
+      if (ch === '\n') {
+        // Newline always splits
+        const segment = txt.substring(sentenceStart, i).trim()
+        if (segment) {
+          results.push({ text: segment, start: sentenceStart, end: sentenceStart + segment.length })
+        }
+        sentenceStart = i + 1
+        i++
+        continue
       }
+
+      if (ch === '.' || ch === '!' || ch === '?') {
+        // Check if this period is part of an abbreviation
+
+        // 1) Single-letter abbreviation pattern: "U.S." or "U.S.A."
+        if (ch === '.') {
+          // Look ahead: is next char a single uppercase letter followed by a period? (e.g., "U.S.")
+          if (i + 2 < txt.length && /[A-Z]/.test(txt[i + 1]) && txt[i + 2] === '.') {
+            i++
+            continue
+          }
+          // Look behind: is prev char a single uppercase letter preceded by space/start? (e.g., the final "." in "U.S.")
+          if (i > 0 && /[A-Z]/.test(txt[i - 1])) {
+            const behindTwo = i >= 2 ? txt[i - 2] : ' '
+            if (behindTwo === '.' || behindTwo === ' ' || i - 1 === sentenceStart) {
+              // Check what follows: if it's a space + lowercase or another letter+period, don't split
+              const afterDot = txt.substring(i + 1).match(/^(\s*)(\S)/)
+              if (afterDot && /[A-Z]/.test(afterDot[2]) && txt[i + afterDot[0].length] === '.') {
+                i++
+                continue
+              }
+              // If followed by space + uppercase, it IS likely a sentence boundary (e.g., "U.S. President")
+              // But "U.S." at end of abbreviation before a name is tricky. 
+              // Heuristic: if the single letter before "." has another "." before it (like "U.S."), don't split
+              if (behindTwo === '.') {
+                // Part of multi-letter abbreviation like "U.S." — check next char
+                const rest = txt.substring(i + 1).trimStart()
+                if (rest.length > 0) {
+                  i++
+                  continue
+                }
+              }
+            }
+          }
+
+          // 2) Known abbreviation: word before "." is in abbreviations set
+          let wordStart = i - 1
+          while (wordStart >= sentenceStart && /[a-zA-Z]/.test(txt[wordStart])) {
+            wordStart--
+          }
+          wordStart++
+          const wordBefore = txt.substring(wordStart, i).toLowerCase()
+          if (abbreviations.has(wordBefore)) {
+            i++
+            continue
+          }
+
+          // 3) Decimal number: "3.14"
+          if (i > 0 && /[0-9]/.test(txt[i - 1]) && i + 1 < txt.length && /[0-9]/.test(txt[i + 1])) {
+            i++
+            continue
+          }
+        }
+
+        // Consume trailing punctuation (e.g., "..." or "?!")
+        while (i + 1 < txt.length && (txt[i + 1] === '.' || txt[i + 1] === '!' || txt[i + 1] === '?')) {
+          i++
+        }
+
+        const endIdx = i + 1
+        const segment = txt.substring(sentenceStart, endIdx).trim()
+        if (segment) {
+          results.push({ text: segment, start: sentenceStart, end: sentenceStart + segment.length })
+        }
+        // Skip trailing whitespace
+        i++
+        while (i < txt.length && txt[i] === ' ') i++
+        sentenceStart = i
+        continue
+      }
+
+      i++
     }
+
+    // Remaining text
+    const remaining = txt.substring(sentenceStart).trim()
+    if (remaining) {
+      results.push({ text: remaining, start: sentenceStart, end: sentenceStart + remaining.length })
+    }
+
     // 문장이 하나도 없으면 전체 텍스트를 하나의 문장으로
     if (results.length === 0 && txt.trim()) {
       results.push({ text: txt.trim(), start: 0, end: txt.trim().length })
