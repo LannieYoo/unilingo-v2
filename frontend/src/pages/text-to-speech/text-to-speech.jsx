@@ -11,7 +11,7 @@ import { createWorker } from 'tesseract.js'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-// TTS ì „ìš© ì–¸ì–´ ëª©ë¡ â€” ì˜ì–´ í†µí•©
+// TTS 전용 언어 목록 — 영어 통합
 const TTS_LANGUAGES = [
   { code: 'en', name: 'English', voice: 'en-US', translateCode: 'en' },
   { code: 'ko', name: 'Korean', voice: 'ko-KR', translateCode: 'ko' },
@@ -19,8 +19,8 @@ const TTS_LANGUAGES = [
 ]
 
 const TRANSLATION_MODELS = [
-  { id: 'deepl', name: 'DeepL', emoji: 'ðŸ’Ž', desc: 'Premium API' },
-  { id: 'google_direct', name: 'Google', emoji: 'ðŸŒ', desc: 'Free API' },
+  { id: 'deepl', name: 'DeepL', emoji: '💎', desc: 'Premium API' },
+  { id: 'google_direct', name: 'Google', emoji: '🌐', desc: 'Free API' },
 ]
 
 const MAX_IMAGES_GUEST = 2
@@ -68,7 +68,7 @@ function TextToSpeech() {
   const [summaryModal, setSummaryModal] = useState({ open: false, loading: false, content: '', error: '' })
   const [summaryCopied, setSummaryCopied] = useState(false)
 
-  // Display settings â€” font size, line height, translation font size
+  // Display settings — font size, line height, translation font size
   const DEFAULT_FONT_SIZE = 16
   const DEFAULT_LINE_HEIGHT = 1.6
   const DEFAULT_TRANSLATION_FONT_SIZE = 13
@@ -89,14 +89,14 @@ function TextToSpeech() {
   const { isAuthenticated } = useAuthStore()
   const maxImages = isAuthenticated ? MAX_IMAGES_LOGGED_IN : MAX_IMAGES_GUEST
 
-  // Settings ì–¸ì–´ ì„¤ì • ì ìš©
+  // Settings 언어 설정 적용
   const { nativeLanguage, targetLanguage: settingsTargetLang, isLoaded: preferencesLoaded } = useLanguagePreferences()
 
   useEffect(() => {
     if (!preferencesLoaded) return
     
-    // Settings targetLanguage(í•™ìŠµ ì–¸ì–´) â†’ TTS Source (ìž…ë ¥)
-    // Settings nativeLanguage(ëª¨êµ­ì–´) â†’ TTS Target (ì¶œë ¥)
+    // Settings targetLanguage(학습 언어) → TTS Source (입력)
+    // Settings nativeLanguage(모국어) → TTS Target (출력)
     const findTTSCode = (translateCode) => {
       const lang = TTS_LANGUAGES.find(l => l.translateCode === translateCode)
       return lang?.code || 'en'
@@ -113,7 +113,7 @@ function TextToSpeech() {
     }
   }, [currentSentenceIdx, highlightStart])
 
-  // ë²ˆì—­ í•¨ìˆ˜ â€” ë°±ì—”ë“œ API ê²½ìœ , ì„ íƒëœ ëª¨ë¸ ì‚¬ìš©
+  // 번역 함수 — 백엔드 API 경유, 선택된 모델 사용
   const translateText = async (text, sourceLang, targetLang) => {
     if (!text.trim()) return text
     
@@ -173,13 +173,13 @@ function TextToSpeech() {
     }
   }
 
-  // í…ìŠ¤íŠ¸ ë³€ê²½ í•¸ë“¤ëŸ¬
+  // 텍스트 변경 핸들러
   const handleTextChange = (e) => {
     const newText = e.target.value
     setText(newText)
     sessionStorage.setItem('tts_text', newText)
     
-    // í…ìŠ¤íŠ¸ê°€ ìžˆìœ¼ë©´ ì–¸ì–´ ìžë™ ê°ì§€
+    // 텍스트가 있으면 언어 자동 감지
     if (newText.trim()) {
       let detectedLang = detectLanguage(newText)
       if (detectedLang === 'en-US') detectedLang = 'en'
@@ -190,7 +190,7 @@ function TextToSpeech() {
     }
   }
 
-  // === ì´ë¯¸ì§€ ë¶™ì—¬ë„£ê¸° / ë“œëž˜ê·¸ì•¤ë“œë¡­ / ì—…ë¡œë“œ ===
+  // === 이미지 붙여넣기 / 드래그앤드롭 / 업로드 ===
   const addImages = useCallback((files) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
     if (imageFiles.length === 0) return
@@ -223,7 +223,7 @@ function TextToSpeech() {
     })
   }, [maxImages, isAuthenticated])
 
-  // í´ë¦½ë³´ë“œ ë¶™ì—¬ë„£ê¸° í•¸ë“¤ëŸ¬
+  // 클립보드 붙여넣기 핸들러
   const handlePaste = useCallback((e) => {
     const items = e.clipboardData?.items
     if (!items) return
@@ -241,7 +241,7 @@ function TextToSpeech() {
     }
   }, [addImages])
 
-  // ë“œëž˜ê·¸ì•¤ë“œë¡­ í•¸ë“¤ëŸ¬
+  // 드래그앤드롭 핸들러
   const handleDragOver = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -263,7 +263,7 @@ function TextToSpeech() {
     }
   }, [addImages])
 
-  // íŒŒì¼ ì„ íƒ í•¸ë“¤ëŸ¬
+  // 파일 선택 핸들러
   const handleFileSelect = useCallback((e) => {
     if (e.target.files) {
       addImages(e.target.files)
@@ -271,7 +271,7 @@ function TextToSpeech() {
     e.target.value = '' // reset for re-upload of same file
   }, [addImages])
 
-  // ì´ë¯¸ì§€ ì œê±°
+  // 이미지 제거
   const removeImage = useCallback((id) => {
     setPastedImages(prev => {
       const img = prev.find(i => i.id === id)
@@ -285,14 +285,14 @@ function TextToSpeech() {
     })
   }, [])
 
-  // ëª¨ë“  ì´ë¯¸ì§€ ì œê±°
+  // 모든 이미지 제거
   const removeAllImages = useCallback(() => {
     pastedImages.forEach(img => URL.revokeObjectURL(img.url))
     setPastedImages([])
     setOcrProgress({})
   }, [pastedImages])
 
-  // ë‹¨ì¼ ì´ë¯¸ì§€ OCR
+  // 단일 이미지 OCR
   const ocrSingleImage = useCallback(async (imageItem) => {
     setPastedImages(prev =>
       prev.map(img => img.id === imageItem.id ? { ...img, status: 'processing' } : img)
@@ -317,12 +317,12 @@ function TextToSpeech() {
       )
       setOcrProgress(prev => ({ ...prev, [imageItem.id]: 100 }))
 
-      // ì¶”ì¶œëœ í…ìŠ¤íŠ¸ë¥¼ textareaì— ì¶”ê°€
+      // 추출된 텍스트를 textarea에 추가
       if (trimmed) {
         setText(prev => {
           const separator = prev.trim() ? '\n' : ''
           const newText = prev + separator + trimmed
-          // ì–¸ì–´ ê°ì§€
+          // 언어 감지
           let detectedLang = detectLanguage(newText)
           if (detectedLang === 'en-US') detectedLang = 'en'
           setSelectedLanguage(detectedLang)
@@ -338,7 +338,7 @@ function TextToSpeech() {
     }
   }, [])
 
-  // ëª¨ë“  ì´ë¯¸ì§€ OCR ì‹¤í–‰
+  // 모든 이미지 OCR 실행
   const ocrAllImages = useCallback(async () => {
     const readyImages = pastedImages.filter(img => img.status === 'ready')
     for (const img of readyImages) {
@@ -346,14 +346,14 @@ function TextToSpeech() {
     }
   }, [pastedImages, ocrSingleImage])
 
-  // ì»´í¬ë„ŒíŠ¸ ì–¸ë§ˆìš´íŠ¸ ì‹œ objectURL ì •ë¦¬
+  // 컴포넌트 언마운트 시 objectURL 정리
   useEffect(() => {
     return () => {
       pastedImages.forEach(img => URL.revokeObjectURL(img.url))
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ë¬¸ìž¥ ë¶„ë¦¬ í•¨ìˆ˜
+  // 문장 분리 함수
   const splitSentences = (txt) => {
     const results = []
     // Known abbreviations that should NOT trigger sentence splits
@@ -409,7 +409,7 @@ function TextToSpeech() {
               // But "U.S." at end of abbreviation before a name is tricky. 
               // Heuristic: if the single letter before "." has another "." before it (like "U.S."), don't split
               if (behindTwo === '.') {
-                // Part of multi-letter abbreviation like "U.S." â€” check next char
+                // Part of multi-letter abbreviation like "U.S." — check next char
                 const rest = txt.substring(i + 1).trimStart()
                 if (rest.length > 0) {
                   i++
@@ -464,14 +464,14 @@ function TextToSpeech() {
       results.push({ text: remaining, start: sentenceStart, end: sentenceStart + remaining.length })
     }
 
-    // ë¬¸ìž¥ì´ í•˜ë‚˜ë„ ì—†ìœ¼ë©´ ì „ì²´ í…ìŠ¤íŠ¸ë¥¼ í•˜ë‚˜ì˜ ë¬¸ìž¥ìœ¼ë¡œ
+    // 문장이 하나도 없으면 전체 텍스트를 하나의 문장으로
     if (results.length === 0 && txt.trim()) {
       results.push({ text: txt.trim(), start: 0, end: txt.trim().length })
     }
     return results
   }
 
-  // í•œ ë¬¸ìž¥ TTS ìž¬ìƒ (Promise)
+  // 한 문장 TTS 재생 (Promise)
   const speakSentence = (translatedText, rate, langCode) => {
     return new Promise((resolve, reject) => {
       if (!translatedText.trim()) { resolve(); return }
@@ -514,17 +514,17 @@ function TextToSpeech() {
     })
   }
 
-  // ë¬¸ìž¥ë³„ ë²ˆì—­ + TTS ì‹¤í–‰ â€” 1-ahead prefetch (ëª¨ë¸ ë³€ê²½ ì¦‰ì‹œ ë°˜ì˜)
+  // 문장별 번역 + TTS 실행 — 1-ahead prefetch (모델 변경 즉시 반영)
   const speakSentenceBysentence = async (sentences, langCode) => {
     const sourceCode = TTS_LANGUAGES.find(l => l.code === selectedLanguage)?.translateCode || selectedLanguage
     const targetCode = TTS_LANGUAGES.find(l => l.code === langCode)?.translateCode || langCode
     const needsTranslation = sourceCode !== targetCode
 
-    // ë²ˆì—­ ìºì‹œ: index â†’ translated text (1ë¬¸ìž¥ ì•žì„œ ë²ˆì—­)
+    // 번역 캐시: index → translated text (1문장 앞서 번역)
     const translationCache = new Map()
     let prefetchIdx = 0
 
-    // ë‹¤ìŒ ë¯¸ë²ˆì—­ ë¬¸ìž¥ 1ê°œë¥¼ ë°±ê·¸ë¼ìš´ë“œ ë²ˆì—­
+    // 다음 미번역 문장 1개를 백그라운드 번역
     const prefetchNext = () => {
       if (!needsTranslation || prefetchIdx >= sentences.length || abortRef.current) return null
       const idx = prefetchIdx++
@@ -534,18 +534,18 @@ function TextToSpeech() {
       return promise
     }
 
-    // ì²« ë¬¸ìž¥ + ë‘ ë²ˆì§¸ ë¬¸ìž¥ ë¯¸ë¦¬ ë²ˆì—­ ì‹œìž‘
+    // 첫 문장 + 두 번째 문장 미리 번역 시작
     if (needsTranslation) {
       prefetchNext()
       prefetchNext()
     }
 
-    // ìž¬ìƒ ë£¨í”„
+    // 재생 루프
     let i = 0
     while (i < sentences.length) {
       if (abortRef.current) break
 
-      // skip ìš”ì²­ ì²˜ë¦¬ (prev/next)
+      // skip 요청 처리 (prev/next)
       if (skipToIdxRef.current >= 0) {
         const skipTo = skipToIdxRef.current
         skipToIdxRef.current = -1
@@ -566,7 +566,7 @@ function TextToSpeech() {
         textToSpeak = cached instanceof Promise ? await cached : (cached || sentence.text)
         setIsTranslating(false)
         setTranslatedTooltip(textToSpeak)
-        // ë²ˆì—­ ê²°ê³¼ ì €ìž¥ (All ëª¨ë“œìš©)
+        // 번역 결과 저장 (All 모드용)
         setSentenceTranslations(prev => ({ ...prev, [i]: textToSpeak }))
         if (abortRef.current) break
 
@@ -582,14 +582,14 @@ function TextToSpeech() {
       try {
         await speakSentence(textToSpeak, speechRateRef.current, langCode)
       } catch {
-        // canceled â€” check if it was a skip or a real stop
+        // canceled — check if it was a skip or a real stop
         if (skipToIdxRef.current >= 0) continue
         break
       }
       i++
     }
 
-    // ì™„ë£Œ
+    // 완료
     setIsTranslating(false)
     setTranslatedTooltip('')
     if (!abortRef.current) {
@@ -598,7 +598,7 @@ function TextToSpeech() {
       setIsSpeaking(false)
       setCurrentSentenceIdx(-1)
       sentenceIdxRef.current = -1
-      // sentenceTranslationsëŠ” ìœ ì§€ (ìž¬ìƒ ì™„ë£Œ í›„ì—ë„ All ëª¨ë“œì—ì„œ ë³¼ ìˆ˜ ìžˆë„ë¡)
+      // sentenceTranslations는 유지 (재생 완료 후에도 All 모드에서 볼 수 있도록)
 
       if (isRepeatModeRef.current) {
         setTimeout(() => handleSpeak(), 500)
@@ -662,7 +662,7 @@ function TextToSpeech() {
     }
   }
 
-  // ì´ì „/ë‹¤ìŒ ë¬¸ìž¥ ì´ë™
+  // 이전/다음 문장 이동
   const handlePrevSentence = () => {
     if (!isSpeaking || sentenceIdxRef.current <= 0) return
     skipToIdxRef.current = sentenceIdxRef.current - 1
@@ -675,13 +675,13 @@ function TextToSpeech() {
     window.speechSynthesis.cancel()
   }
 
-  // ì†ë„ ë³€ê²½ â€” refì— ì¦‰ì‹œ ë°˜ì˜, ë‹¤ìŒ ë¬¸ìž¥ë¶€í„° ì ìš©ë¨
+  // 속도 변경 — ref에 즉시 반영, 다음 문장부터 적용됨
   const handleSpeedChange = (newRate) => {
     setSpeechRate(newRate)
-    // speechRateRefëŠ” useEffectì—ì„œ ìžë™ ë™ê¸°í™”
+    // speechRateRef는 useEffect에서 자동 동기화
   }
 
-  // Target Language ë³€ê²½ â€” ìž¬ìƒ/ì¼ì‹œì •ì§€ ì¤‘ì´ë©´ ì¤‘ë‹¨
+  // Target Language 변경 — 재생/일시정지 중이면 중단
   const handleTargetLanguageChange = (newTargetLang) => {
     setTargetLanguage(newTargetLang)
     sessionStorage.setItem('tts_target_lang', newTargetLang)
@@ -690,12 +690,12 @@ function TextToSpeech() {
     }
   }
 
-  // ë‹¨ì–´ ë°œìŒ ìž¬ìƒ (ì˜¤ë””ì˜¤ URL ë˜ëŠ” SpeechSynthesis í´ë°±)
+  // 단어 발음 재생 (오디오 URL 또는 SpeechSynthesis 폴백)
   const speakWord = (word, audioUrl) => {
     if (audioUrl) {
       const audio = new Audio(audioUrl)
       audio.play().catch(() => {
-        // ì˜¤ë””ì˜¤ ìž¬ìƒ ì‹¤íŒ¨ ì‹œ SpeechSynthesis í´ë°±
+        // 오디오 재생 실패 시 SpeechSynthesis 폴백
         const utterance = new SpeechSynthesisUtterance(word)
         utterance.lang = 'en-US'
         utterance.rate = 0.9
@@ -709,7 +709,7 @@ function TextToSpeech() {
     }
   }
 
-  // ë‹¨ì–´ í´ë¦­ â€” ë²ˆì—­ + ë°œìŒ íŒì—…
+  // 단어 클릭 — 번역 + 발음 팝업
   const handleWordClick = async (word, event) => {
     event.stopPropagation()
     const rect = event.target.getBoundingClientRect()
@@ -764,7 +764,7 @@ function TextToSpeech() {
     } : prev)
   }
 
-  // Display settings í•¸ë“¤ëŸ¬
+  // Display settings 핸들러
   const handleFontSizeChange = (delta) => {
     setFontSize(prev => {
       const next = Math.min(28, Math.max(12, prev + delta))
@@ -885,7 +885,7 @@ function TextToSpeech() {
     }
   }
 
-  // í…ìŠ¤íŠ¸ë¥¼ ë‹¨ì–´ë³„ë¡œ ë Œë”ë§ (ì–´ë ¤ìš´ ë‹¨ì–´ í´ë¦­ ê°€ëŠ¥)
+  // 텍스트를 단어별로 렌더링 (어려운 단어 클릭 가능)
   const renderWords = (str, extraClass) => {
     const tokens = tokenizeWithDifficulty(str)
     return tokens.map((t, i) => {
@@ -905,13 +905,13 @@ function TextToSpeech() {
     })
   }
 
-  // í•˜ì´ë¼ì´íŠ¸ëœ í…ìŠ¤íŠ¸ ë Œë”ë§ â€” translationViewModeì— ë”°ë¼ ë‹¤ë¥´ê²Œ
+  // 하이라이트된 텍스트 렌더링 — translationViewMode에 따라 다르게
   const renderHighlightedText = () => {
     const sentences = sentencesRef.current
     const hasSentences = sentences.length > 0
     const needsTranslation = selectedLanguage !== targetLanguage
 
-    // All ëª¨ë“œ: ë¬¸ìž¥ë³„ë¡œ ë²ˆì—­ í‘œì‹œ
+    // All 모드: 문장별로 번역 표시
     if (translationViewMode === 'all' && hasSentences && needsTranslation) {
       return (
         <>
@@ -932,7 +932,7 @@ function TextToSpeech() {
       )
     }
 
-    // Highlight ëª¨ë“œ ë˜ëŠ” Off ëª¨ë“œ
+    // Highlight 모드 또는 Off 모드
     if (highlightStart < 0 || highlightEnd < 0) {
       return renderWords(text)
     }
@@ -957,7 +957,7 @@ function TextToSpeech() {
     )
   }
 
-  // All ëª¨ë“œ ì „í™˜ ì‹œ ì „ì²´ ë¬¸ìž¥ ì¦‰ì‹œ ë²ˆì—­
+  // All 모드 전환 시 전체 문장 즉시 번역
   const translateAllSentences = async () => {
     if (!text.trim() || selectedLanguage === targetLanguage) return
 
@@ -967,7 +967,7 @@ function TextToSpeech() {
       sentencesRef.current = sentences
     }
 
-    // ì´ë¯¸ ë²ˆì—­ëœ ë¬¸ìž¥ì€ ê±´ë„ˆëœ€
+    // 이미 번역된 문장은 건너뜀
     const untranslated = sentences
       .map((s, i) => ({ idx: i, text: s.text }))
       .filter(s => !sentenceTranslations[s.idx])
@@ -993,14 +993,14 @@ function TextToSpeech() {
     setIsTranslating(false)
   }
 
-  // translationViewModeê°€ 'all'ë¡œ ë°”ë€Œë©´ ì¦‰ì‹œ ë²ˆì—­ ì‹¤í–‰
+  // translationViewMode가 'all'로 바뀌면 즉시 번역 실행
   useEffect(() => {
     if (translationViewMode === 'all' && text.trim() && selectedLanguage !== targetLanguage) {
       translateAllSentences()
     }
   }, [translationViewMode])
 
-  // ref ë™ê¸°í™”
+  // ref 동기화
   useEffect(() => {
     speechRateRef.current = speechRate
   }, [speechRate])
@@ -1009,18 +1009,18 @@ function TextToSpeech() {
   }, [translationModel])
 
 
-  // isRepeatMode ë³€ê²½ ì‹œ ref ì—…ë°ì´íŠ¸
+  // isRepeatMode 변경 시 ref 업데이트
   useEffect(() => {
     isRepeatModeRef.current = isRepeatMode
   }, [isRepeatMode])
 
-  // ìŒì„± ëª©ë¡ ë¯¸ë¦¬ ë¡œë“œ
+  // 음성 목록 미리 로드
   useEffect(() => {
     if ('speechSynthesis' in window) {
-      // ìŒì„± ëª©ë¡ ë¡œë“œ íŠ¸ë¦¬ê±°
+      // 음성 목록 로드 트리거
       window.speechSynthesis.getVoices()
       
-      // ìŒì„± ëª©ë¡ ë³€ê²½ ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆ
+      // 음성 목록 변경 이벤트 리스너
       const loadVoices = () => {
         const voices = window.speechSynthesis.getVoices()
         console.log('[TTS] Available voices loaded:', voices.length)
@@ -1030,7 +1030,7 @@ function TextToSpeech() {
       }
       
       window.speechSynthesis.onvoiceschanged = loadVoices
-      loadVoices() // ì¦‰ì‹œ í•œ ë²ˆ ì‹¤í–‰
+      loadVoices() // 즉시 한 번 실행
     }
   }, [])
 
@@ -1080,7 +1080,7 @@ function TextToSpeech() {
                     onChange={(e) => setIsRepeatMode(e.target.checked)}
                     className="repeat-checkbox"
                   />
-                  <span className="repeat-label-text">ðŸ”</span>
+                  <span className="repeat-label-text">🔁</span>
                 </label>
               </div>
               <input
@@ -1110,7 +1110,7 @@ function TextToSpeech() {
                 onClick={() => fileInputRef.current?.click()}
                 title="Attach images for OCR"
               >
-                ðŸ“· Attach Images
+                📷 Attach Images
               </button>
               {selectedLanguage !== targetLanguage && (
                 <div className="tts-tools-right">
@@ -1152,28 +1152,28 @@ function TextToSpeech() {
                 className="nav-btn"
                 title="Previous sentence"
               >
-                â®
+                ⏮
               </button>
               <button
                 onClick={handleSpeak}
                 disabled={(isSpeaking && !isPaused) || !text.trim() || isTranslating}
                 className="speak-btn"
               >
-                {isTranslating ? 'ðŸ”„ Translating...' : isPaused ? 'â–¶ Resume' : isSpeaking ? 'ðŸ”Š Playing...' : 'â–¶ Play'}
+                {isTranslating ? '🔄 Translating...' : isPaused ? '▶ Resume' : isSpeaking ? '🔊 Playing...' : '▶ Play'}
               </button>
               <button
                 onClick={handlePause}
                 disabled={!isSpeaking || isPaused}
                 className="pause-btn"
               >
-                â¸ Pause
+                ⏸ Pause
               </button>
               <button
                 onClick={handleStop}
                 disabled={!isSpeaking && !isPaused}
                 className="stop-btn"
               >
-                â¹ Stop
+                ⏹ Stop
               </button>
               <button
                 onClick={handleNextSentence}
@@ -1181,14 +1181,14 @@ function TextToSpeech() {
                 className="nav-btn"
                 title="Next sentence"
               >
-                â­
+                ⏭
               </button>
             </div>
           </div>
 
           {voiceWarning && (
             <div className="voice-warning">
-              <div className="voice-warning-icon">âš ï¸</div>
+              <div className="voice-warning-icon">⚠️</div>
               <div className="voice-warning-content">
                 <div className="voice-warning-title">Voice Not Available</div>
                 <div className="voice-warning-message">
@@ -1201,7 +1201,7 @@ function TextToSpeech() {
                     <li>
                       <strong>Windows:</strong>
                       <ol className="voice-warning-steps">
-                        <li>Open Settings â†’ Time & Language â†’ <strong>Language & region</strong></li>
+                        <li>Open Settings → Time & Language → <strong>Language & region</strong></li>
                         <li>Click <strong>"Add a language"</strong></li>
                         <li>Search and select your language (e.g., "English (India)")</li>
                         <li>Check <strong>"Text-to-speech"</strong> option</li>
@@ -1209,7 +1209,7 @@ function TextToSpeech() {
                         <li>Restart your browser</li>
                       </ol>
                     </li>
-                    <li><strong>macOS:</strong> System Preferences â†’ Accessibility â†’ Spoken Content â†’ System voice â†’ Customize</li>
+                    <li><strong>macOS:</strong> System Preferences → Accessibility → Spoken Content → System voice → Customize</li>
                     <li><strong>Linux:</strong> Install speech-dispatcher and language packs</li>
                   </ul>
                   {navigator.platform.toLowerCase().includes('win') && (
@@ -1217,7 +1217,7 @@ function TextToSpeech() {
                       className="voice-warning-settings-btn"
                       onClick={() => window.open('ms-settings:regionlanguage', '_blank')}
                     >
-                      ðŸ”§ Open Windows Language Settings
+                      🔧 Open Windows Language Settings
                     </button>
                   )}
                 </div>
@@ -1225,7 +1225,7 @@ function TextToSpeech() {
                   className="voice-warning-close"
                   onClick={() => setVoiceWarning(null)}
                 >
-                  âœ•
+                  ✕
                 </button>
               </div>
             </div>
@@ -1239,12 +1239,12 @@ function TextToSpeech() {
             onDrop={handleDrop}
             style={{ flex: 1, minHeight: 0 }}
           >
-            {/* ì´ë¯¸ì§€ ì¸ë„¤ì¼ ì˜ì—­ */}
+            {/* 이미지 썸네일 영역 */}
             {pastedImages.length > 0 && (
               <div className="pasted-images-area">
                 <div className="pasted-images-header">
                   <span className="pasted-images-title">
-                    ðŸ“· Images ({pastedImages.length})
+                    📷 Images ({pastedImages.length})
                   </span>
                   <div className="pasted-images-actions">
                     {pastedImages.some(img => img.status === 'ready') && (
@@ -1253,7 +1253,7 @@ function TextToSpeech() {
                         onClick={ocrAllImages}
                         title="Extract text from all images"
                       >
-                        ðŸ” Extract All Text
+                        🔍 Extract All Text
                       </button>
                     )}
                     <button
@@ -1261,7 +1261,7 @@ function TextToSpeech() {
                       onClick={removeAllImages}
                       title="Remove all images"
                     >
-                      âœ• Clear All
+                      ✕ Clear All
                     </button>
                   </div>
                 </div>
@@ -1279,10 +1279,10 @@ function TextToSpeech() {
                           </div>
                         )}
                         {img.status === 'done' && (
-                          <div className="ocr-done-badge">âœ“</div>
+                          <div className="ocr-done-badge">✓</div>
                         )}
                         {img.status === 'error' && (
-                          <div className="ocr-error-badge">âœ—</div>
+                          <div className="ocr-error-badge">✗</div>
                         )}
                       </div>
                       <div className="pasted-image-actions">
@@ -1292,7 +1292,7 @@ function TextToSpeech() {
                             onClick={() => ocrSingleImage(img)}
                             title="Extract text (OCR)"
                           >
-                            ðŸ”
+                            🔍
                           </button>
                         )}
                         <button
@@ -1300,12 +1300,12 @@ function TextToSpeech() {
                           onClick={() => removeImage(img.id)}
                           title="Remove image"
                         >
-                          âœ•
+                          ✕
                         </button>
                       </div>
                     </div>
                   ))}
-                  {/* ì´ë¯¸ì§€ ì¶”ê°€ ë²„íŠ¼ (ì œí•œì— ì•ˆ ê±¸ë¦´ ë•Œë§Œ í‘œì‹œ) */}
+                  {/* 이미지 추가 버튼 (제한에 안 걸릴 때만 표시) */}
                   {pastedImages.length < maxImages && (
                     <button
                       className="add-image-card"
@@ -1317,10 +1317,10 @@ function TextToSpeech() {
                     </button>
                   )}
                 </div>
-                {/* ë¹„ë¡œê·¸ì¸ ì´ë¯¸ì§€ ì œí•œ ì•ˆë‚´ */}
+                {/* 비로그인 이미지 제한 안내 */}
                 {imageLimitWarning && !isAuthenticated && (
                   <div className="image-limit-warning">
-                    <span className="image-limit-warning-icon">ðŸ”’</span>
+                    <span className="image-limit-warning-icon">🔒</span>
                     <span className="image-limit-warning-text">
                       You can attach up to {MAX_IMAGES_GUEST} images as a guest. Please sign in to attach up to {MAX_IMAGES_LOGGED_IN} images.
                     </span>
@@ -1328,7 +1328,7 @@ function TextToSpeech() {
                       className="image-limit-warning-close"
                       onClick={() => setImageLimitWarning(false)}
                     >
-                      âœ•
+                      ✕
                     </button>
                   </div>
                 )}
@@ -1336,7 +1336,7 @@ function TextToSpeech() {
             )}
 
             <div className="text-display-wrapper" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-              {/* Text display toolbar â€” font size, line height, translation size, reset, clear */}
+              {/* Text display toolbar — font size, line height, translation size, reset, clear */}
               <div className="text-display-toolbar">
                 <div className="toolbar-group">
                   <span className="toolbar-label">Aa</span>
@@ -1345,7 +1345,7 @@ function TextToSpeech() {
                     onClick={() => handleFontSizeChange(-1)}
                     disabled={fontSize <= 12}
                     title="Decrease font size"
-                  >âˆ’</button>
+                  >−</button>
                   <span className="toolbar-value">{fontSize}px</span>
                   <button
                     className="toolbar-btn"
@@ -1356,13 +1356,13 @@ function TextToSpeech() {
                 </div>
                 <div className="toolbar-divider"></div>
                 <div className="toolbar-group">
-                  <span className="toolbar-label">â†•</span>
+                  <span className="toolbar-label">↕</span>
                   <button
                     className="toolbar-btn"
                     onClick={() => handleLineHeightChange(-0.2)}
                     disabled={lineHeight <= 1.0}
                     title="Decrease line spacing"
-                  >âˆ’</button>
+                  >−</button>
                   <span className="toolbar-value">{lineHeight.toFixed(1)}</span>
                   <button
                     className="toolbar-btn"
@@ -1381,7 +1381,7 @@ function TextToSpeech() {
                         onClick={() => handleTranslationFontSizeChange(-1)}
                         disabled={translationFontSize <= 10}
                         title="Decrease translation font size"
-                      >âˆ’</button>
+                      >−</button>
                       <span className="toolbar-value">{translationFontSize}px</span>
                       <button
                         className="toolbar-btn"
@@ -1398,38 +1398,38 @@ function TextToSpeech() {
                   onClick={handleCleanText}
                   data-tooltip={cleanFeedback ? 'Cleaned!' : 'Clean article text (remove captions, credits, ads)'}
                   disabled={!text.trim()}
-                >{cleanFeedback ? 'âœ“' : 'ðŸ§¹'}</button>
+                >{cleanFeedback ? '✓' : '🧹'}</button>
                 <button
                   className={`toolbar-btn toolbar-compact-btn has-tooltip${compactLines ? ' active' : ''}`}
                   onClick={handleToggleCompactLines}
                   data-tooltip={compactLines ? 'Restore original line breaks' : 'Collapse blank lines'}
                   disabled={!text.trim()}
-                >Â¶</button>
+                >¶</button>
                 <button
                   className="toolbar-btn toolbar-reset-btn has-tooltip"
                   onClick={handleResetDisplaySettings}
                   data-tooltip="Reset to defaults"
                   disabled={fontSize === DEFAULT_FONT_SIZE && lineHeight === DEFAULT_LINE_HEIGHT && translationFontSize === DEFAULT_TRANSLATION_FONT_SIZE}
-                >â†º</button>
+                >↺</button>
                 <button
                   className="toolbar-btn toolbar-clear-btn has-tooltip"
                   onClick={handleClearContent}
                   data-tooltip="Clear all content"
                   disabled={!text.trim()}
-                >ðŸ—‘</button>
+                >🗑</button>
                 <div className="toolbar-divider"></div>
                 <button
                   className={`toolbar-btn toolbar-copy-btn has-tooltip${copyFeedback ? ' copied' : ''}`}
                   onClick={handleCopyText}
                   data-tooltip={copyFeedback ? 'Copied!' : 'Copy text'}
                   disabled={!text.trim()}
-                >{copyFeedback ? 'âœ“' : 'ðŸ“‹'}</button>
+                >{copyFeedback ? '✓' : '📋'}</button>
                 <button
                   className="toolbar-btn toolbar-summarize-btn has-tooltip"
                   onClick={handleSummarize}
                   data-tooltip="AI Summarize (via Lannie Server)"
                   disabled={!text.trim() || text.trim().length < 20}
-                >âœ¨</button>
+                >✨</button>
               </div>
               {(!isEditing && text.trim()) || isSpeaking ? (
                 <div
@@ -1446,7 +1446,7 @@ function TextToSpeech() {
                   onChange={handleTextChange}
                   onBlur={() => { if (text.trim()) setIsEditing(false) }}
                   placeholder={pastedImages.length > 0
-                    ? 'Images attached. Click ðŸ” to extract text, or type here...'
+                    ? 'Images attached. Click 🔍 to extract text, or type here...'
                     : 'Enter text to convert to speech... (Paste images with Ctrl+V)'
                   }
                   className="input-textarea"
@@ -1462,7 +1462,7 @@ function TextToSpeech() {
                 >
                   <div className="word-popup-header">
                     <span className="word-popup-word">{wordPopup.word}</span>
-                    <button className="word-popup-close" onClick={() => setWordPopup(null)}>âœ•</button>
+                    <button className="word-popup-close" onClick={() => setWordPopup(null)}>✕</button>
                   </div>
                   {wordPopup.loading ? (
                     <div className="word-popup-loading">Loading...</div>
@@ -1490,7 +1490,7 @@ function TextToSpeech() {
                               className="word-popup-speak-btn"
                               onClick={(e) => { e.stopPropagation(); speakWord(wordPopup.word, wordPopup.usAudio) }}
                               title="Play US pronunciation"
-                            >ðŸ”Š</button>
+                            >🔊</button>
                           </span>
                         )}
                         {wordPopup.ukPhonetic && (
@@ -1509,7 +1509,7 @@ function TextToSpeech() {
                               className="word-popup-speak-btn"
                               onClick={(e) => { e.stopPropagation(); speakWord(wordPopup.word, wordPopup.ukAudio) }}
                               title="Play UK pronunciation"
-                            >ðŸ”Š</button>
+                            >🔊</button>
                           </span>
                         )}
                         {!wordPopup.usPhonetic && !wordPopup.ukPhonetic && (
@@ -1519,7 +1519,7 @@ function TextToSpeech() {
                               className="word-popup-speak-btn"
                               onClick={(e) => { e.stopPropagation(); speakWord(wordPopup.word, null) }}
                               title="Play pronunciation"
-                            >ðŸ”Š</button>
+                            >🔊</button>
                           </span>
                         )}
                       </div>
@@ -1528,16 +1528,16 @@ function TextToSpeech() {
                 </div>
               )}
             </div>
-            {/* ë“œëž˜ê·¸ ì˜¤ë²„ë ˆì´ */}
+            {/* 드래그 오버레이 */}
             {isDragOver && (
               <div className="drag-overlay">
                 <div className="drag-overlay-content">
-                  <span className="drag-overlay-icon">ðŸ“·</span>
+                  <span className="drag-overlay-icon">📷</span>
                   <span className="drag-overlay-text">Drop images here</span>
                 </div>
               </div>
             )}
-            {/* ìˆ¨ê²¨ì§„ íŒŒì¼ ìž…ë ¥ */}
+            {/* 숨겨진 파일 입력 */}
             <input
               ref={fileInputRef}
               type="file"
@@ -1561,7 +1561,7 @@ function TextToSpeech() {
         <div className="summary-modal-overlay" onClick={() => setSummaryModal(prev => ({ ...prev, open: false }))}>
           <div className="summary-modal" onClick={e => e.stopPropagation()}>
             <div className="summary-modal-header">
-              <span className="summary-modal-title">âœ¨ AI Summary</span>
+              <span className="summary-modal-title">✨ AI Summary</span>
               <div className="summary-modal-actions">
                 {summaryModal.content && !summaryModal.loading && !summaryModal.error && (
                   <>
@@ -1574,7 +1574,7 @@ function TextToSpeech() {
                         setTimeout(() => setSummaryCopied(false), 1500)
                       }}
                       title="Copy to clipboard"
-                    >{summaryCopied ? 'âœ“ Copied' : 'ðŸ“‹ Copy'}</button>
+                    >{summaryCopied ? '✓ Copied' : '📋 Copy'}</button>
                     <button
                       className="summary-action-btn"
                       onClick={() => {
@@ -1589,10 +1589,10 @@ function TextToSpeech() {
                         URL.revokeObjectURL(url)
                       }}
                       title="Download as text file"
-                    >ðŸ’¾ Save</button>
+                    >💾 Save</button>
                   </>
                 )}
-                <button className="summary-modal-close" onClick={() => setSummaryModal(prev => ({ ...prev, open: false }))}>âœ•</button>
+                <button className="summary-modal-close" onClick={() => setSummaryModal(prev => ({ ...prev, open: false }))}>✕</button>
               </div>
             </div>
             <div className="summary-modal-body">
@@ -1603,13 +1603,13 @@ function TextToSpeech() {
                 </div>
               ) : summaryModal.error === 'sign_in_required' ? (
                 <div className="summary-modal-auth">
-                  <span className="summary-auth-icon">ðŸ”’</span>
+                  <span className="summary-auth-icon">🔒</span>
                   <p>Please sign in to use AI Summarize.</p>
                   <p className="summary-auth-sub">This feature uses our AI server and is available for logged-in users only.</p>
                 </div>
               ) : summaryModal.error ? (
                 <div className="summary-modal-error">
-                  <span className="summary-error-icon">âš </span>
+                  <span className="summary-error-icon">⚠</span>
                   <p>{summaryModal.error}</p>
                 </div>
               ) : (
@@ -1617,7 +1617,7 @@ function TextToSpeech() {
               )}
             </div>
             {summaryModal.content && !summaryModal.loading && !summaryModal.error && (
-              <div className="summary-modal-footer">Made by Lannie Server Â· Qwen</div>
+              <div className="summary-modal-footer">Made by Lannie Server · Qwen</div>
             )}
           </div>
         </div>
