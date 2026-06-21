@@ -3,11 +3,17 @@
  * PTE Core 시험 준비 메인 뷰
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { PageLayout, PageBox } from '../../../components/layout/PageLayout'
 import { useRecording } from '../../recording'
+import { useWebSpeechInput } from '../../../common/hooks/useWebSpeechInput'
+import { analyzeReadAloud } from '../_07_utils/readAloudAnalyzer'
+import { decodeBlobToPCM, blobToWAV } from '../_07_utils/audioDecoder'
 import readAloudQuestions from '../_01_data/read_aloud_questions.json'
 import '../_10_styles/pte.css'
+
+/* Whisper server URL — uses ngrok proxy in production */
+const WHISPER_SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
 
 /* ─── Translations ─── */
 const MODAL_LANGS = [
@@ -361,14 +367,140 @@ function ImpactStars({ level }) {
   )
 }
 
+/* ─── Score Gauge Component ─── */
+function ScoreGauge({ label, score, icon, color }) {
+  const percentage = Math.round((score / 90) * 100)
+  const gradientStyle = {
+    background: `conic-gradient(${color} ${percentage * 3.6}deg, var(--border-color) ${percentage * 3.6}deg)`,
+  }
+
+  return (
+    <div className="pte-ra-score-gauge">
+      <div className="pte-ra-score-gauge__ring" style={gradientStyle}>
+        <div className="pte-ra-score-gauge__inner">
+          <span className="pte-ra-score-gauge__value">{score}</span>
+          <span className="pte-ra-score-gauge__max">/90</span>
+        </div>
+      </div>
+      <div className="pte-ra-score-gauge__label">
+        <span className="material-symbols-outlined" style={{ fontSize: '1rem', color }}>{icon}</span>
+        {label}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Analysis Result Component ─── */
+function AnalysisResult({ analysis, engineLabel, onClose }) {
+  if (!analysis) return null
+
+  return (
+    <div className="pte-ra-analysis">
+      {/* Engine tag */}
+      <div className="pte-ra-analysis__engine-tag">
+        Analyzed with: {engineLabel}
+      </div>
+
+      {/* Overall score */}
+      <div className="pte-ra-analysis__overall">
+        <span className="pte-ra-analysis__overall-label">Overall</span>
+        <span className="pte-ra-analysis__overall-score">{analysis.overall}</span>
+        <span className="pte-ra-analysis__overall-max">/ 90</span>
+      </div>
+
+      {/* Score gauges */}
+      <div className="pte-ra-scores">
+        <ScoreGauge label="Content" score={analysis.content} icon="fact_check" color="#22c55e" />
+        <ScoreGauge label="Fluency" score={analysis.fluency} icon="waves" color="#3b82f6" />
+        <ScoreGauge label="Pronunciation" score={analysis.pronunciation} icon="record_voice_over" color="#f59e0b" />
+      </div>
+
+      {/* Word-level diff */}
+      <div className="pte-ra-word-diff">
+        <h5 className="pte-ra-word-diff__title">
+          <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>text_compare</span>
+          Word-by-Word Breakdown
+        </h5>
+        <div className="pte-ra-word-diff__legend">
+          <span><span className="pte-ra-word pte-ra-word--correct">correct</span> Spoken correctly</span>
+          <span><span className="pte-ra-word pte-ra-word--close">close</span> Close match</span>
+          <span><span className="pte-ra-word pte-ra-word--missed">missed</span> Not detected</span>
+        </div>
+        <div className="pte-ra-word-diff__text">
+          {analysis.wordDiff.map((w, i) => (
+            <span key={i} className={`pte-ra-word pte-ra-word--${w.status}`} title={
+              w.status === 'close' ? `Heard as: "${w.matchedAs}"` :
+              w.status === 'missed' ? 'This word was not detected in your speech' :
+              'Correctly spoken'
+            }>
+              {w.word}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Improvement tips */}
+      {analysis.tips.length > 0 && (
+        <div className="pte-ra-tips">
+          <h5 className="pte-ra-tips__title">
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#f59e0b' }}>lightbulb</span>
+            Improvement Tips
+          </h5>
+          <ul>
+            {analysis.tips.map((tip, i) => (
+              <li key={i}>{tip}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Disclaimer */}
+      <div className="pte-ra-analysis__disclaimer">
+        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>info</span>
+        <p>
+          <strong>Disclaimer:</strong> This analysis is generated using automated speech-to-text comparison and is <strong>not equivalent to official PTE Core scoring</strong>.
+          Actual PTE scores assess oral fluency, pronunciation, intonation, and stress at an acoustic level, which this tool does not replicate.
+          Use these results as a <strong>general reference for practice only</strong>.
+        </p>
+      </div>
+
+      <button className="pte-ra-btn pte-ra-btn--secondary" onClick={onClose} style={{ marginTop: '0.75rem', alignSelf: 'center' }}>
+        <span className="material-symbols-outlined">close</span>
+        Close Analysis
+      </button>
+    </div>
+  )
+}
+
 /* ─── Read Aloud Practice ─── */
 function ReadAloudPractice({ color, onClose }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [status, setStatus] = useState('preparing') // 'preparing', 'recording', 'completed'
   const [timeLeft, setTimeLeft] = useState(35) // prep: 35s, recording: 40s
   
+  // Analysis state
+  const [analysisState, setAnalysisState] = useState('idle') // 'idle', 'analyzing', 'done'
+  const [analysisResult, setAnalysisResult] = useState(null)
+  const [analysisEngine, setAnalysisEngine] = useState('')
+  const [analysisError, setAnalysisError] = useState(null)
+
   const timerRef = useRef(null)
+  const webSpeechTextRef = useRef('')
+  
   const { isRecording, recordings, startRecording, stopRecording, downloadRecording } = useRecording()
+  
+  // Web Speech API for concurrent recognition during recording
+  const webSpeechResultHandler = useCallback((text, isFinal) => {
+    if (isFinal && text) {
+      webSpeechTextRef.current += text + ' '
+    }
+  }, [])
+  
+  const webSpeech = useWebSpeechInput({
+    language: 'en-US',
+    onResult: webSpeechResultHandler,
+    continuous: true,
+  })
   
   const currentQuestion = readAloudQuestions[currentIdx]
 
@@ -382,8 +514,7 @@ function ReadAloudPractice({ color, onClose }) {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timerRef.current)
-            startRecording()
-            setStatus('recording')
+            handleStartRecordingInternal()
             return 40
           }
           return prev - 1
@@ -395,8 +526,7 @@ function ReadAloudPractice({ color, onClose }) {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timerRef.current)
-            stopRecording()
-            setStatus('completed')
+            handleStopRecordingInternal()
             return 0
           }
           return prev - 1
@@ -415,30 +545,214 @@ function ReadAloudPractice({ color, onClose }) {
       if (isRecording) {
         stopRecording()
       }
+      webSpeech.stop()
     }
   }, [isRecording, stopRecording])
 
+  const handleStartRecordingInternal = () => {
+    webSpeechTextRef.current = ''
+    startRecording()
+    // Start Web Speech API concurrently
+    webSpeech.start()
+    setStatus('recording')
+  }
+
+  const handleStopRecordingInternal = () => {
+    stopRecording()
+    webSpeech.stop()
+    setStatus('completed')
+  }
+
   const handleStartRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current)
-    startRecording()
-    setStatus('recording')
+    handleStartRecordingInternal()
   }
 
   const handleStopRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current)
-    stopRecording()
-    setStatus('completed')
+    handleStopRecordingInternal()
   }
 
   const handleRetry = () => {
     if (isRecording) stopRecording()
+    webSpeech.stop()
     setStatus('preparing')
+    setAnalysisState('idle')
+    setAnalysisResult(null)
+    setAnalysisError(null)
+    webSpeechTextRef.current = ''
   }
 
   const handleNext = () => {
     if (currentIdx < readAloudQuestions.length - 1) {
       setCurrentIdx((prev) => prev + 1)
       setStatus('preparing')
+      setAnalysisState('idle')
+      setAnalysisResult(null)
+      setAnalysisError(null)
+      webSpeechTextRef.current = ''
+    }
+  }
+
+  // ─── Analysis Handlers ───────────────────────────────────────
+
+  const runAnalysis = (recognizedText, engineLabel) => {
+    const result = analyzeReadAloud(currentQuestion.text, recognizedText)
+    setAnalysisResult(result)
+    setAnalysisEngine(engineLabel)
+    setAnalysisState('done')
+    setAnalysisError(null)
+  }
+
+  const handleAnalyzeBrowser = () => {
+    const text = webSpeechTextRef.current.trim()
+    if (!text) {
+      setAnalysisError('No speech was captured by the browser. The Web Speech API may not have detected your speech. Try "Local AI" or "Server" instead.')
+      return
+    }
+    setAnalysisState('analyzing')
+    setAnalysisError(null)
+    // Web Speech result is already available — instant analysis
+    setTimeout(() => runAnalysis(text, '🌐 Browser (Web Speech API)'), 100)
+  }
+
+  const handleAnalyzeWasm = async () => {
+    const latestRec = recordings[recordings.length - 1]
+    if (!latestRec?.blob) {
+      setAnalysisError('No recording available to analyze.')
+      return
+    }
+
+    setAnalysisState('analyzing')
+    setAnalysisError(null)
+
+    try {
+      // Decode blob to PCM
+      const pcmSamples = await decodeBlobToPCM(latestRec.blob)
+      
+      // Create a temporary WASM worker for offline transcription
+      const worker = new Worker(
+        new URL('../../../common/workers/sttWasmWorker.js', import.meta.url)
+      )
+
+      let fullText = ''
+
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          worker.terminate()
+          reject(new Error('WASM analysis timed out after 30 seconds'))
+        }, 30000)
+
+        worker.onmessage = (event) => {
+          const msg = event.data
+          switch (msg.type) {
+            case 'ready':
+              // Feed audio and request transcription
+              worker.postMessage({ type: 'start', language: 'en-US' })
+              
+              // Feed audio in chunks (simulate streaming)
+              const chunkSize = 4096
+              for (let i = 0; i < pcmSamples.length; i += chunkSize) {
+                const chunk = pcmSamples.slice(i, i + chunkSize)
+                worker.postMessage({ type: 'audio', samples: chunk }, [chunk.buffer])
+              }
+              
+              // Signal end of audio
+              setTimeout(() => {
+                worker.postMessage({ type: 'stop' })
+              }, 500)
+              break
+              
+            case 'final':
+              if (msg.text?.trim()) {
+                fullText += msg.text.trim() + ' '
+              }
+              break
+              
+            case 'end':
+              clearTimeout(timeout)
+              worker.terminate()
+              resolve()
+              break
+              
+            case 'error':
+              clearTimeout(timeout)
+              worker.terminate()
+              reject(new Error(msg.message))
+              break
+          }
+        }
+
+        worker.onerror = (err) => {
+          clearTimeout(timeout)
+          worker.terminate()
+          reject(new Error('WASM worker error: ' + err.message))
+        }
+
+        // Initialize WASM
+        worker.postMessage({
+          type: 'init',
+          wasmBaseUrl: window.location.origin + '/',
+          language: 'en-US',
+        })
+      })
+
+      if (!fullText.trim()) {
+        setAnalysisError('WASM SenseVoice could not recognize any speech in the recording. Try "Browser" or "Server" instead.')
+        setAnalysisState('idle')
+        return
+      }
+
+      runAnalysis(fullText.trim(), '🤖 Local AI (SenseVoice WASM)')
+    } catch (err) {
+      console.error('[RA Analysis] WASM error:', err)
+      setAnalysisError(`Local AI analysis failed: ${err.message}`)
+      setAnalysisState('idle')
+    }
+  }
+
+  const handleAnalyzeServer = async () => {
+    const latestRec = recordings[recordings.length - 1]
+    if (!latestRec?.blob) {
+      setAnalysisError('No recording available to analyze.')
+      return
+    }
+
+    setAnalysisState('analyzing')
+    setAnalysisError(null)
+
+    try {
+      // Convert blob to WAV for server upload
+      const wavBlob = await blobToWAV(latestRec.blob)
+      
+      const formData = new FormData()
+      formData.append('audio', wavBlob, 'recording.wav')
+      formData.append('language', 'en')
+
+      const response = await fetch(`${WHISPER_SERVER_URL}/api/stt/transcribe`, {
+        method: 'POST',
+        body: formData,
+        mode: 'cors',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      const text = result.text?.trim()
+
+      if (!text) {
+        setAnalysisError('Server Whisper could not recognize any speech. Try "Browser" or "Local AI" instead.')
+        setAnalysisState('idle')
+        return
+      }
+
+      runAnalysis(text, '🖥️ Server (Whisper large-v3)')
+    } catch (err) {
+      console.error('[RA Analysis] Server error:', err)
+      setAnalysisError(`Server analysis failed: ${err.message}. Make sure the Whisper server is running.`)
+      setAnalysisState('idle')
     }
   }
 
@@ -526,7 +840,7 @@ function ReadAloudPractice({ color, onClose }) {
                   onClick={() => downloadRecording(latestRecording)}
                 >
                   <span className="material-symbols-outlined">download</span>
-                  Download Recording
+                  Download
                 </button>
               )}
               <button className="pte-ra-btn pte-ra-btn--secondary" onClick={handleRetry}>
@@ -540,18 +854,93 @@ function ReadAloudPractice({ color, onClose }) {
                   onClick={handleNext}
                 >
                   <span className="material-symbols-outlined">arrow_forward</span>
-                  Next Question
+                  Next
                 </button>
               ) : (
                 <button className="pte-ra-btn pte-ra-btn--secondary" onClick={onClose}>
                   <span className="material-symbols-outlined">done_all</span>
-                  Finish Practice
+                  Finish
                 </button>
               )}
             </>
           )}
         </div>
       </div>
+
+      {/* ─── Analysis Section ─── */}
+      {status === 'completed' && analysisState !== 'done' && (
+        <div className="pte-ra-engine-picker">
+          <h5 className="pte-ra-engine-picker__title">
+            <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>analytics</span>
+            Analyze My Speech
+          </h5>
+          <p className="pte-ra-engine-picker__subtitle">Choose an engine to transcribe and analyze your recording:</p>
+
+          <div className="pte-ra-engine-picker__buttons">
+            <button 
+              className="pte-ra-engine-btn"
+              onClick={handleAnalyzeBrowser}
+              disabled={analysisState === 'analyzing'}
+            >
+              <span className="pte-ra-engine-btn__icon">🌐</span>
+              <div>
+                <strong>Browser</strong>
+                <span>Web Speech API · Instant</span>
+              </div>
+            </button>
+
+            <button 
+              className="pte-ra-engine-btn"
+              onClick={handleAnalyzeWasm}
+              disabled={analysisState === 'analyzing'}
+            >
+              <span className="pte-ra-engine-btn__icon">🤖</span>
+              <div>
+                <strong>Local AI</strong>
+                <span>SenseVoice WASM · 2–5s</span>
+              </div>
+            </button>
+
+            <button 
+              className="pte-ra-engine-btn"
+              onClick={handleAnalyzeServer}
+              disabled={analysisState === 'analyzing'}
+            >
+              <span className="pte-ra-engine-btn__icon">🖥️</span>
+              <div>
+                <strong>Server</strong>
+                <span>Whisper large-v3 · 3–8s</span>
+              </div>
+            </button>
+          </div>
+
+          {analysisState === 'analyzing' && (
+            <div className="pte-ra-engine-picker__loading">
+              <div className="pte-ra-spinner" />
+              <span>Analyzing your speech...</span>
+            </div>
+          )}
+
+          {analysisError && (
+            <div className="pte-ra-engine-picker__error">
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>warning</span>
+              {analysisError}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Analysis Results */}
+      {analysisState === 'done' && analysisResult && (
+        <AnalysisResult
+          analysis={analysisResult}
+          engineLabel={analysisEngine}
+          onClose={() => {
+            setAnalysisState('idle')
+            setAnalysisResult(null)
+          }}
+        />
+      )}
 
       {/* Security/Local Storage disclaimer */}
       <div className="pte-ra-notice">
@@ -563,6 +952,7 @@ function ReadAloudPractice({ color, onClose }) {
     </div>
   )
 }
+
 
 /* ─── Practice Mock Modal ─── */
 function PracticeMockModal({ isOpen, onClose, item, color }) {
