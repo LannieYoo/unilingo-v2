@@ -806,6 +806,42 @@ body.translator-focus-active {
   font-size: 18px;
 }
 
+/* Clean article text button */
+.translator-clean-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 5.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 50%;
+  color: #16a34a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.translator-clean-btn:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.translator-clean-btn.cleaned {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+  opacity: 1;
+}
+
 /* TTS Speak Button */
 .translator-speak-btn {
   position: absolute;

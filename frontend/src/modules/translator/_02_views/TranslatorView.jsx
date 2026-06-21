@@ -17,6 +17,7 @@ import { TopLoadingBar } from '../../../common/components/TopLoadingBar'
 import { AILoadingBar } from '../../../common/components/AILoadingBar'
 import { useAI } from '../../../common/hooks/useAI'
 import '../_10_styles/translator.css'
+import { cleanArticleText } from '../../../common/utils/cleanArticleText'
 
 export function TranslatorView() {
   const {
@@ -56,6 +57,7 @@ export function TranslatorView() {
   const [sttMode, setSttMode] = useState('local') // 'local' | 'server'
   const [showSttModeHelp, setShowSttModeHelp] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
+  const [cleanFeedback, setCleanFeedback] = useState(false)
 
   // Alternative translations (유사 표현)
   const [showAlternatives, setShowAlternatives] = useState(false)
@@ -525,6 +527,17 @@ export function TranslatorView() {
     }
   }
 
+  // Clean article text — remove noise from web copy-paste
+  const handleCleanInput = () => {
+    if (!inputText?.trim()) return
+    const cleaned = cleanArticleText(inputText)
+    if (cleaned !== inputText) {
+      setInputText(cleaned)
+      setCleanFeedback(true)
+      setTimeout(() => setCleanFeedback(false), 1500)
+    }
+  }
+
   const handlePaste = async (event) => {
     const items = event.clipboardData?.items
     if (!items) return
@@ -796,6 +809,13 @@ export function TranslatorView() {
             />
             {inputText && (
               <>
+                <button
+                  onClick={handleCleanInput}
+                  className={`translator-clean-btn${cleanFeedback ? ' cleaned' : ''}`}
+                  title={cleanFeedback ? 'Cleaned!' : 'Clean text (remove captions, credits, join lines)'}
+                >
+                  <span>{cleanFeedback ? '✓' : '🧹'}</span>
+                </button>
                 <button
                   onClick={() => {
                     stop()
