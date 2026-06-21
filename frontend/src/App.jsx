@@ -10,6 +10,7 @@ import Logs from './pages/logs/logs'
 import { SttStreamView } from './modules/stt_stream'
 import { TranslatorView, TranslationHistoryView } from './modules/translator'
 import { RecordingView } from './modules/recording'
+import { PtePrepView } from './modules/pte'
 import { DictionaryView, DictionaryHistoryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
 
@@ -339,6 +340,7 @@ function AppContent() {
             
             {/* New modular pages */}
             <Route path="/speech-to-recording" element={<RecordingView />} />
+            <Route path="/pte-core" element={<PtePrepView />} />
             <Route path="/translator" element={<TranslatorView />} />
             <Route path="/translator/history" element={<TranslationHistoryView />} />
             <Route path="/stt-stream" element={<SttStreamView />} />

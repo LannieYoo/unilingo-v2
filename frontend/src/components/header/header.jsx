@@ -29,6 +29,7 @@ function Header() {
     { path: '/text-to-speech', label: 'Text to Speech', name: 'textToSpeech' },
     { path: '/stt-stream', label: 'Speech to Text', name: 'speechToText' },
     { path: '/speech-to-recording', label: 'Recording', name: 'recording' },
+    { path: '/pte-core', label: 'PTE Core', name: 'pteCore' },
   ]
 
   // Admin page accessible via direct URL only
@@ -70,17 +71,22 @@ function Header() {
               <Link
                 to={item.path}
                 className={`text-base whitespace-nowrap py-1 transition-all ${
-                  location.pathname === item.path
-                    ? item.name === 'admin'
-                      ? 'font-bold text-orange-600'
-                      : 'font-bold text-primary'
-                    : item.name === 'admin'
-                      ? 'font-medium text-orange-500 hover:text-orange-600'
-                      : 'font-medium text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
+                  item.name === 'pteCore'
+                    ? location.pathname === item.path
+                      ? 'font-bold pte-nav-link pte-nav-link--active'
+                      : 'font-medium pte-nav-link'
+                    : location.pathname === item.path
+                      ? item.name === 'admin'
+                        ? 'font-bold text-orange-600'
+                        : 'font-bold text-primary'
+                      : item.name === 'admin'
+                        ? 'font-medium text-orange-500 hover:text-orange-600'
+                        : 'font-medium text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
                 }`}
                 onClick={closeMenu}
               >
                 {item.label}
+                {item.name === 'pteCore' && <span className="pte-nav-new">NEW</span>}
               </Link>
             </Fragment>
           ))}
@@ -152,17 +158,22 @@ function Header() {
                   key={item.path}
                   to={item.path}
                   className={`text-base font-medium py-3 px-2 rounded-md transition-colors ${
-                    location.pathname === item.path
-                      ? item.name === 'admin'
-                        ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20'
-                        : 'text-primary bg-primary/10 dark:bg-primary/20'
-                      : item.name === 'admin'
-                        ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                        : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark hover:bg-slate-100 dark:hover:bg-slate-800'
+                    item.name === 'pteCore'
+                      ? location.pathname === item.path
+                        ? 'pte-nav-link pte-nav-link--active bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'pte-nav-link'
+                      : location.pathname === item.path
+                        ? item.name === 'admin'
+                          ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20'
+                          : 'text-primary bg-primary/10 dark:bg-primary/20'
+                        : item.name === 'admin'
+                          ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                          : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                   onClick={closeMenu}
                 >
                   {item.label}
+                  {item.name === 'pteCore' && <span className="pte-nav-new" style={{ marginLeft: '0.5rem' }}>NEW</span>}
                 </Link>
               ))}
               
