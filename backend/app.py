@@ -134,6 +134,14 @@ def create_app(config_name: str = None) -> Flask:
                     conn.execute(text("ALTER TABLE users ADD COLUMN daily_gpu_limit_minutes INTEGER DEFAULT NULL"))
                     conn.commit()
                     app.logger.info("Migration: Added daily_gpu_limit_minutes column to users table")
+                
+                # Add search_source column to dictionary_logs if it doesn't exist
+                if inspector.has_table('dictionary_logs'):
+                    dict_columns = [c['name'] for c in inspector.get_columns('dictionary_logs')]
+                    if 'search_source' not in dict_columns:
+                        conn.execute(text("ALTER TABLE dictionary_logs ADD COLUMN search_source VARCHAR(20) NOT NULL DEFAULT 'dictionary'"))
+                        conn.commit()
+                        app.logger.info("Migration: Added search_source column to dictionary_logs table")
         else:
             app.logger.warning("SUPABASE_DB_URI not configured. Skipping table creation.")
     except Exception as e:

@@ -852,7 +852,7 @@ def get_dictionary_logs():
             if not user:
                 return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found', 'trace_id': trace_id}}), 404
             logs = dictionary_log_repo.get_user_logs(user.id, limit=limit, offset=offset, favorites_only=favorites_only)
-            result = [{'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'is_favorite': log.is_favorite, 'search_results': log.search_results, 'result_summary': log.result_summary, 'created_at': log.created_at.isoformat() if log.created_at else None} for log in logs]
+            result = [{'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'search_source': getattr(log, 'search_source', 'dictionary'), 'is_favorite': log.is_favorite, 'search_results': log.search_results, 'result_summary': log.result_summary, 'created_at': log.created_at.isoformat() if log.created_at else None} for log in logs]
             return jsonify({'logs': result, 'trace_id': trace_id}), 200
         finally:
             db.close()
@@ -877,7 +877,7 @@ def get_recent_dictionary_logs():
             if not user:
                 return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found', 'trace_id': trace_id}}), 404
             logs = dictionary_log_repo.get_recent_logs(user.id, limit=limit)
-            result = [{'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'is_favorite': log.is_favorite, 'created_at': log.created_at.isoformat() if log.created_at else None} for log in logs]
+            result = [{'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'search_source': getattr(log, 'search_source', 'dictionary'), 'is_favorite': log.is_favorite, 'created_at': log.created_at.isoformat() if log.created_at else None} for log in logs]
             return jsonify({'logs': result, 'trace_id': trace_id}), 200
         finally:
             db.close()
@@ -901,6 +901,7 @@ def create_dictionary_log():
         target_lang = data.get('target_lang', 'ko')
         search_results = data.get('search_results')
         result_summary = data.get('result_summary')
+        search_source = data.get('search_source', 'dictionary')
         if not search_word:
             return jsonify({'error': {'code': 'INVALID_REQUEST', 'message': 'search_word is required', 'trace_id': trace_id}}), 400
         ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -913,8 +914,8 @@ def create_dictionary_log():
             if not user:
                 return jsonify({'error': {'code': 'USER_NOT_FOUND', 'message': 'User not found', 'trace_id': trace_id}}), 404
             dictionary_log_repo = get_dictionary_log_repository(db)
-            log = dictionary_log_repo.upsert_log(user_id=user.id, search_word=search_word, source_lang=source_lang, target_lang=target_lang, search_results=search_results, result_summary=result_summary, ip_address=ip_address)
-            return jsonify({'log': {'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'is_favorite': log.is_favorite, 'created_at': log.created_at.isoformat() if log.created_at else None}, 'trace_id': trace_id}), 201
+            log = dictionary_log_repo.upsert_log(user_id=user.id, search_word=search_word, source_lang=source_lang, target_lang=target_lang, search_results=search_results, result_summary=result_summary, ip_address=ip_address, search_source=search_source)
+            return jsonify({'log': {'id': log.id, 'search_word': log.search_word, 'source_lang': log.source_lang, 'target_lang': log.target_lang, 'search_source': log.search_source, 'is_favorite': log.is_favorite, 'created_at': log.created_at.isoformat() if log.created_at else None}, 'trace_id': trace_id}), 201
         finally:
             db.close()
     except Exception as e:

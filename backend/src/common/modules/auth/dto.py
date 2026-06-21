@@ -205,6 +205,7 @@ class DictionaryLogCreateRequest(BaseModel):
     search_word: str
     source_lang: str
     target_lang: str
+    search_source: str = 'dictionary'  # 'dictionary', 'translator', 'pte'
 
 
 # ============================================================

@@ -1320,7 +1320,6 @@
   text-align: left;
   min-width: 150px;
   flex: 1;
-  max-width: 200px;
 }
 
 .pte-ra-engine-btn:hover:not(:disabled) {
@@ -2159,6 +2158,7 @@
   flex-direction: column;
   gap: 1rem;
   width: 100%;
+  align-self: stretch;
   box-sizing: border-box;
 }
 
