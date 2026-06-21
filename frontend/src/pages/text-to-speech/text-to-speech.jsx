@@ -57,6 +57,7 @@ function TextToSpeech() {
   const sentenceIdxRef = useRef(-1)
   const skipToIdxRef = useRef(-1)
   const nextImageId = useRef(0)
+  const activeHighlightRef = useRef(null)
   const [wordPopup, setWordPopup] = useState(null) // { word, x, y, translation, usPhonetic, ukPhonetic, usAudio, ukAudio, loading }
   const [isEditing, setIsEditing] = useState(true) // true = textarea, false = read-only display
   const [compactLines, setCompactLines] = useState(false)
@@ -103,6 +104,13 @@ function TextToSpeech() {
     setSelectedLanguage(findTTSCode(settingsTargetLang))
     setTargetLanguage(findTTSCode(nativeLanguage))
   }, [preferencesLoaded, nativeLanguage, settingsTargetLang])
+
+  // Auto-scroll to highlighted sentence
+  useEffect(() => {
+    if (activeHighlightRef.current) {
+      activeHighlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [currentSentenceIdx, highlightStart])
 
   // 번역 함수 — 백엔드 API 경유, 선택된 모델 사용
   const translateText = async (text, sourceLang, targetLang) => {
@@ -999,7 +1007,7 @@ function TextToSpeech() {
             const isActive = idx === currentSentenceIdx
             const translation = sentenceTranslations[idx]
             return (
-              <span key={idx} className="highlight-wrapper">
+              <span key={idx} className="highlight-wrapper" ref={isActive ? activeHighlightRef : undefined}>
                 <span className={isActive ? 'highlight-text' : undefined}>{renderWords(sentText)}</span>
                 {translation && (
                   <span className={`highlight-tooltip${isActive ? ' highlight-tooltip--active' : ''}`} style={{ fontSize: `${translationFontSize}px` }}>{translation}</span>
@@ -1025,7 +1033,7 @@ function TextToSpeech() {
     return (
       <>
         {renderWords(before)}
-        <span className="highlight-wrapper">
+        <span className="highlight-wrapper" ref={activeHighlightRef}>
           <span className="highlight-text">{renderWords(highlight)}</span>
           {showTooltip && (
             <span className="highlight-tooltip highlight-tooltip--active" style={{ fontSize: `${translationFontSize}px` }}>{translatedTooltip}</span>
