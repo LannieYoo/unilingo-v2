@@ -24,11 +24,19 @@
 
 const SAMPLE_RATE = 16000
 
+// The bundled WASM Silero VAD does not reliably honor maxSpeechDuration on
+// continuous speech (lectures/playback with no pauses), so segments grow until
+// the 60s buffer fills. We enforce our own cap: once speech has run this long
+// without a natural silence split, force-flush the current segment.
+const FORCE_SPLIT_SECONDS = 4
+const FORCE_SPLIT_SAMPLES = FORCE_SPLIT_SECONDS * SAMPLE_RATE
+
 let recognizer = null
 let vad = null
 let circularBuffer = null
 let isRunning = false
 let speechDetected = false
+let continuousSpeechSamples = 0
 let currentLanguage = ''
 
 // ─── Language Mapping ──────────────────────────────────────────
@@ -233,7 +241,7 @@ async function initEngine(wasmBaseUrl, initLanguage) {
     bufferSizeInSeconds: 60,
   }
   vad = createVad(Module, vadConfig)
-  console.log('[STT Worker] VAD created (tuned for near-realtime: 0.4s silence, 5s max)')
+  console.log(`[STT Worker] VAD created (0.4s silence split, ${FORCE_SPLIT_SECONDS}s manual force-split)`)
 
   // Initialize CircularBuffer (30 seconds of audio at 16kHz)
   circularBuffer = new CircularBuffer(30 * SAMPLE_RATE, Module)
@@ -262,17 +270,27 @@ function processAudio(samples) {
     circularBuffer.pop(windowSize)
 
     // Check for speech detection
-    if (vad.isDetected() && !speechDetected) {
-      speechDetected = true
-      console.log('[STT Worker] Speech detected')
-    }
-
-    if (!vad.isDetected()) {
+    if (vad.isDetected()) {
+      if (!speechDetected) {
+        speechDetected = true
+        console.log('[STT Worker] Speech detected')
+      }
+      // Track continuous (un-split) speech and force a split once it runs too long
+      continuousSpeechSamples += windowSize
+      if (continuousSpeechSamples >= FORCE_SPLIT_SAMPLES) {
+        console.log(`[STT Worker] Force-splitting at ${FORCE_SPLIT_SECONDS}s of continuous speech`)
+        vad.flush()
+        continuousSpeechSamples = 0
+      }
+    } else {
       speechDetected = false
+      continuousSpeechSamples = 0
     }
 
     // Process any complete speech segments
     while (!vad.isEmpty()) {
+      // A segment boundary (natural or forced) was reached — reset the run length
+      continuousSpeechSamples = 0
       const segment = vad.front()
       const duration = segment.samples.length / SAMPLE_RATE
       vad.pop()
@@ -351,6 +369,7 @@ function handleStop() {
   }
 
   speechDetected = false
+  continuousSpeechSamples = 0
   isRunning = false
   self.postMessage({ type: 'end' })
   console.log('[STT Worker] Stopped')
@@ -398,6 +417,7 @@ self.onmessage = async (event) => {
 
         isRunning = true
         speechDetected = false
+        continuousSpeechSamples = 0
         self.postMessage({ type: 'started' })
         console.log(`[STT Worker] Started (language: ${currentLanguage || 'auto'}, maxSpeech: 5s)`)
         break

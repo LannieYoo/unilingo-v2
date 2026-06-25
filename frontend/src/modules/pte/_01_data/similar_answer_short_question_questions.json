@@ -1,0 +1,1073 @@
+[
+  {
+    "id": 1,
+    "title": "Answer Short Question Similar Practice 1",
+    "promptTitle": "Animal",
+    "text": "Which animal is known for having a very long neck?",
+    "answer": "giraffe",
+    "acceptedAnswers": [
+      "giraffe",
+      "a giraffe"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 2,
+    "title": "Answer Short Question Similar Practice 2",
+    "promptTitle": "Planet",
+    "text": "Which planet is closest to the sun?",
+    "answer": "Mercury",
+    "acceptedAnswers": [
+      "Mercury"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 3,
+    "title": "Answer Short Question Similar Practice 3",
+    "promptTitle": "Color",
+    "text": "What color do you get when you mix blue and yellow?",
+    "answer": "green",
+    "acceptedAnswers": [
+      "green"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 4,
+    "title": "Answer Short Question Similar Practice 4",
+    "promptTitle": "Transport",
+    "text": "What do people wear on a bicycle to protect their head?",
+    "answer": "helmet",
+    "acceptedAnswers": [
+      "helmet",
+      "a helmet"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 5,
+    "title": "Answer Short Question Similar Practice 5",
+    "promptTitle": "Time",
+    "text": "How many days are there in a week?",
+    "answer": "seven",
+    "acceptedAnswers": [
+      "seven",
+      "7"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 6,
+    "title": "Answer Short Question Similar Practice 6",
+    "promptTitle": "Direction",
+    "text": "Where does the sun rise, in the east or the west?",
+    "answer": "east",
+    "acceptedAnswers": [
+      "east",
+      "the east"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 7,
+    "title": "Answer Short Question Similar Practice 7",
+    "promptTitle": "Body",
+    "text": "Which organ pumps blood through the human body?",
+    "answer": "heart",
+    "acceptedAnswers": [
+      "heart",
+      "the heart"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 8,
+    "title": "Answer Short Question Similar Practice 8",
+    "promptTitle": "School",
+    "text": "What do students use to write on a blackboard?",
+    "answer": "chalk",
+    "acceptedAnswers": [
+      "chalk"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 9,
+    "title": "Answer Short Question Similar Practice 9",
+    "promptTitle": "Weather",
+    "text": "What do we call frozen rain that falls as white flakes?",
+    "answer": "snow",
+    "acceptedAnswers": [
+      "snow"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 10,
+    "title": "Answer Short Question Similar Practice 10",
+    "promptTitle": "Food",
+    "text": "What fruit is yellow and usually curved?",
+    "answer": "banana",
+    "acceptedAnswers": [
+      "banana",
+      "a banana"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 11,
+    "title": "Answer Short Question Similar Practice 11",
+    "promptTitle": "Geometry",
+    "text": "How many sides does a triangle have?",
+    "answer": "three",
+    "acceptedAnswers": [
+      "three",
+      "3"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 12,
+    "title": "Answer Short Question Similar Practice 12",
+    "promptTitle": "Measurement",
+    "text": "What is the opposite of heavy?",
+    "answer": "light",
+    "acceptedAnswers": [
+      "light"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 13,
+    "title": "Answer Short Question Similar Practice 13",
+    "promptTitle": "Geography",
+    "text": "What is the largest ocean on Earth?",
+    "answer": "Pacific",
+    "acceptedAnswers": [
+      "Pacific",
+      "the Pacific",
+      "Pacific Ocean",
+      "the Pacific Ocean"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 14,
+    "title": "Answer Short Question Similar Practice 14",
+    "promptTitle": "Science",
+    "text": "What gas do plants absorb from the air?",
+    "answer": "carbon dioxide",
+    "acceptedAnswers": [
+      "carbon dioxide",
+      "CO2"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 15,
+    "title": "Answer Short Question Similar Practice 15",
+    "promptTitle": "Language",
+    "text": "What is the plural of mouse?",
+    "answer": "mice",
+    "acceptedAnswers": [
+      "mice"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 16,
+    "title": "Answer Short Question Similar Practice 16",
+    "promptTitle": "Technology",
+    "text": "What device do you use to take photographs digitally?",
+    "answer": "camera",
+    "acceptedAnswers": [
+      "camera",
+      "a camera"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 17,
+    "title": "Answer Short Question Similar Practice 17",
+    "promptTitle": "Music",
+    "text": "What do we call a person who writes music?",
+    "answer": "composer",
+    "acceptedAnswers": [
+      "composer",
+      "a composer"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 18,
+    "title": "Answer Short Question Similar Practice 18",
+    "promptTitle": "Job",
+    "text": "Who treats patients in a hospital?",
+    "answer": "doctor",
+    "acceptedAnswers": [
+      "doctor",
+      "a doctor"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 19,
+    "title": "Answer Short Question Similar Practice 19",
+    "promptTitle": "Math",
+    "text": "What is five plus seven?",
+    "answer": "twelve",
+    "acceptedAnswers": [
+      "twelve",
+      "12"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 20,
+    "title": "Answer Short Question Similar Practice 20",
+    "promptTitle": "City",
+    "text": "What do we call a large road in a city with many lanes?",
+    "answer": "avenue",
+    "acceptedAnswers": [
+      "avenue",
+      "an avenue"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 21,
+    "title": "Answer Short Question Similar Practice 21",
+    "promptTitle": "Nature",
+    "text": "What is the hard outer layer of a tree called?",
+    "answer": "bark",
+    "acceptedAnswers": [
+      "bark",
+      "tree bark"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 22,
+    "title": "Answer Short Question Similar Practice 22",
+    "promptTitle": "Language",
+    "text": "What punctuation mark ends a direct question?",
+    "answer": "question mark",
+    "acceptedAnswers": [
+      "question mark",
+      "a question mark"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 23,
+    "title": "Answer Short Question Similar Practice 23",
+    "promptTitle": "Cooking",
+    "text": "What kitchen appliance is used to keep food cold?",
+    "answer": "refrigerator",
+    "acceptedAnswers": [
+      "refrigerator",
+      "a refrigerator",
+      "fridge",
+      "a fridge"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 24,
+    "title": "Answer Short Question Similar Practice 24",
+    "promptTitle": "Transport",
+    "text": "What do you call a train that runs below ground?",
+    "answer": "subway",
+    "acceptedAnswers": [
+      "subway",
+      "the subway",
+      "metro",
+      "underground"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 25,
+    "title": "Answer Short Question Similar Practice 25",
+    "promptTitle": "Business",
+    "text": "What document shows how much money a company earns and spends?",
+    "answer": "budget",
+    "acceptedAnswers": [
+      "budget",
+      "a budget"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 26,
+    "title": "Answer Short Question Similar Practice 26",
+    "promptTitle": "Environment",
+    "text": "What do we call energy produced by the sun?",
+    "answer": "solar energy",
+    "acceptedAnswers": [
+      "solar energy",
+      "solar power"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 27,
+    "title": "Answer Short Question Similar Practice 27",
+    "promptTitle": "Animals",
+    "text": "Which bird is often associated with wisdom?",
+    "answer": "owl",
+    "acceptedAnswers": [
+      "owl",
+      "an owl"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 28,
+    "title": "Answer Short Question Similar Practice 28",
+    "promptTitle": "Grammar",
+    "text": "What is the past tense of go?",
+    "answer": "went",
+    "acceptedAnswers": [
+      "went"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 29,
+    "title": "Answer Short Question Similar Practice 29",
+    "promptTitle": "Literature",
+    "text": "Who writes novels and stories?",
+    "answer": "author",
+    "acceptedAnswers": [
+      "author",
+      "an author",
+      "writer",
+      "a writer"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 30,
+    "title": "Answer Short Question Similar Practice 30",
+    "promptTitle": "Health",
+    "text": "What do you call the temperature of the human body when it is higher than normal?",
+    "answer": "fever",
+    "acceptedAnswers": [
+      "fever",
+      "a fever"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 31,
+    "title": "Answer Short Question Similar Practice 31",
+    "promptTitle": "Shopping",
+    "text": "What do customers usually receive after making a payment?",
+    "answer": "receipt",
+    "acceptedAnswers": [
+      "receipt",
+      "a receipt"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 32,
+    "title": "Answer Short Question Similar Practice 32",
+    "promptTitle": "Communication",
+    "text": "What do we call a message sent by email to many people at once?",
+    "answer": "newsletter",
+    "acceptedAnswers": [
+      "newsletter",
+      "a newsletter"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 33,
+    "title": "Answer Short Question Similar Practice 33",
+    "promptTitle": "Transport",
+    "text": "Which vehicle usually lands on a runway?",
+    "answer": "airplane",
+    "acceptedAnswers": [
+      "airplane",
+      "plane",
+      "an airplane",
+      "a plane"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 34,
+    "title": "Answer Short Question Similar Practice 34",
+    "promptTitle": "Office",
+    "text": "What machine prints paper documents?",
+    "answer": "printer",
+    "acceptedAnswers": [
+      "printer",
+      "a printer"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 35,
+    "title": "Answer Short Question Similar Practice 35",
+    "promptTitle": "History",
+    "text": "What do we call a period of one hundred years?",
+    "answer": "century",
+    "acceptedAnswers": [
+      "century",
+      "a century"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 36,
+    "title": "Answer Short Question Similar Practice 36",
+    "promptTitle": "Science",
+    "text": "What force keeps planets moving around the sun?",
+    "answer": "gravity",
+    "acceptedAnswers": [
+      "gravity"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 37,
+    "title": "Answer Short Question Similar Practice 37",
+    "promptTitle": "Biology",
+    "text": "What do bees collect from flowers?",
+    "answer": "nectar",
+    "acceptedAnswers": [
+      "nectar"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 38,
+    "title": "Answer Short Question Similar Practice 38",
+    "promptTitle": "Media",
+    "text": "What do we call a moving image advertisement on television?",
+    "answer": "commercial",
+    "acceptedAnswers": [
+      "commercial",
+      "an advertisement",
+      "advertisement",
+      "ad"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 39,
+    "title": "Answer Short Question Similar Practice 39",
+    "promptTitle": "Calendar",
+    "text": "Which month comes after September?",
+    "answer": "October",
+    "acceptedAnswers": [
+      "October"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 40,
+    "title": "Answer Short Question Similar Practice 40",
+    "promptTitle": "Sports",
+    "text": "What sport uses a racket and a shuttlecock?",
+    "answer": "badminton",
+    "acceptedAnswers": [
+      "badminton"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 41,
+    "title": "Answer Short Question Similar Practice 41",
+    "promptTitle": "Business",
+    "text": "What is a person called who starts a new business?",
+    "answer": "entrepreneur",
+    "acceptedAnswers": [
+      "entrepreneur",
+      "an entrepreneur"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 42,
+    "title": "Answer Short Question Similar Practice 42",
+    "promptTitle": "Internet",
+    "text": "What do we call a secret string of characters used to access an account?",
+    "answer": "password",
+    "acceptedAnswers": [
+      "password",
+      "a password"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 43,
+    "title": "Answer Short Question Similar Practice 43",
+    "promptTitle": "Grammar",
+    "text": "What part of speech describes a noun?",
+    "answer": "adjective",
+    "acceptedAnswers": [
+      "adjective",
+      "an adjective"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 44,
+    "title": "Answer Short Question Similar Practice 44",
+    "promptTitle": "Economics",
+    "text": "What is the term for a general rise in prices over time?",
+    "answer": "inflation",
+    "acceptedAnswers": [
+      "inflation"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 45,
+    "title": "Answer Short Question Similar Practice 45",
+    "promptTitle": "Weather",
+    "text": "What instrument measures temperature?",
+    "answer": "thermometer",
+    "acceptedAnswers": [
+      "thermometer",
+      "a thermometer"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 46,
+    "title": "Answer Short Question Similar Practice 46",
+    "promptTitle": "Astronomy",
+    "text": "What is the natural satellite of the Earth?",
+    "answer": "moon",
+    "acceptedAnswers": [
+      "moon",
+      "the moon"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 47,
+    "title": "Answer Short Question Similar Practice 47",
+    "promptTitle": "Education",
+    "text": "What do we call the final part of a book where key ideas are summarized?",
+    "answer": "conclusion",
+    "acceptedAnswers": [
+      "conclusion",
+      "the conclusion"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 48,
+    "title": "Answer Short Question Similar Practice 48",
+    "promptTitle": "Maps",
+    "text": "What do we call the line dividing the Earth into northern and southern halves?",
+    "answer": "equator",
+    "acceptedAnswers": [
+      "equator",
+      "the equator"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 49,
+    "title": "Answer Short Question Similar Practice 49",
+    "promptTitle": "Law",
+    "text": "What do we call a written agreement between two parties?",
+    "answer": "contract",
+    "acceptedAnswers": [
+      "contract",
+      "a contract"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 50,
+    "title": "Answer Short Question Similar Practice 50",
+    "promptTitle": "Chemistry",
+    "text": "What is H2O commonly called?",
+    "answer": "water",
+    "acceptedAnswers": [
+      "water"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 51,
+    "title": "Answer Short Question Similar Practice 51",
+    "promptTitle": "Travel",
+    "text": "What document allows you to travel internationally?",
+    "answer": "passport",
+    "acceptedAnswers": [
+      "passport",
+      "a passport"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 52,
+    "title": "Answer Short Question Similar Practice 52",
+    "promptTitle": "Transport",
+    "text": "What do you call the place where buses regularly stop for passengers?",
+    "answer": "bus stop",
+    "acceptedAnswers": [
+      "bus stop",
+      "a bus stop"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 53,
+    "title": "Answer Short Question Similar Practice 53",
+    "promptTitle": "Culture",
+    "text": "What do we call the traditional food of a country or region?",
+    "answer": "cuisine",
+    "acceptedAnswers": [
+      "cuisine"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 54,
+    "title": "Answer Short Question Similar Practice 54",
+    "promptTitle": "Technology",
+    "text": "What do we call software damage caused by harmful code?",
+    "answer": "virus",
+    "acceptedAnswers": [
+      "virus",
+      "a virus",
+      "computer virus"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 55,
+    "title": "Answer Short Question Similar Practice 55",
+    "promptTitle": "Math",
+    "text": "What do we call the answer to a multiplication problem?",
+    "answer": "product",
+    "acceptedAnswers": [
+      "product",
+      "the product"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 56,
+    "title": "Answer Short Question Similar Practice 56",
+    "promptTitle": "Environment",
+    "text": "What do we call the process of using old materials again?",
+    "answer": "recycling",
+    "acceptedAnswers": [
+      "recycling"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 57,
+    "title": "Answer Short Question Similar Practice 57",
+    "promptTitle": "Language",
+    "text": "What is the opposite of ancient?",
+    "answer": "modern",
+    "acceptedAnswers": [
+      "modern"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 58,
+    "title": "Answer Short Question Similar Practice 58",
+    "promptTitle": "Agriculture",
+    "text": "What machine is commonly used to harvest wheat?",
+    "answer": "combine",
+    "acceptedAnswers": [
+      "combine",
+      "combine harvester",
+      "a combine harvester"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 59,
+    "title": "Answer Short Question Similar Practice 59",
+    "promptTitle": "Art",
+    "text": "What do we call a picture made with a camera?",
+    "answer": "photograph",
+    "acceptedAnswers": [
+      "photograph",
+      "photo",
+      "a photograph",
+      "a photo"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 60,
+    "title": "Answer Short Question Similar Practice 60",
+    "promptTitle": "Hospital",
+    "text": "What room do surgeons work in during operations?",
+    "answer": "operating room",
+    "acceptedAnswers": [
+      "operating room",
+      "operation room",
+      "surgery",
+      "the operating room"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 61,
+    "title": "Answer Short Question Similar Practice 61",
+    "promptTitle": "Finance",
+    "text": "What do we call money borrowed from a bank to buy a house?",
+    "answer": "mortgage",
+    "acceptedAnswers": [
+      "mortgage",
+      "a mortgage"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 62,
+    "title": "Answer Short Question Similar Practice 62",
+    "promptTitle": "Geography",
+    "text": "What is the capital city of Canada?",
+    "answer": "Ottawa",
+    "acceptedAnswers": [
+      "Ottawa"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 63,
+    "title": "Answer Short Question Similar Practice 63",
+    "promptTitle": "Science",
+    "text": "What process turns liquid water into vapor?",
+    "answer": "evaporation",
+    "acceptedAnswers": [
+      "evaporation"
+    ],
+    "source": "AI-Generated Similar Practice",
+    "sourceLabel": "AI-Generated Similar Practice",
+    "preparationTime": 0,
+    "answerTime": 10,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  }
+]

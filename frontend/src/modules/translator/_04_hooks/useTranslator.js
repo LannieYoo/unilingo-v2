@@ -9,6 +9,31 @@ import { useLanguagePreferences, useAuthStore } from '../../auth'
 import { useGlossary } from '../../../shared/modules/glossary'
 import { useUsage } from '../../../common/contexts/UsageContext'
 
+const TRANSLATOR_STATE_STORAGE_KEY = 'unilingo.translator.state.v1'
+
+function loadPersistedTranslatorState() {
+  if (typeof window === 'undefined') return {}
+
+  try {
+    const raw = window.localStorage.getItem(TRANSLATOR_STATE_STORAGE_KEY)
+    if (!raw) return {}
+
+    const parsed = JSON.parse(raw)
+    return {
+      inputText: typeof parsed.inputText === 'string' ? parsed.inputText : '',
+      outputText: typeof parsed.outputText === 'string' ? parsed.outputText : '',
+      sourceLang: typeof parsed.sourceLang === 'string' ? parsed.sourceLang : 'ko',
+      targetLang: typeof parsed.targetLang === 'string' ? parsed.targetLang : 'en',
+      translationProvider: typeof parsed.translationProvider === 'string' ? parsed.translationProvider : null,
+      domain: typeof parsed.domain === 'string' ? parsed.domain : 'general',
+      manualLangChange: Boolean(parsed.manualLangChange),
+    }
+  } catch (error) {
+    console.warn('[Translator] Failed to restore saved state:', error)
+    return {}
+  }
+}
+
 /**
  * 언어 감지 함수
  */
@@ -39,25 +64,28 @@ export function detectLanguage(text) {
  * 번역 훅
  */
 export function useTranslator() {
-  const [inputText, setInputText] = useState('')
-  const [outputText, setOutputText] = useState('')
-  const [sourceLang, setSourceLang] = useState('ko')
-  const [targetLang, setTargetLang] = useState('en')
+  const persistedStateRef = useRef(loadPersistedTranslatorState())
+  const restoredWithOutputRef = useRef(Boolean(persistedStateRef.current.inputText && persistedStateRef.current.outputText))
+
+  const [inputText, setInputText] = useState(persistedStateRef.current.inputText || '')
+  const [outputText, setOutputText] = useState(persistedStateRef.current.outputText || '')
+  const [sourceLang, setSourceLang] = useState(persistedStateRef.current.sourceLang || 'ko')
+  const [targetLang, setTargetLang] = useState(persistedStateRef.current.targetLang || 'en')
   const [isTranslating, setIsTranslating] = useState(false)
-  const [translationProvider, setTranslationProvider] = useState(null)
+  const [translationProvider, setTranslationProvider] = useState(persistedStateRef.current.translationProvider || null)
   
   // Track whether a translation is in progress to avoid race conditions
   const latestRequestIdRef = useRef(0)
   
   const translateTimeoutRef = useRef(null)
   const abortControllerRef = useRef(null)
-  const isManualLangChangeRef = useRef(false)
+  const isManualLangChangeRef = useRef(Boolean(persistedStateRef.current.manualLangChange))
 
   // 공통 언어 설정 훅 사용
   const { nativeLanguage, targetLanguage, isLoaded } = useLanguagePreferences()
   
   // Glossary 훅 사용
-  const { domain, setDomain, preProcess, postProcess } = useGlossary('general')
+  const { domain, setDomain, preProcess, postProcess } = useGlossary(persistedStateRef.current.domain || 'general')
 
   // Usage tracking hook
   const { trackUsage } = useUsage()
@@ -68,6 +96,10 @@ export function useTranslator() {
   // Load language preferences from settings
   useEffect(() => {
     if (!isLoaded) return
+
+    // If the user returns to Translator with an existing final state, keep it
+    // exactly as they left it instead of replacing languages from preferences.
+    if (persistedStateRef.current.inputText || persistedStateRef.current.outputText) return
     
     // Settings의 native_language → Translator의 Source Language (모국어로 입력)
     // Settings의 target_language → Translator의 Target Language (번역 대상)
@@ -81,6 +113,27 @@ export function useTranslator() {
       setTargetLang(targetLanguage)
     }
   }, [isLoaded, nativeLanguage, targetLanguage])
+
+  // Persist the visible Translator work state so route changes do not wipe the
+  // current input, final translation, selected languages, or provider badge.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem(TRANSLATOR_STATE_STORAGE_KEY, JSON.stringify({
+        inputText,
+        outputText,
+        sourceLang,
+        targetLang,
+        translationProvider,
+        domain,
+        manualLangChange: isManualLangChangeRef.current,
+        savedAt: Date.now(),
+      }))
+    } catch (error) {
+      console.warn('[Translator] Failed to save state:', error)
+    }
+  }, [inputText, outputText, sourceLang, targetLang, translationProvider, domain])
 
   // 입력 텍스트 변경 시 언어 자동 탐지
   useEffect(() => {
@@ -244,6 +297,11 @@ export function useTranslator() {
   useEffect(() => {
     if (translateTimeoutRef.current) {
       clearTimeout(translateTimeoutRef.current)
+    }
+
+    if (restoredWithOutputRef.current) {
+      restoredWithOutputRef.current = false
+      return
     }
 
     if (!inputText?.trim()) {

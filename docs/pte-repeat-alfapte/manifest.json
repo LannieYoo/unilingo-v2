@@ -1,0 +1,57 @@
+{
+  "seed_url": "https://alfapte.com",
+  "slug": "pte-repeat-alfapte",
+  "total_urls": 8,
+  "max_depth": 1,
+  "crawled_at": "2026-06-22T13:32:45.216742",
+  "pages": [
+    {
+      "url": "https://alfapte.com",
+      "title": "PTE Practice Test Online with AI Scoring & Free Trial | AlfaPTE",
+      "depth": 0,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/pte-academic-exam-structure",
+      "title": "PTE Academic Exam: Format, Pattern & Preparation Guide",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/pte-strategies-videos",
+      "title": "PTE Strategy Videos - Free Online PTE Coaching | Alfapte",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/pte-score-calculator",
+      "title": "PTE Academic Exam - Score Calculator | New Scoring System",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/best-pte-with-ai-course-online",
+      "title": "Free PTE Courses Online with AI, Best PTE Predictions | Alfapte",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/pte-speaking-practice",
+      "title": "PTE Speaking Practice Test for PTE Academic & UKVI",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/pte-academic-ukvi-exam-structure",
+      "title": "PTE Academic UKVI: Exam Format, Practice & Mock Tests",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://alfapte.com/pte-full-sectional-mock-tests",
+      "title": "PTE Mock Test Free Online - Academic Full Mock Tests",
+      "depth": 1,
+      "status": 200
+    }
+  ]
+}

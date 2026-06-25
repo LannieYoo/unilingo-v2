@@ -1,0 +1,122 @@
+/* PyTorch — docs site cleanup (pydata-sphinx-theme) */
+/* @pdf-width: 1280 */
+/* @md-content-selector: .bd-article */
+/* @md-remove: .headerlink,.viewcode-link,.feedback,.rating,.bd-header-article */
+
+/* Override @page margins */
+@page {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Top navigation / header bar */
+header.bd-header,
+.header-holder,
+.bd-header,
+.navbar {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+}
+
+/* Version warning banner */
+#bd-header-version-warning,
+.pst-async-banner-revealer {
+    display: none !important;
+}
+
+/* Skip link */
+#pst-skip-link {
+    display: none !important;
+}
+
+/* Back to top button */
+#pst-back-to-top {
+    display: none !important;
+}
+
+/* Left sidebar (primary navigation) */
+.bd-sidebar-primary,
+.bd-sidebar,
+#pst-primary-sidebar-checkbox,
+label.overlay {
+    display: none !important;
+}
+
+/* Right sidebar (table of contents) */
+.bd-sidebar-secondary,
+.bd-toc,
+.bd-toc-nav {
+    display: none !important;
+}
+
+/* Search overlay */
+.search-button__wrapper {
+    display: none !important;
+}
+
+/* Rate this Page / Send Feedback (keep prev/next nav) */
+.bd-header-article,
+.feedback,
+.feedback-send,
+.rating {
+    display: none !important;
+}
+
+/* Cookie banner */
+.cookie-banner-wrapper {
+    display: none !important;
+}
+
+/* Osano cookie consent widget (floating icon) */
+.osano-cm-widget,
+.osano-cm-dialog,
+.osano-cm-window,
+[class*="osano"] {
+    display: none !important;
+}
+
+/* RunLLM "Ask AI" widget */
+#runllm-widget-container,
+[id*="runllm"],
+[class*="runllm"],
+.runllm-widget {
+    display: none !important;
+}
+
+/* Site-wide footer: Docs / Tutorials / Resources */
+#docs-tutorials-resources,
+.docs-tutorials-resources {
+    display: none !important;
+}
+
+/* Site footer: newsletter + links */
+footer.site-footer,
+#newsletter {
+    display: none !important;
+}
+
+/* Remove all top spacing */
+html, body {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Content area — full width */
+.bd-main,
+.bd-content,
+.bd-article-container,
+.bd-article {
+    margin: 0 !important;
+    max-width: 100% !important;
+    padding: 8px 16px !important;
+}
+
+.bd-page-width {
+    max-width: 100% !important;
+}
+
+.bd-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}

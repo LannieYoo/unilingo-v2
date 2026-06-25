@@ -97,7 +97,7 @@ def create_app(config_name: str = None) -> Flask:
     try:
         from sqlalchemy import create_engine
         from backend.src.common.supabase import SUPABASE_DB_URI
-        from backend.src.common.modules.auth.service import UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel
+        from backend.src.common.modules.auth.service import UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel, CelpipTestLogModel
         from backend.src.common.modules.errors.service import ErrorEventModel
         from backend.src.common.modules.usage.service import UsageLog, GuestUsageLog
         

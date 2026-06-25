@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"import\\('./src/modules/celpip/_01_data/celpipMockTests.js'\\).then\\(m=>{const want={'Problem Solving':8,'Daily Life Conversation':5,Information:6,'News Item':5,Discussion:8,Viewpoints:6};let bad=0;for\\(const t of m.CELPIP_MOCK_TESTS.listening\\){if\\(t.questions.length!==want[t.type]\\){bad++;console.log\\('COUNT OFF',t.id,t.type,t.questions.length\\)}}console.log\\('question-count mismatches:',bad\\)}\\)\")",
+      "Bash(npx esbuild *)",
+      "Bash(curl -s -o /dev/null -w \"localhost:3001 -> %{http_code}\\\\n\" --max-time 4 http://localhost:3001/celpip)",
+      "Bash(node -e \"import\\('./src/modules/celpip/_01_data/celpipMockTests.js'\\).then\\(m=>{let bad=0;for\\(const t of m.CELPIP_MOCK_TESTS.listening\\){if\\(t.segments\\){const sum=t.segments.reduce\\(\\(a,s\\)=>a+s.q,0\\);if\\(sum!==t.questions.length\\){bad++;console.log\\('SEG SUM OFF',t.id,sum,'vs',t.questions.length\\)}if\\(!t.transcript\\)console.log\\('NO TRANSCRIPT',t.id\\)}}console.log\\('PS segmented sets:',m.CELPIP_MOCK_TESTS.listening.filter\\(t=>t.segments\\).length\\);console.log\\('segment-sum mismatches:',bad\\)}\\)\")",
+      "Bash(node -e \"import\\('./src/modules/celpip/_01_data/celpipMockTests.js'\\).then\\(m=>{const L=m.CELPIP_MOCK_TESTS.listening;let issues=0;for\\(const t of L\\){const segs=t.segments||[{q:t.questions.length}];const sum=segs.reduce\\(\\(a,s\\)=>a+s.q,0\\);if\\(sum!==t.questions.length\\){issues++;console.log\\('seg-sum',t.id\\)}for\\(const q of t.questions\\){if\\(!q.options.includes\\(q.answer\\)\\){issues++;console.log\\('ans',t.id\\)}}if\\(!t.transcript\\){issues++;console.log\\('no-transcript',t.id\\)}}console.log\\('listening sets',L.length,'PS segmented',L.filter\\(t=>t.segments\\).length,'issues',issues\\)}\\)\")",
+      "WebFetch(domain:www.celpip.ca)",
+      "Bash(node crawl/generate_celpip_listening.mjs)",
+      "Bash(node -e \"import\\('./src/modules/celpip/_01_data/celpipMockTests.js'\\).then\\(m=>{const L=m.CELPIP_MOCK_TESTS.listening;const want={'Problem Solving':8,'Daily Life Conversation':5,Information:6,'News Item':5,Discussion:8,Viewpoints:6};const counts={};let issues=0;for\\(const t of L\\){counts[t.type]=\\(counts[t.type]||0\\)+1;if\\(t.questions.length!==want[t.type]\\){issues++;console.log\\('count off',t.id\\)}for\\(const q of t.questions\\){if\\(!q.options.includes\\(q.answer\\)\\){issues++;console.log\\('ans',t.id\\)}}if\\(!t.transcript\\){issues++;console.log\\('no transcript',t.id\\)}}const totalQ=L.reduce\\(\\(a,t\\)=>a+t.questions.length,0\\);console.log\\('total listening sets:',L.length\\);console.log\\('by type:',counts\\);console.log\\('total questions:',totalQ\\);console.log\\('issues:',issues\\)}\\)\")",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

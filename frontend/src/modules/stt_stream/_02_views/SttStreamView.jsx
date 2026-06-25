@@ -35,6 +35,16 @@ import { useUsage } from '../../../common/hooks/useUsage'
 import { UsageIndicator } from '../../../common/components/UsageIndicator'
 import { TopLoadingBar } from '../../../common/components/TopLoadingBar'
 
+// Latency-bounded "typewriter": animates like typing but always empties the
+// whole backlog within ~TYPE_DRAIN_TICKS ticks (~160ms), so the display never
+// falls behind live speech. Short chunks still reveal char-by-char; large
+// chunks/backlogs burst in fast instead of lagging seconds behind the speaker.
+const STREAM_TYPE_INTERVAL_MS = 16
+const TYPE_DRAIN_TICKS = 10
+
+const getStreamTypeBatchSize = (queueLength) =>
+  Math.max(1, Math.ceil(queueLength / TYPE_DRAIN_TICKS))
+
 export function SttStreamView() {
   const {
     finalText,
@@ -54,10 +64,83 @@ export function SttStreamView() {
   // Accumulated transcript state
   const [displayFinalText, setDisplayFinalText] = useState('')
   const [displayInterimText, setDisplayInterimText] = useState('')
+  const [translationSourceText, setTranslationSourceText] = useState('')
+  const [displayTranslatedText, setDisplayTranslatedText] = useState('')
   const [sttMode, setSttMode] = useState('local') // 'local' | 'server'
   const [showSttModeHelp, setShowSttModeHelp] = useState(false)
   const lastFinalRef = useRef('')
   const restartCountRef = useRef(0)
+  const typewriterQueueRef = useRef('')
+  const typewriterTimerRef = useRef(null)
+  const translationTypewriterQueueRef = useRef('')
+  const translationTypewriterTimerRef = useRef(null)
+  const translationVisibleSourceRef = useRef('')
+
+  const stopTypewriter = useCallback(() => {
+    if (typewriterTimerRef.current) {
+      clearInterval(typewriterTimerRef.current)
+      typewriterTimerRef.current = null
+    }
+  }, [])
+
+  const flushTypewriter = useCallback(() => {
+    if (!typewriterQueueRef.current) return
+    const remaining = typewriterQueueRef.current
+    typewriterQueueRef.current = ''
+    stopTypewriter()
+    setDisplayFinalText(prev => prev + remaining)
+  }, [stopTypewriter])
+
+  const pumpTypewriter = useCallback(() => {
+    if (typewriterTimerRef.current) return
+
+    typewriterTimerRef.current = setInterval(() => {
+      if (!typewriterQueueRef.current) {
+        stopTypewriter()
+        return
+      }
+
+      const batchSize = getStreamTypeBatchSize(typewriterQueueRef.current.length)
+      const next = typewriterQueueRef.current.slice(0, batchSize)
+      typewriterQueueRef.current = typewriterQueueRef.current.slice(batchSize)
+      setDisplayFinalText(prev => prev + next)
+    }, STREAM_TYPE_INTERVAL_MS)
+  }, [stopTypewriter])
+
+  const appendStreamingText = useCallback((text) => {
+    if (!text) return
+    typewriterQueueRef.current += text
+    pumpTypewriter()
+  }, [pumpTypewriter])
+
+  const stopTranslationTypewriter = useCallback(() => {
+    if (translationTypewriterTimerRef.current) {
+      clearInterval(translationTypewriterTimerRef.current)
+      translationTypewriterTimerRef.current = null
+    }
+  }, [])
+
+  const pumpTranslationTypewriter = useCallback(() => {
+    if (translationTypewriterTimerRef.current) return
+
+    translationTypewriterTimerRef.current = setInterval(() => {
+      if (!translationTypewriterQueueRef.current) {
+        stopTranslationTypewriter()
+        return
+      }
+
+      const batchSize = getStreamTypeBatchSize(translationTypewriterQueueRef.current.length)
+      const next = translationTypewriterQueueRef.current.slice(0, batchSize)
+      translationTypewriterQueueRef.current = translationTypewriterQueueRef.current.slice(batchSize)
+      setDisplayTranslatedText(prev => prev + next)
+    }, STREAM_TYPE_INTERVAL_MS)
+  }, [stopTranslationTypewriter])
+
+  const appendStreamingTranslation = useCallback((text) => {
+    if (!text) return
+    translationTypewriterQueueRef.current += text
+    pumpTranslationTypewriter()
+  }, [pumpTranslationTypewriter])
 
   // Unified STT hook: routes based on mode (local/server)
   const sttLanguage = getSTTLanguage(selectedLang)
@@ -67,6 +150,8 @@ export function SttStreamView() {
     isListening: isRunning,
     error: sttError,
     isAvailable: sttAvailable,
+    isModelLoading,
+    modelLoadProgress,
     activeEngine,
   } = useSpeechInput({
     language: sttLanguage,
@@ -77,7 +162,9 @@ export function SttStreamView() {
         if (text === lastFinalRef.current) return
         lastFinalRef.current = text
         const cleaned = text.replace(/[.。！？!?]+$/, '')
-        setDisplayFinalText(prev => prev + cleaned + ' ')
+        const chunkText = `${cleaned} `
+        appendStreamingText(chunkText)
+        setTranslationSourceText(prev => prev + chunkText)
         setDisplayInterimText('')
       } else if (!isFinal && text.trim()) {
         setDisplayInterimText(text)
@@ -85,11 +172,16 @@ export function SttStreamView() {
     },
   })
 
+  // Local model isn't ready until the worker reports progress 1; server/web-speech
+  // report progress 1 immediately. Blocks premature Start ("Model is still loading").
+  const sttLoading = isModelLoading || (modelLoadProgress ?? 1) < 1
+
   const stop = useCallback(() => {
     sttStop()
+    flushTypewriter()
     setDisplayInterimText('')
     lastFinalRef.current = ''
-  }, [sttStop])
+  }, [flushTypewriter, sttStop])
 
   const toggle = useCallback(async () => {
     if (isRunning) {
@@ -188,11 +280,18 @@ export function SttStreamView() {
   const fullText = getFullText()
   
   const { containerRef: leftRef, handleScroll: handleLeftScroll } = useAutoScroll([displayFinalText, displayInterimText])
-  const { containerRef: rightRef, handleScroll: handleRightScroll } = useAutoScroll([translatedText])
+  const { containerRef: rightRef, handleScroll: handleRightScroll } = useAutoScroll([displayTranslatedText])
 
   const prevFinalTextRef = useRef('')
   const sessionStartTimeRef = useRef(null)
   const sessionWordCountRef = useRef(0)
+
+  useEffect(() => {
+    return () => {
+      stopTypewriter()
+      stopTranslationTypewriter()
+    }
+  }, [stopTranslationTypewriter, stopTypewriter])
 
   const handleMouseDown = useCallback((e) => {
     if (!isTranslationEnabled) return
@@ -269,9 +368,9 @@ export function SttStreamView() {
 
 
   useEffect(() => {
-    if (!displayFinalText || displayFinalText === prevFinalTextRef.current) return
-    const newPart = displayFinalText.slice(prevFinalTextRef.current.length).trim()
-    prevFinalTextRef.current = displayFinalText
+    if (!translationSourceText || translationSourceText === prevFinalTextRef.current) return
+    const newPart = translationSourceText.slice(prevFinalTextRef.current.length).trim()
+    prevFinalTextRef.current = translationSourceText
     if (newPart) {
       const newWords = newPart.split(/\s+/).filter(w => w.trim()).length
       sessionWordCountRef.current += newWords
@@ -283,7 +382,30 @@ export function SttStreamView() {
         }
       })
     }
-  }, [displayFinalText, selectedLang, addSentenceToTranslate])
+  }, [translationSourceText, selectedLang, addSentenceToTranslate])
+
+  useEffect(() => {
+    if (!translatedText) {
+      translationVisibleSourceRef.current = ''
+      translationTypewriterQueueRef.current = ''
+      stopTranslationTypewriter()
+      setDisplayTranslatedText('')
+      return
+    }
+
+    const previousText = translationVisibleSourceRef.current
+    if (translatedText.startsWith(previousText)) {
+      const addedText = translatedText.slice(previousText.length)
+      translationVisibleSourceRef.current = translatedText
+      appendStreamingTranslation(addedText)
+      return
+    }
+
+    translationVisibleSourceRef.current = translatedText
+    translationTypewriterQueueRef.current = ''
+    stopTranslationTypewriter()
+    setDisplayTranslatedText(translatedText)
+  }, [appendStreamingTranslation, stopTranslationTypewriter, translatedText])
 
   const handleLanguageChange = (newLang) => {
     setSelectedLang(newLang)
@@ -294,8 +416,15 @@ export function SttStreamView() {
     clearTranslation()
     resetTimer()
     prevFinalTextRef.current = ''
+    typewriterQueueRef.current = ''
+    translationTypewriterQueueRef.current = ''
+    stopTypewriter()
+    stopTranslationTypewriter()
     setDisplayFinalText('')
     setDisplayInterimText('')
+    setTranslationSourceText('')
+    setDisplayTranslatedText('')
+    translationVisibleSourceRef.current = ''
     lastFinalRef.current = ''
   }
 
@@ -403,9 +532,9 @@ export function SttStreamView() {
               <ActionButton
                 variant={isRunning ? 'recording' : 'default'}
                 onClick={handleToggle}
-                disabled={!sttAvailable || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
+                disabled={!sttAvailable || (!isRunning && sttLoading) || (!isAuthenticated && isLimitReached && !isRunning) || (isAuthenticated && usageLimitExceeded && !isRunning)}
               >
-                {isRunning ? 'Stop' : 'Start'}
+                {isRunning ? 'Stop' : sttLoading ? 'Loading…' : 'Start'}
               </ActionButton>
               
               <ActionButton
@@ -555,7 +684,7 @@ export function SttStreamView() {
                   {isTranslating ? (
                     <span className="stt-translating-badge">Translating...</span>
                   ) : (
-                    `${(translatedText || '').length} chars`
+                    `${(displayTranslatedText || translatedText || '').length} chars`
                   )}
                 </span>
               </div>
@@ -575,8 +704,8 @@ export function SttStreamView() {
                 ref={rightRef}
                 onScroll={handleRightScroll}
               >
-                {translatedText ? (
-                  <span className="stt-translated-text">{translatedText}</span>
+                {displayTranslatedText ? (
+                  <span className="stt-translated-text">{displayTranslatedText}</span>
                 ) : (
                   <span className="stt-placeholder">Translation will appear here...</span>
                 )}

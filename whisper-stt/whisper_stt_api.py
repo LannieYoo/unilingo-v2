@@ -35,6 +35,21 @@ app.add_middleware(
 model = None
 MODEL_SIZE = "large-v3"
 
+# Phrases Whisper hallucinates on short / low-content audio chunks. When a chunk
+# transcribes to nothing but one of these, it's almost certainly a hallucination,
+# so we drop it rather than polluting the transcript (and its translation).
+HALLUCINATION_PHRASES = {
+    "thank you", "thank you.", "thanks for watching", "thanks for watching.",
+    "thank you for watching", "thank you for watching.", "please subscribe",
+    "see you in the next video", "see you in the next video.",
+    "see you next time", "bye", "bye.", "bye bye", "okay", "okay.", "ok", "you",
+    "i'll see you in the next video.", "thanks for watching!",
+}
+
+
+def is_hallucination(text: str) -> bool:
+    return text.strip().lower() in HALLUCINATION_PHRASES
+
 
 def get_model():
     global model
@@ -82,7 +97,7 @@ async def transcribe(
     Transcribe an audio chunk with Whisper.
 
     Accepts: WAV or raw PCM (16kHz mono float32 or int16)
-    Returns: { text, language, duration, processing_time }
+    Returns: { text, language, duration, processing_time, words, segments }
     """
     start = time.time()
 
@@ -103,16 +118,58 @@ async def transcribe(
             return {"text": "", "language": language, "duration": duration, "processing_time": 0}
 
         # Transcribe
+        # Anti-hallucination settings: chunks are short and decoded independently,
+        # so Whisper is prone to emitting "Thank you" / "Bye" / "See you in the next
+        # video" on low-content audio. vad_filter trims internal silence, the
+        # threshold params drop low-confidence output, and condition_on_previous_text
+        # is off because each chunk has no real prior context.
         segments, info = whisper.transcribe(
             audio_array,
             language=language if language != "auto" else None,
             beam_size=5,
             best_of=5,
-            vad_filter=False,  # VAD done on client side
-            without_timestamps=True,
+            temperature=0,
+            vad_filter=True,
+            vad_parameters=dict(min_silence_duration_ms=300),
+            condition_on_previous_text=False,
+            no_speech_threshold=0.6,
+            log_prob_threshold=-1.0,
+            without_timestamps=False,
+            word_timestamps=True,
         )
 
-        text = " ".join(seg.text.strip() for seg in segments).strip()
+        segment_payload = []
+        word_payload = []
+
+        for seg in segments:
+            seg_words = []
+            for word in getattr(seg, "words", None) or []:
+                cleaned_word = (getattr(word, "word", "") or "").strip()
+                if not cleaned_word:
+                    continue
+
+                entry = {
+                    "word": cleaned_word,
+                    "start": round(float(word.start), 3) if getattr(word, "start", None) is not None else None,
+                    "end": round(float(word.end), 3) if getattr(word, "end", None) is not None else None,
+                }
+                seg_words.append(entry)
+                word_payload.append(entry)
+
+            segment_payload.append({
+                "start": round(float(seg.start), 3) if getattr(seg, "start", None) is not None else None,
+                "end": round(float(seg.end), 3) if getattr(seg, "end", None) is not None else None,
+                "text": seg.text.strip(),
+                "words": seg_words,
+            })
+
+        text = " ".join(seg["text"] for seg in segment_payload if seg["text"]).strip()
+
+        # Drop whole-chunk hallucinations so they don't leak into the transcript/translation
+        if is_hallucination(text):
+            logger.info(f'Dropped hallucination: "{text}"')
+            return {"text": "", "language": language, "duration": round(duration, 2), "processing_time": round(time.time() - start, 3)}
+
         processing_time = time.time() - start
 
         logger.info(
@@ -124,6 +181,8 @@ async def transcribe(
             "language": info.language if info else language,
             "duration": round(duration, 2),
             "processing_time": round(processing_time, 3),
+            "words": word_payload,
+            "segments": segment_payload,
         }
 
     except Exception as e:

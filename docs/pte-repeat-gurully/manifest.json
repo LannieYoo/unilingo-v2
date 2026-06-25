@@ -1,0 +1,57 @@
+{
+  "seed_url": "https://www.gurully.com",
+  "slug": "pte-repeat-gurully",
+  "total_urls": 8,
+  "max_depth": 1,
+  "crawled_at": "2026-06-22T13:32:51.001557",
+  "pages": [
+    {
+      "url": "https://www.gurully.com",
+      "title": "AI-Powered PTE, IELTS, CELPIP & DET Exam Practice",
+      "depth": 0,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/pte",
+      "title": "Free PTE Mock Test Online | AI Scoring & Full Practice | Gurully",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/exam/pte/eligibilities",
+      "title": "PTE Exam Eligibility 2026 | Age Limit & Eligible Countries",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/exam/pte/result-and-score",
+      "title": "PTE Result & Score Guide — Understand Your PTE Exam Result",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/exam/pte/academic/score-calculator",
+      "title": "PTE Score Calculator 2026 & PTE vs IELTS Score Calculator",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/exam/pte/fees-and-registration",
+      "title": "PTE Exam Fee: Booking, Registration, Refund & Cancellation",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/exam/pte/academic/exam-pattern",
+      "title": "PTE Academic Test Format 2026 — New Pattern Explained",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.gurully.com/exam/pte/academic",
+      "title": "Everything About PTE Academic Exam 2026 - Gurully",
+      "depth": 1,
+      "status": 200
+    }
+  ]
+}

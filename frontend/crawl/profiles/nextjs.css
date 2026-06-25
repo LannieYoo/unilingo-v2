@@ -1,0 +1,48 @@
+/* Next.js — docs site cleanup */
+/* @pdf-width: A4 */
+/* @md-content-selector: article */
+/* @md-direct: .md */
+/* @md-converter: nextjs */
+
+/* Feedback widget ("Was this helpful?") */
+article > .flex.justify-center {
+    display: none !important;
+}
+
+/* Top navigation bar */
+header {
+    display: none !important;
+}
+
+/* Event/announcement banner */
+header + div[class*="border-b"] {
+    display: none !important;
+}
+
+/* Left docs sidebar */
+div[class*="sticky"][class*="shrink-0"] {
+    display: none !important;
+}
+
+/* Right-side TOC ("On this page") */
+nav[class*="order-last"][class*="shrink-0"] {
+    display: none !important;
+}
+
+/* Footer */
+footer,
+div[class*="footer-module"] {
+    display: none !important;
+}
+
+/* Expand content to full width */
+main {
+    margin: 0 !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+.prose {
+    max-width: 100% !important;
+}

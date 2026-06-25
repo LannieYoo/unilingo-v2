@@ -1,0 +1,15 @@
+{
+  "seed_url": "https://ptesuccess.com.au",
+  "slug": "pte-repeat-ptesuccess",
+  "total_urls": 1,
+  "max_depth": 1,
+  "crawled_at": "2026-06-22T13:32:54.120974",
+  "pages": [
+    {
+      "url": "https://ptesuccess.com.au",
+      "title": "",
+      "depth": 0,
+      "status": 200
+    }
+  ]
+}

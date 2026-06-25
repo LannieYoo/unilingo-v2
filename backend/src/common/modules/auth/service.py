@@ -102,6 +102,16 @@ class DictionaryLogModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     user = relationship("UserModel", back_populates="dictionary_logs")
 
+class CelpipTestLogModel(Base):
+    __tablename__ = 'celpip_test_logs'
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False, index=True)
+    test_id = Column(String(100), nullable=False, index=True)
+    score = Column(Integer, nullable=False, default=0)
+    answers = Column(Text, nullable=True) # JSON string of answers
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    user = relationship("UserModel")
+
 class UserRepository:
     def __init__(self, db: Session):
         self._db = db
@@ -458,6 +468,38 @@ class DictionaryLogRepository:
 
 def get_dictionary_log_repository(db_session: Session) -> DictionaryLogRepository:
     return DictionaryLogRepository(db_session)
+
+    def get_celpip_test_log_repository(self) -> 'CelpipTestLogRepository':
+        return CelpipTestLogRepository(self._db)
+
+class CelpipTestLogRepository:
+    def __init__(self, db: Session):
+        self._db = db
+
+    def save_log(self, user_id: int, test_id: str, score: int, answers: str):
+        model = CelpipTestLogModel(
+            user_id=user_id,
+            test_id=test_id,
+            score=score,
+            answers=answers
+        )
+        self._db.add(model)
+        self._db.commit()
+        self._db.refresh(model)
+        return model
+
+    def get_logs_by_user(self, user_id: int):
+        logs = self._db.query(CelpipTestLogModel).filter(CelpipTestLogModel.user_id == user_id).all()
+        return [
+            {
+                'id': log.id,
+                'test_id': log.test_id,
+                'score': log.score,
+                'answers': log.answers,
+                'created_at': log.created_at.isoformat()
+            }
+            for log in logs
+        ]
 
 class JWTHelper:
     def __init__(self):

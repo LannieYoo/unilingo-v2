@@ -1,0 +1,33 @@
+/* Qt for Python — Sphinx / Furo theme cleanup */
+/* @pdf-width: A4 */
+/* @md-content-selector: article */
+
+/* Hide navigation chrome */
+.sidebar-drawer,
+.sidebar-container,
+.mobile-header,
+.skip-to-content,
+.toc-drawer,
+.toc-sticky,
+.page > header,
+.nav-overlay-icon,
+.theme-toggle-container,
+.toc-overlay-icon,
+.header-left,
+.header-right,
+.sidebar-toggle,
+.overlay {
+    display: none !important;
+}
+
+/* Expand content to full width */
+.page {
+    margin-left: 0 !important;
+}
+.main {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+}
+article {
+    max-width: 100% !important;
+}

@@ -1,0 +1,57 @@
+{
+  "seed_url": "https://www.pearsonpte.com/pte-core",
+  "slug": "pte-repeat-pearson",
+  "total_urls": 8,
+  "max_depth": 1,
+  "crawled_at": "2026-06-22T13:30:51.889316",
+  "pages": [
+    {
+      "url": "https://www.pearsonpte.com/pte-core",
+      "title": "PTE Core | Pearson PTE",
+      "depth": 0,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-academic",
+      "title": "PTE Academic | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-core/scoring",
+      "title": "PTE Core scoring | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-academic/test-format",
+      "title": "PTE Academic & UKVI test format | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-academic/scoring",
+      "title": "Understand your PTE Academic Score | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-core/preparation",
+      "title": "PTE Core preparation  | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-academic/preparation",
+      "title": "PTE Academic & UKVI preparation | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.pearsonpte.com/pte-core/test-format",
+      "title": "PTE Core test format | Pearson PTE",
+      "depth": 1,
+      "status": 200
+    }
+  ]
+}

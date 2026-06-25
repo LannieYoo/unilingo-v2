@@ -1,22 +1,32 @@
 /**
  * useServerSpeechInput — Server-side Whisper STT Hook
  *
- * Captures microphone audio in the browser, sends 3-second chunks
+ * Captures microphone audio in the browser, sends small low-latency chunks
  * to a remote faster-whisper server via REST for transcription.
  * Used for accented English (Indian, etc.) where local SenseVoice struggles.
  *
  * Same interface as useWasmSpeechInput for drop-in compatibility.
  *
  * Audio pipeline:
- *   Microphone → Web Audio API (16kHz mono) → 3s buffer → WAV blob
+ *   Microphone → Web Audio API (16kHz mono) → short buffer → WAV blob
  *   → POST /api/stt/transcribe → text response → onResult callback
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 const SAMPLE_RATE = 16000
-const CHUNK_DURATION_S = 3  // Send audio every 3 seconds
-const CHUNK_SIZE = SAMPLE_RATE * CHUNK_DURATION_S
+
+// ─── Client-side energy VAD ───────────────────────────────────
+// Instead of cutting blindly every N seconds (which splits words mid-utterance
+// and feeds Whisper garbled boundaries), we detect speech vs. silence by frame
+// energy (RMS) and emit a segment only when the speaker pauses. This gives
+// Whisper whole utterances → far better accuracy and cleaner translations.
+const SPEECH_RMS_THRESHOLD = 0.015   // frame louder than this = speech
+const SILENCE_HANGOVER_S = 0.6       // this much trailing silence ends a segment
+const MIN_SEGMENT_S = 0.4            // drop anything shorter (noise blips)
+const MAX_SEGMENT_S = 8              // safety cap: force-emit continuous speech
+const PRE_ROLL_FRAMES = 2            // ~0.5s of audio kept before speech onset so
+                                     // the first word isn't clipped
 // Server URL — Whisper STT server
 // Production: ngrok tunnel to Lannie Server (set VITE_WHISPER_SERVER_URL)
 // Development: direct access to Lannie Server
@@ -34,9 +44,17 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
   const streamRef = useRef(null)
   const onResultRef = useRef(onResult)
   const finalTranscriptRef = useRef('')
-  const audioBufferRef = useRef([])  // Accumulates Float32 samples
   const isRunningRef = useRef(false)
-  const flushTimerRef = useRef(null)
+  const serverQueueRef = useRef([])
+  const isSendingRef = useRef(false)
+  const sessionIdRef = useRef(0)
+
+  // VAD state (per-frame, mutated inside onaudioprocess)
+  const segmentFramesRef = useRef([])    // frames of the current utterance
+  const segmentSamplesRef = useRef(0)    // sample count of current utterance
+  const hasSpeechRef = useRef(false)     // has the current utterance seen speech?
+  const silenceSamplesRef = useRef(0)    // trailing silence samples since last speech
+  const preRollRef = useRef([])          // ring buffer of recent frames (pre-speech)
 
   useEffect(() => {
     onResultRef.current = onResult
@@ -97,7 +115,7 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
 
   // ─── Send chunk to server ─────────────────────────────────────
 
-  const sendChunkToServer = useCallback(async (samples) => {
+  const sendChunkToServer = useCallback(async (samples, sessionId = sessionIdRef.current) => {
     if (samples.length < SAMPLE_RATE * 0.3) return  // Skip < 0.3s
 
     // Skip silent chunks — Whisper hallucinates on silence ('you you you')
@@ -130,6 +148,10 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
 
       const result = await response.json()
 
+      if (sessionId !== sessionIdRef.current) {
+        return
+      }
+
       if (result.text && result.text.trim()) {
         const text = result.text.trim()
         console.log(`[Server STT] Recognized: "${text}" (${result.duration}s → ${result.processing_time}s)`)
@@ -151,24 +173,95 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
     }
   }, [language, continuous, encodeWav])
 
-  // ─── Periodic flush ───────────────────────────────────────────
+  const processServerQueue = useCallback(async () => {
+    if (isSendingRef.current) return
 
-  const flushBuffer = useCallback(() => {
-    if (audioBufferRef.current.length === 0) return
+    isSendingRef.current = true
+    try {
+      while (serverQueueRef.current.length > 0) {
+        const item = serverQueueRef.current.shift()
+        if (!item || item.sessionId !== sessionIdRef.current) continue
+        await sendChunkToServer(item.samples, item.sessionId)
+      }
+    } finally {
+      isSendingRef.current = false
+    }
+  }, [sendChunkToServer])
 
-    // Combine all buffered samples
-    const totalLength = audioBufferRef.current.reduce((sum, buf) => sum + buf.length, 0)
+  // ─── Segment emission (VAD-driven) ────────────────────────────
+
+  // Combine the current utterance's frames and queue it for the server, then
+  // reset VAD state for the next utterance. Drops sub-MIN_SEGMENT_S blips.
+  const emitSegment = useCallback(() => {
+    const frames = segmentFramesRef.current
+    const totalLength = segmentSamplesRef.current
+
+    // Reset state up front so a slow send can't race the next utterance
+    segmentFramesRef.current = []
+    segmentSamplesRef.current = 0
+    hasSpeechRef.current = false
+    silenceSamplesRef.current = 0
+
+    if (frames.length === 0) return
+    if (totalLength < MIN_SEGMENT_S * SAMPLE_RATE) return
+
     const combined = new Float32Array(totalLength)
     let offset = 0
-    for (const buf of audioBufferRef.current) {
+    for (const buf of frames) {
       combined.set(buf, offset)
       offset += buf.length
     }
-    audioBufferRef.current = []
 
-    // Send to server (async, don't await)
-    sendChunkToServer(combined)
-  }, [sendChunkToServer])
+    serverQueueRef.current.push({
+      samples: combined,
+      sessionId: sessionIdRef.current,
+    })
+    processServerQueue()
+  }, [processServerQueue])
+
+  // Feed one captured frame through the energy VAD. Accumulates speech (plus a
+  // little pre-roll and trailing silence) and emits a segment on a real pause
+  // or the safety cap.
+  const processFrame = useCallback((samples) => {
+    // Frame energy (RMS)
+    let sumSq = 0
+    for (let i = 0; i < samples.length; i++) sumSq += samples[i] * samples[i]
+    const rms = Math.sqrt(sumSq / samples.length)
+    const isSpeech = rms >= SPEECH_RMS_THRESHOLD
+
+    // Maintain a small pre-roll ring buffer of the most recent frames
+    preRollRef.current.push(samples)
+    if (preRollRef.current.length > PRE_ROLL_FRAMES) preRollRef.current.shift()
+
+    if (isSpeech) {
+      if (!hasSpeechRef.current) {
+        // Speech onset — seed the segment with the pre-roll so the first word
+        // (already captured in the ring buffer) isn't clipped
+        hasSpeechRef.current = true
+        segmentFramesRef.current = [...preRollRef.current]
+        segmentSamplesRef.current = preRollRef.current.reduce((s, f) => s + f.length, 0)
+      } else {
+        segmentFramesRef.current.push(samples)
+        segmentSamplesRef.current += samples.length
+      }
+      silenceSamplesRef.current = 0
+    } else if (hasSpeechRef.current) {
+      // Trailing silence inside an utterance — keep it, but end the segment
+      // once the pause is long enough
+      segmentFramesRef.current.push(samples)
+      segmentSamplesRef.current += samples.length
+      silenceSamplesRef.current += samples.length
+      if (silenceSamplesRef.current >= SILENCE_HANGOVER_S * SAMPLE_RATE) {
+        emitSegment()
+        return
+      }
+    }
+
+    // Safety cap: force-emit very long continuous speech so latency stays bounded
+    if (hasSpeechRef.current && segmentSamplesRef.current >= MAX_SEGMENT_S * SAMPLE_RATE) {
+      emitSegment()
+    }
+  }, [emitSegment])
 
   // ─── Audio Capture ────────────────────────────────────────────
 
@@ -197,7 +290,7 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
         const inputData = e.inputBuffer.getChannelData(0)
         const samples = new Float32Array(inputData.length)
         samples.set(inputData)
-        audioBufferRef.current.push(samples)
+        processFrame(samples)
       }
 
       source.connect(processor)
@@ -211,7 +304,7 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
       setError(new Error('Microphone access denied or unavailable'))
       return false
     }
-  }, [])
+  }, [processFrame])
 
   const stopAudioCapture = useCallback(() => {
     if (workletNodeRef.current) {
@@ -239,7 +332,15 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
 
     setError(null)
     finalTranscriptRef.current = ''
-    audioBufferRef.current = []
+    serverQueueRef.current = []
+    sessionIdRef.current += 1
+
+    // Reset VAD state
+    segmentFramesRef.current = []
+    segmentSamplesRef.current = 0
+    hasSpeechRef.current = false
+    silenceSamplesRef.current = 0
+    preRollRef.current = []
 
     const captureOk = await startAudioCapture()
     if (!captureOk) return false
@@ -247,37 +348,25 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
     isRunningRef.current = true
     setIsListening(true)
 
-    // Start periodic flush timer (every CHUNK_DURATION_S seconds)
-    flushTimerRef.current = setInterval(flushBuffer, CHUNK_DURATION_S * 1000)
-
-    console.log(`[Server STT] Started (language: ${language}, chunk: ${CHUNK_DURATION_S}s)`)
+    console.log(`[Server STT] Started (language: ${language}, VAD-segmented)`)
     return true
-  }, [isListening, isAvailable, language, startAudioCapture, flushBuffer])
+  }, [isListening, isAvailable, language, startAudioCapture])
 
   const stop = useCallback(() => {
     isRunningRef.current = false
 
-    // Stop timer
-    if (flushTimerRef.current) {
-      clearInterval(flushTimerRef.current)
-      flushTimerRef.current = null
-    }
-
-    // Flush remaining audio
-    flushBuffer()
+    // Flush the final in-progress utterance, if any
+    emitSegment()
 
     stopAudioCapture()
     setIsListening(false)
     setInterimTranscript('')
-  }, [stopAudioCapture, flushBuffer])
+  }, [stopAudioCapture, emitSegment])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       isRunningRef.current = false
-      if (flushTimerRef.current) {
-        clearInterval(flushTimerRef.current)
-      }
       stopAudioCapture()
     }
   }, [stopAudioCapture])

@@ -1,0 +1,57 @@
+{
+  "seed_url": "https://ptemagic.com",
+  "slug": "pte-repeat-ptemagic",
+  "total_urls": 8,
+  "max_depth": 1,
+  "crawled_at": "2026-06-22T13:33:01.599330",
+  "pages": [
+    {
+      "url": "https://ptemagic.com",
+      "title": "PTE Magic Practice App: Real PTE Online Mock Tests with AI Scores",
+      "depth": 0,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/sso/auth/register",
+      "title": "Online Practice PTE Academic | PTE Core | Duolingo DET | IELTS Academic - Lume Test",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/features",
+      "title": "Explore PTE Magic Platform Features",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/sso/auth/login",
+      "title": "Online Practice PTE Academic | PTE Core | Duolingo DET | IELTS Academic - Lume Test",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/contact-us",
+      "title": "PTE Magic - Contact Us",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/how-to-find-a-job-in-new-zealand-as-an-international-student",
+      "title": "PTE Magic Blog - How To Find A Job In New Zealand As An International Student",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/how-to-study-in-new-zealand-as-an-international-student",
+      "title": "PTE Magic Blog - How To Study In New Zealand As An International Student",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://ptemagic.com/blogs",
+      "title": "PTE Magic - PTE Magic Blog",
+      "depth": 1,
+      "status": 200
+    }
+  ]
+}

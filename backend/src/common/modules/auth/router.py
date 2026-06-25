@@ -1052,6 +1052,63 @@ def update_language_preferences():
         return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
 
 
+@router.route('/celpip_logs', methods=['POST'])
+@login_required
+def save_celpip_test_log():
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Authentication required'}}), 401
+    
+    try:
+        data = request.get_json()
+        if not data or 'test_id' not in data or 'score' not in data:
+            return jsonify({'error': {'code': 'INVALID_REQUEST', 'message': 'test_id and score are required'}}), 400
+            
+        test_id = data.get('test_id')
+        score = data.get('score')
+        answers = data.get('answers')
+        if isinstance(answers, (dict, list)):
+            import json
+            answers = json.dumps(answers, ensure_ascii=False)
+            
+        db = next(get_db())
+        try:
+            auth_service = get_auth_service(db)
+            repo = auth_service.get_celpip_test_log_repository()
+            
+            # Since get_celpip_test_log_repository is a method on AuthService, use that to get the repo
+            repo.save_log(user_id=current_user.id, test_id=test_id, score=score, answers=answers)
+            
+            return jsonify({'status': 'success'}), 200
+        finally:
+            db.close()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
+
+@router.route('/celpip_logs', methods=['GET'])
+@login_required
+def get_celpip_test_logs():
+    trace_id = g.get('trace_id', 'unknown')
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': {'code': 'UNAUTHORIZED', 'message': 'Authentication required'}}), 401
+    
+    try:
+        db = next(get_db())
+        try:
+            auth_service = get_auth_service(db)
+            repo = auth_service.get_celpip_test_log_repository()
+            logs = repo.get_logs_by_user(current_user.id)
+            
+            return jsonify({'logs': logs}), 200
+        finally:
+            db.close()
+    except Exception as e:
+        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
+
 __all__ = [
     'router', 'admin_router',
     'login_required', 'admin_required', 'token_required',

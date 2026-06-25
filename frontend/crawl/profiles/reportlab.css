@@ -1,0 +1,82 @@
+/* ReportLab — docs site cleanup (mkdocs-material) */
+/* @pdf-width: A4 */
+/* @md-content-selector: article */
+
+/* Override @page margins from mkdocs-material print stylesheet */
+@page {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Top navigation / header bar */
+header,
+nav.navbar,
+.navbar,
+.md-header,
+.md-tabs {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Left sidebar navigation */
+.docs-sidebar,
+.sidebar,
+#sidebar,
+.md-sidebar,
+[class*="sidebar"],
+[class*="Sidebar"] {
+    display: none !important;
+}
+
+/* Search bar */
+.md-search,
+[class*="search"] {
+    display: none !important;
+}
+
+/* Remove all top spacing (fixed navbar leaves gap) */
+html, body {
+    padding: 0 !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* mkdocs-material container — remove the spacing left by header */
+.md-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Remove wrapper padding */
+.container,
+.container-fluid,
+[class*="wrapper"],
+[class*="Wrapper"],
+body > div {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Main content area */
+main,
+.md-main,
+.docs-content,
+.content,
+article {
+    margin: 0 !important;
+    max-width: 100% !important;
+    padding: 8px 16px !important;
+}
+
+.md-main__inner {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Footer */
+footer {
+    display: none !important;
+}

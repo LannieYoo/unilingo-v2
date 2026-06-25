@@ -30,6 +30,7 @@ function Header() {
     { path: '/stt-stream', label: 'Speech to Text', name: 'speechToText' },
     { path: '/speech-to-recording', label: 'Recording', name: 'recording' },
     { path: '/pte-core', label: 'PTE Core', name: 'pteCore' },
+    { path: '/celpip', label: 'CELPIP', name: 'celpip' },
   ]
 
   // Admin page accessible via direct URL only
@@ -75,6 +76,10 @@ function Header() {
                     ? location.pathname === item.path
                       ? 'font-bold pte-nav-link pte-nav-link--active'
                       : 'font-medium pte-nav-link'
+                    : item.name === 'celpip'
+                      ? location.pathname === item.path
+                        ? 'font-bold celpip-nav-link celpip-nav-link--active'
+                        : 'font-medium celpip-nav-link'
                     : location.pathname === item.path
                       ? item.name === 'admin'
                         ? 'font-bold text-orange-600'
@@ -161,6 +166,10 @@ function Header() {
                       ? location.pathname === item.path
                         ? 'pte-nav-link pte-nav-link--active bg-indigo-50 dark:bg-indigo-900/20'
                         : 'pte-nav-link'
+                      : item.name === 'celpip'
+                        ? location.pathname === item.path
+                          ? 'celpip-nav-link celpip-nav-link--active bg-teal-50 dark:bg-teal-900/20'
+                          : 'celpip-nav-link'
                       : location.pathname === item.path
                         ? item.name === 'admin'
                           ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20'

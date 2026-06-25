@@ -478,5 +478,425 @@
     "text": "The psychology of decision making explores how individuals evaluate choices under uncertainty and make final selections. Factors include cognitive heuristics, emotional state, and social pressure. Understanding these decision-making processes helps individuals recognize biases and make more rational choices in their personal and professional lives.",
     "source": "AI-Generated Practice",
     "id": 80
+  },
+  {
+    "title": "The Role of Education in Economic Growth",
+    "text": "Education plays a crucial role in driving economic growth and reducing inequality. Countries that invest in quality education tend to experience higher productivity, greater innovation, and improved social outcomes. Access to education empowers individuals to participate more fully in the workforce and society.",
+    "source": "Moved from Real Questions",
+    "id": 81
+  },
+  {
+    "title": "Ocean Conservation Efforts",
+    "text": "Oceans cover more than seventy percent of the Earth's surface and play a vital role in regulating the climate. Marine ecosystems are under increasing pressure from pollution, overfishing, and rising sea temperatures. International cooperation is essential to protect these fragile environments for future generations.",
+    "source": "Moved from Real Questions",
+    "id": 82
+  },
+  {
+    "title": "Space Exploration and Technology",
+    "text": "Space exploration has driven remarkable advances in technology and scientific understanding. Satellite systems now provide essential services including communication, navigation, and weather forecasting. As private companies enter the space industry, the pace of innovation continues to accelerate dramatically.",
+    "source": "Moved from Real Questions",
+    "id": 83
+  },
+  {
+    "title": "The Psychology of Decision Making",
+    "text": "Research in behavioral psychology has revealed that human decision making is often influenced by cognitive biases. People tend to rely on mental shortcuts rather than logical analysis when facing complex choices. Understanding these biases can help individuals make more informed and rational decisions.",
+    "source": "Moved from Real Questions",
+    "id": 84
+  },
+  {
+    "title": "Global Food Security Challenges",
+    "text": "Ensuring food security for a growing global population remains one of the greatest challenges of our time. Agricultural productivity must increase significantly while reducing environmental impact. Innovations in farming technology, sustainable practices, and improved supply chains are critical to achieving this goal.",
+    "source": "Moved from Real Questions",
+    "id": 85
+  },
+  {
+    "title": "The Digital Transformation of Healthcare",
+    "text": "Digital technology is revolutionizing the healthcare industry. Electronic health records, telemedicine, and artificial intelligence are improving patient care and diagnostic accuracy. These innovations enable healthcare providers to deliver more personalized treatments while reducing costs and increasing accessibility.",
+    "source": "Moved from Real Questions",
+    "id": 86
+  },
+  {
+    "title": "Water Scarcity and Resource Management",
+    "text": "Water scarcity affects billions of people worldwide and is expected to worsen due to population growth and climate change. Efficient water management strategies, including conservation, recycling, and desalination technologies, are increasingly important for ensuring adequate freshwater supplies in the coming decades.",
+    "source": "Moved from Real Questions",
+    "id": 87
+  },
+  {
+    "title": "The Importance of Cultural Diversity",
+    "text": "Cultural diversity enriches societies by bringing together different perspectives, traditions, and ideas. Multicultural communities foster creativity and innovation while promoting tolerance and understanding. However, managing diversity requires deliberate policies that ensure equal opportunities and social cohesion among all groups.",
+    "source": "Moved from Real Questions",
+    "id": 88
+  },
+  {
+    "title": "Advances in Genetic Research",
+    "text": "Recent advances in genetic research have opened new possibilities for treating inherited diseases. Gene therapy and genome editing technologies offer the potential to correct genetic defects at their source. While these developments are promising, they also raise important ethical questions about genetic modification.",
+    "source": "Moved from Real Questions",
+    "id": 89
+  },
+  {
+    "title": "The Impact of Social Media",
+    "text": "Social media has fundamentally changed the way people communicate and access information. While these platforms enable instant global connectivity, they have also been linked to issues such as misinformation, cyberbullying, and declining mental health among young users. Responsible digital citizenship is becoming increasingly important.",
+    "source": "Moved from Real Questions",
+    "id": 90
+  },
+  {
+    "title": "Sustainable Architecture and Design",
+    "text": "Sustainable architecture integrates environmental considerations into building design and construction. Green buildings use energy-efficient materials, natural lighting, and renewable energy systems to minimize their carbon footprint. This approach not only benefits the environment but also creates healthier and more comfortable living spaces.",
+    "source": "Moved from Real Questions",
+    "id": 91
+  },
+  {
+    "title": "International Trade and Globalization",
+    "text": "International trade has been a driving force behind economic globalization. The exchange of goods, services, and capital across borders has lifted millions out of poverty and fostered economic interdependence. However, trade disputes and protectionist policies continue to challenge the global trading system.",
+    "source": "Moved from Real Questions",
+    "id": 92
+  },
+  {
+    "title": "Mental Health Awareness",
+    "text": "Mental health awareness has gained significant attention in recent years. Governments and organizations are increasingly recognizing the importance of psychological well-being alongside physical health. Reducing stigma, improving access to treatment, and promoting early intervention are key priorities in addressing the global mental health crisis.",
+    "source": "Moved from Real Questions",
+    "id": 93
+  },
+  {
+    "title": "The Future of Transportation",
+    "text": "The transportation sector is undergoing a major transformation with the development of electric and autonomous vehicles. These technologies promise to reduce emissions, improve road safety, and enhance urban mobility. Investment in charging infrastructure and regulatory frameworks will be crucial for widespread adoption.",
+    "source": "Moved from Real Questions",
+    "id": 94
+  },
+  {
+    "title": "Archaeological Discoveries",
+    "text": "Archaeological discoveries continue to reshape our understanding of ancient civilizations. Advanced imaging technologies and DNA analysis now allow researchers to uncover details that were previously invisible. These findings provide valuable insights into how early societies organized themselves, traded, and adapted to their environments.",
+    "source": "Moved from Real Questions",
+    "id": 95
+  },
+  {
+    "title": "The Economics of Aging Populations",
+    "text": "Many developed countries are facing the challenge of aging populations. As life expectancy increases and birth rates decline, governments must adapt pension systems, healthcare services, and labor markets. Immigration and technological innovation are often proposed as solutions to offset the economic impacts of demographic change.",
+    "source": "Moved from Real Questions",
+    "id": 96
+  },
+  {
+    "title": "Deforestation and Ecosystem Loss",
+    "text": "Deforestation remains a critical environmental concern, particularly in tropical regions. The clearing of forests for agriculture and development destroys habitats, reduces biodiversity, and contributes to greenhouse gas emissions. Reforestation programs and sustainable land management are essential to reversing these trends.",
+    "source": "Moved from Real Questions",
+    "id": 97
+  },
+  {
+    "title": "The Rise of Remote Work",
+    "text": "The shift to remote work, accelerated by the global pandemic, has permanently altered workplace dynamics. Many organizations now offer hybrid arrangements that combine office and home-based work. This transition requires new approaches to communication, collaboration, and employee well-being in distributed teams.",
+    "source": "Moved from Real Questions",
+    "id": 98
+  },
+  {
+    "title": "Cybersecurity in the Digital Age",
+    "text": "As digital systems become more integrated into daily life, cybersecurity threats continue to grow in both frequency and sophistication. Protecting sensitive data from hackers requires constant vigilance, advanced encryption methods, and comprehensive security protocols. Organizations must invest significantly in cybersecurity to safeguard their operations.",
+    "source": "Moved from Real Questions",
+    "id": 99
+  },
+  {
+    "title": "Coral Reef Degradation",
+    "text": "Coral reefs, often called the rainforests of the sea, are experiencing severe degradation due to rising ocean temperatures. Bleaching events have become more frequent, threatening the marine biodiversity that depends on these ecosystems. Conservation efforts must address both local pollution and global climate factors.",
+    "source": "Moved from Real Questions",
+    "id": 100
+  },
+  {
+    "title": "Climate and Health Impact",
+    "text": "Recent studies indicate that rising temperatures are exacerbating respiratory diseases in urban areas. High level of smog combined with humidity increases ozone concentration, creating a hazardous environment for children and the elderly. Public health experts recommend increasing green infrastructure to mitigate these severe climate impacts.",
+    "source": "Moved from Real Questions",
+    "id": 101
+  },
+  {
+    "title": "Remote Work Productivity",
+    "text": "A comprehensive survey of remote workers revealed that flexibility significantly improves job satisfaction and productivity. However, many employees report challenges in separating professional duties from personal life, leading to burnout. Organizations are encouraged to establish clear communication guidelines to support healthy boundaries.",
+    "source": "Moved from Real Questions",
+    "id": 102
+  },
+  {
+    "title": "Agricultural Technology",
+    "text": "Smart agriculture utilizes sensors and drone technology to optimize water usage and monitor crop health in real-time. By analyzing soil moisture and weather patterns, farmers can make precise decisions about irrigation and fertilization. This technological shift reduces waste and increases yield sustainably.",
+    "source": "Moved from Real Questions",
+    "id": 103
+  },
+  {
+    "title": "Artificial Intelligence Ethics",
+    "text": "As artificial intelligence becomes integrated into critical decision-making systems, transparency is increasingly paramount. Algorithms used in hiring, lending, and law enforcement must be audited to ensure fairness and prevent bias. Researchers emphasize that technical solutions alone cannot resolve systemic social inequalities.",
+    "source": "Moved from Real Questions",
+    "id": 104
+  },
+  {
+    "title": "Financial Literacy",
+    "text": "Understanding basic financial concepts is essential for navigating today's complex economic landscape. Programs focused on budgeting, saving, and debt management empower individuals to make informed decisions about their futures. Educating young people early about money management helps reduce long-term wealth inequality.",
+    "source": "Moved from Real Questions",
+    "id": 105
+  },
+  {
+    "title": "Oceanic Carbon Absorption",
+    "text": "The world's oceans play a crucial role in mitigating climate change by absorbing vast amounts of carbon dioxide. However, this absorption leads to ocean acidification, which threatens coral reefs and marine ecosystems. International agreements are vital to coordinate conservation strategies and protect marine biodiversity.",
+    "source": "Moved from Real Questions",
+    "id": 106
+  },
+  {
+    "title": "History of Printing",
+    "text": "The invention of the movable type printing press in the fifteenth century revolutionized global communication. By making books cheaper and more accessible, it accelerated the spread of scientific knowledge and literacy. This technological revolution laid the foundation for the modern information age.",
+    "source": "Moved from Real Questions",
+    "id": 107
+  },
+  {
+    "title": "Green Building Materials",
+    "text": "Architects are increasingly incorporating sustainable materials, such as bamboo and recycled steel, into modern building designs. These green alternatives reduce carbon footprints during construction and improve energy efficiency. Implementing green standards is essential for achieving carbon neutrality in growing cities.",
+    "source": "Moved from Real Questions",
+    "id": 108
+  },
+  {
+    "title": "Microbiome and Brain Link",
+    "text": "Scientific research suggests a strong correlation between gut bacteria diversity and mental well-being. The gut-brain axis allows constant communication between the digestive tract and the central nervous system. A diet rich in prebiotic fibers supports gut health and may help alleviate symptoms of anxiety.",
+    "source": "Moved from Real Questions",
+    "id": 109
+  },
+  {
+    "title": "Electric Grid Modernization",
+    "text": "Upgrading the electrical grid is a critical step in transitioning to clean energy sources. Modern grids must be capable of handling fluctuating power inputs from solar and wind installations. Smart grid technology enables efficient energy distribution and reduces the frequency of blackouts.",
+    "source": "Moved from Real Questions",
+    "id": 110
+  },
+  {
+    "title": "Bilingual Education Benefits",
+    "text": "Studies show that children enrolled in bilingual education programs demonstrate superior cognitive flexibility. Learning two languages simultaneously strengthens executive function, which aids in problem-solving and focus. These cognitive advantages persist throughout adulthood, providing long-term intellectual benefits.",
+    "source": "Moved from Real Questions",
+    "id": 111
+  },
+  {
+    "title": "Water Infrastructure Funding",
+    "text": "Aging water infrastructure in many developed countries requires significant capital investment to prevent contamination. Leaking pipes and outdated treatment plants lose billions of gallons of clean water daily. Governments must prioritize infrastructure funding to ensure access to safe drinking water.",
+    "source": "Moved from Real Questions",
+    "id": 112
+  },
+  {
+    "title": "Solar Energy Storage",
+    "text": "The rapid growth of solar power is driving the demand for advanced battery storage systems. Batteries store excess electricity generated during peak daylight hours for use during the night. Enhancing storage capacity is vital for making solar energy a reliable, 24-hour utility.",
+    "source": "Moved from Real Questions",
+    "id": 113
+  },
+  {
+    "title": "Language and Identity",
+    "text": "Language is not merely a tool for communication; it is a vital repository of culture and heritage. When a language becomes extinct, unique historical knowledge and traditions are lost forever. Preservation efforts, such as recording oral histories, help maintain linguistic diversity.",
+    "source": "Moved from Real Questions",
+    "id": 114
+  },
+  {
+    "title": "Soil Erosion Solutions",
+    "text": "Intensive agricultural practices have accelerated soil erosion worldwide, threatening global food security. Planting cover crops and implementing crop rotation are effective methods to restore soil nutrients and structure. Protecting topsoil is essential for maintaining sustainable agricultural systems.",
+    "source": "Moved from Real Questions",
+    "id": 115
+  },
+  {
+    "title": "Cognitive Aging Research",
+    "text": "Cognitive decline is a natural part of aging, but certain lifestyle choices can slow this progression. Engaging in mentally stimulating activities, regular exercise, and maintaining social connections support brain health. Researchers are investigating how these factors delay neurodegenerative diseases.",
+    "source": "Moved from Real Questions",
+    "id": 116
+  },
+  {
+    "title": "Urban Heat Island Effect",
+    "text": "Metropolitan areas often experience higher temperatures than surrounding rural areas due to human activity. Concrete structures and asphalt absorb and radiate solar heat, creating urban heat islands. Planting trees and installing green roofs are effective solutions to cool down cities.",
+    "source": "Moved from Real Questions",
+    "id": 117
+  },
+  {
+    "title": "Microplastic Ingestion",
+    "text": "Ingestion of microplastics by marine animals has become a widespread environmental concern. These tiny particles, often invisible to the naked eye, can cause physical blockages and accumulate toxins. Understanding the impact of plastics on the marine food web is critical for human health.",
+    "source": "Moved from Real Questions",
+    "id": 118
+  },
+  {
+    "title": "Space Debris Mitigation",
+    "text": "The growing amount of defunct satellites and rocket fragments in orbit poses a serious threat to space missions. Collisions in low Earth orbit could create clouds of debris, making certain regions unusable. Developing technology to remove space junk is essential for future exploration.",
+    "source": "Moved from Real Questions",
+    "id": 119
+  },
+  {
+    "title": "Sustainable Forestry",
+    "text": "Sustainable forestry practices balance the demand for timber with the preservation of forest ecosystems. Selective logging and immediate replanting protect biodiversity and maintain carbon capture levels. Consumer demand for certified sustainable products is driving industry-wide reforms.",
+    "source": "Moved from Real Questions",
+    "id": 120
+  },
+  {
+    "title": "Academic Integrity",
+    "text": "Academic integrity is the foundation of university education and research. Students are expected to submit original work and properly cite all reference sources. Universities implement strict policies and use advanced detection software to identify plagiarism and maintain high academic standards.",
+    "source": "Moved from Real Questions",
+    "id": 121
+  },
+  {
+    "title": "Cognitive Psychology",
+    "text": "Cognitive psychology explores how people perceive, think, remember, and learn. Researchers study mental processes to understand how we solve problems and make decisions daily. These insights are applied in educational design to develop more effective learning strategies for students.",
+    "source": "Moved from Real Questions",
+    "id": 122
+  },
+  {
+    "title": "Wind Energy Expansion",
+    "text": "Wind energy is expanding rapidly as countries strive to meet their carbon reduction targets. Modern wind turbines are larger and more efficient, generating substantial power even in low wind conditions. Offshore wind farms represent a key growth area, providing clean energy to coastal cities.",
+    "source": "Moved from Real Questions",
+    "id": 123
+  },
+  {
+    "title": "Digital Literacy",
+    "text": "Digital literacy is increasingly essential for participating in the modern economy and society. Workers must be comfortable utilizing various software applications, collaborating online, and evaluating information critically. Educational systems are integrating digital skills training across all grade levels.",
+    "source": "Moved from Real Questions",
+    "id": 124
+  },
+  {
+    "title": "Soil Biodiversity",
+    "text": "Soil biodiversity plays a vital role in maintaining ecosystem health and agricultural productivity. Trillions of microorganisms decompose organic matter, recycle nutrients, and help control plant diseases. Preserving soil biodiversity is critical for sustainable farming and combatting climate change.",
+    "source": "Moved from Real Questions",
+    "id": 125
+  },
+  {
+    "title": "Ancient Trade Routes",
+    "text": "Ancient trade routes, such as the Silk Road, facilitated not only the exchange of goods but also the spread of ideas, technologies, and religions. These interactions shaped the development of civilizations across Asia, Europe, and Africa, fostering cultural exchange and economic growth.",
+    "source": "Moved from Real Questions",
+    "id": 126
+  },
+  {
+    "title": "Public Transit Investment",
+    "text": "Investing in public transit infrastructure is essential for reducing traffic congestion and greenhouse gas emissions in growing cities. Efficient bus and rail systems encourage residents to leave their personal vehicles at home. Improved transit accessibility also supports economic growth in underserved communities.",
+    "source": "Moved from Real Questions",
+    "id": 127
+  },
+  {
+    "title": "Marine Biogeochemistry",
+    "text": "Marine biogeochemistry examines the chemical, physical, geological, and biological processes that govern the composition of the ocean environment. Researchers study nutrient cycles to understand how marine life responds to climate change and ocean acidification, which is vital for conservation.",
+    "source": "Moved from Real Questions",
+    "id": 128
+  },
+  {
+    "title": "History of Writing Systems",
+    "text": "The development of writing systems marks a crucial milestone in human history, enabling the recording of laws, literature, and scientific discoveries. Early systems, like cuneiform and hieroglyphs, evolved to meet the administrative needs of complex societies, paving the way for modern literacy.",
+    "source": "Moved from Real Questions",
+    "id": 129
+  },
+  {
+    "title": "Ecosystem Restoration",
+    "text": "Ecosystem restoration involves active intervention to rebuild damaged habitats and recover lost biodiversity. Projects range from planting native trees to restoring wetlands and reintroducing native species. Successful restoration efforts support clean water, carbon capture, and resilient communities.",
+    "source": "Moved from Real Questions",
+    "id": 130
+  },
+  {
+    "title": "Remote Work Collaboration",
+    "text": "Remote work requires effective communication tools and clear protocols to maintain collaboration. Teams utilize video conferencing, instant messaging, and shared document platforms to coordinate projects across different time zones. Successful remote organizations prioritize transparency and regular updates to keep all employees aligned and motivated.",
+    "source": "Moved from Real Questions",
+    "id": 131
+  },
+  {
+    "title": "Sustainable Urban Design",
+    "text": "Sustainable urban design focuses on creating environmentally friendly cities that promote resident well-being. This involves developing walkable neighborhoods, expanding public transportation, and integrating green spaces into high-density areas. Eco-friendly construction materials and solar energy systems are also key components of modern sustainable developments.",
+    "source": "Moved from Real Questions",
+    "id": 132
+  },
+  {
+    "title": "Financial Literacy",
+    "text": "Financial literacy is a critical skill that enables individuals to make informed decisions about their money. Understanding budgeting, saving, investing, and managing debt helps people secure their financial future. High schools are increasingly incorporating personal finance education into their curriculum to prepare students for adulthood.",
+    "source": "Moved from Real Questions",
+    "id": 133
+  },
+  {
+    "title": "Employee Wellness Programs",
+    "text": "Employee wellness programs are becoming standard in modern workplaces as companies recognize the link between health and productivity. These initiatives offer health screenings, gym memberships, and mental health resources. Providing these benefits helps reduce absenteeism and improves overall job satisfaction among staff.",
+    "source": "Moved from Real Questions",
+    "id": 134
+  },
+  {
+    "title": "Renewable Grid Integration",
+    "text": "Integrating renewable energy into the national grid requires advanced technology and careful planning. Because solar and wind power fluctuate with weather conditions, smart grids and large-scale battery storage are essential. These innovations ensure a reliable electricity supply while transitioning away from fossil fuels.",
+    "source": "Moved from Real Questions",
+    "id": 135
+  },
+  {
+    "title": "The Importance of Pollinators",
+    "text": "Pollinators, including bees, butterflies, and birds, play a vital role in global food production. They assist in the reproduction of many crops, contributing to agricultural diversity and ecosystem stability. However, habitat loss and pesticide use have caused severe population declines, threatening global food security.",
+    "source": "Moved from Real Questions",
+    "id": 136
+  },
+  {
+    "title": "Modern E-Commerce Trends",
+    "text": "E-commerce has grown exponentially, transforming the retail industry and consumer behavior. Shoppers value the convenience of online browsing, home delivery, and easy return policies. Businesses are responding by optimizing their mobile platforms and utilizing artificial intelligence to recommend personalized products.",
+    "source": "Moved from Real Questions",
+    "id": 137
+  },
+  {
+    "title": "Community Gardens",
+    "text": "Community gardens are transforming vacant urban lots into productive green spaces. These shared gardens allow city residents to grow their own fresh produce, fostering physical activity and healthy eating habits. They also build stronger neighborhoods by bringing people together to work toward a common goal.",
+    "source": "Moved from Real Questions",
+    "id": 138
+  },
+  {
+    "title": "Corporate Social Responsibility",
+    "text": "Corporate social responsibility is now a priority for businesses seeking to build trust with consumers. Companies are implementing sustainable manufacturing processes, supporting local charities, and ensuring fair labor conditions. Consumers are increasingly choosing to support brands that align with their social and environmental values.",
+    "source": "Moved from Real Questions",
+    "id": 139
+  },
+  {
+    "title": "The Science of Hydration",
+    "text": "Staying adequately hydrated is essential for physical and cognitive performance. Water regulates body temperature, lubricates joints, and transports nutrients to cells. Even mild dehydration can cause fatigue, headaches, and difficulty concentrating, making it important to drink water throughout the day.",
+    "source": "Moved from Real Questions",
+    "id": 140
+  },
+  {
+    "title": "Artificial Intelligence in Medicine",
+    "text": "Artificial intelligence is revolutionizing healthcare by assisting doctors in diagnosing diseases and planning treatments. Machine learning algorithms can analyze medical images with high accuracy, detecting abnormalities early. AI is also used in drug discovery, analyzing chemical compounds to find potential treatments quickly.",
+    "source": "Moved from Real Questions",
+    "id": 141
+  },
+  {
+    "title": "Coastal Erosion Management",
+    "text": "Coastal erosion threatens infrastructure and ecosystems in many low-lying regions. Rising sea levels and intense storms accelerate the loss of land along coastlines. Management strategies include building seawalls, nourishing beaches with sand, and restoring natural defenses like mangroves and sand dunes.",
+    "source": "Moved from Real Questions",
+    "id": 142
+  },
+  {
+    "title": "Lifelong Learning",
+    "text": "In a rapidly changing job market, lifelong learning is key to career resilience and personal growth. Workers must continuously update their skills to adapt to new technologies and industries. Online courses and professional certifications make it easier than ever for individuals to pursue ongoing education.",
+    "source": "Moved from Real Questions",
+    "id": 143
+  },
+  {
+    "title": "Green Roof Benefits",
+    "text": "Green roofs, which are covered with vegetation, offer numerous environmental benefits to cities. They absorb rainwater, reducing the load on storm drains, and lower building temperatures through insulation. They also mitigate the urban heat island effect and provide habitats for local birds and insects.",
+    "source": "Moved from Real Questions",
+    "id": 144
+  },
+  {
+    "title": "Cybersecurity Best Practices",
+    "text": "Cybersecurity is crucial for protecting sensitive data from unauthorized access and cyberattacks. Individuals should use strong, unique passwords and enable multi-factor authentication on all accounts. Organizations must regularly train their employees to recognize phishing attempts and secure their network infrastructure.",
+    "source": "Moved from Real Questions",
+    "id": 145
+  },
+  {
+    "title": "Active Transportation",
+    "text": "Active transportation, such as walking and cycling, improves personal health and reduces urban traffic congestion. Developing dedicated bike lanes and pedestrian-friendly pathways encourages residents to choose these active options. This shift also lowers greenhouse gas emissions and improves local air quality.",
+    "source": "Moved from Real Questions",
+    "id": 146
+  },
+  {
+    "title": "Microbiome and Nutrition",
+    "text": "Nutrition plays a critical role in shaping the gut microbiome, which affects overall health and immunity. Diets rich in fruits, vegetables, and whole grains promote a diverse community of beneficial bacteria. Conversely, highly processed foods can disrupt this balance, increasing the risk of chronic diseases.",
+    "source": "Moved from Real Questions",
+    "id": 147
+  },
+  {
+    "title": "Renewable Energy and Jobs",
+    "text": "The transition to renewable energy is creating millions of jobs worldwide in manufacturing, installation, and maintenance. Solar and wind sectors are growing rapidly, offering new career paths in local communities. Investing in clean energy training programs is essential for building a skilled workforce for this sector.",
+    "source": "Moved from Real Questions",
+    "id": 148
+  },
+  {
+    "title": "Digital Archiving",
+    "text": "Digital archiving is essential for preserving historical documents, photographs, and records for future generations. Libraries and museums are digitizing their collections to prevent physical deterioration and improve public access. These digital archives allow researchers worldwide to explore historical materials easily.",
+    "source": "Moved from Real Questions",
+    "id": 149
+  },
+  {
+    "title": "Soil Erosion Prevention",
+    "text": "Soil erosion poses a significant threat to global agriculture and food production. Unsustainable farming practices can strip away fertile topsoil, reducing crop yields and causing water pollution. Implementing cover crops, conservation tillage, and terrace farming helps protect the soil and preserve its productivity.",
+    "source": "Moved from Real Questions",
+    "id": 150
   }
 ]

@@ -19,6 +19,30 @@ import { useAI } from '../../../common/hooks/useAI'
 import '../_10_styles/translator.css'
 import { cleanArticleText } from '../../../common/utils/cleanArticleText'
 
+const TRANSLATOR_VIEW_STATE_STORAGE_KEY = 'unilingo.translator.viewState.v1'
+
+function loadPersistedTranslatorViewState() {
+  if (typeof window === 'undefined') return {}
+
+  try {
+    const raw = window.localStorage.getItem(TRANSLATOR_VIEW_STATE_STORAGE_KEY)
+    if (!raw) return {}
+
+    const parsed = JSON.parse(raw)
+    return {
+      conversationMode: Boolean(parsed.conversationMode),
+      focusMode: Boolean(parsed.focusMode),
+      sttMode: parsed.sttMode === 'server' ? 'server' : 'local',
+      showAlternatives: Boolean(parsed.showAlternatives),
+      alternatives: parsed.alternatives && typeof parsed.alternatives === 'object' ? parsed.alternatives : {},
+      alternativesOutputText: typeof parsed.alternativesOutputText === 'string' ? parsed.alternativesOutputText : '',
+    }
+  } catch (error) {
+    console.warn('[Translator] Failed to restore view state:', error)
+    return {}
+  }
+}
+
 export function TranslatorView() {
   const {
     inputText,
@@ -42,6 +66,7 @@ export function TranslatorView() {
   const fileInputRef = useRef(null)
   const inputTextareaRef = useRef(null)
   const outputTextareaRef = useRef(null)
+  const persistedViewStateRef = useRef(loadPersistedTranslatorViewState())
   const [recentHistory, setRecentHistory] = useState([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, text }
@@ -52,18 +77,37 @@ export function TranslatorView() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
   const [guestCharCount, setGuestCharCount] = useState(0)
-  const [conversationMode, setConversationMode] = useState(false)
-  const [focusMode, setFocusMode] = useState(false)
-  const [sttMode, setSttMode] = useState('local') // 'local' | 'server'
+  const [conversationMode, setConversationMode] = useState(Boolean(persistedViewStateRef.current.conversationMode))
+  const [focusMode, setFocusMode] = useState(Boolean(persistedViewStateRef.current.focusMode))
+  const [sttMode, setSttMode] = useState(persistedViewStateRef.current.sttMode || 'local') // 'local' | 'server'
   const [showSttModeHelp, setShowSttModeHelp] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
   const [cleanFeedback, setCleanFeedback] = useState(false)
 
   // Alternative translations (유사 표현)
-  const [showAlternatives, setShowAlternatives] = useState(false)
-  const [alternatives, setAlternatives] = useState({}) // { lineIdx: [{text, nuance}] }
+  const [showAlternatives, setShowAlternatives] = useState(Boolean(persistedViewStateRef.current.showAlternatives))
+  const [alternatives, setAlternatives] = useState(persistedViewStateRef.current.alternatives || {}) // { lineIdx: [{text, nuance}] }
   const [altLoading, setAltLoading] = useState({}) // { lineIdx: true/false }
-  const altFetchedRef = useRef('') // track which outputText was already fetched
+  const altFetchedRef = useRef(persistedViewStateRef.current.alternativesOutputText || '') // track which outputText was already fetched
+
+  // Persist view-only controls separately from the core translation state.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem(TRANSLATOR_VIEW_STATE_STORAGE_KEY, JSON.stringify({
+        conversationMode,
+        focusMode,
+        sttMode,
+        showAlternatives,
+        alternatives,
+        alternativesOutputText: altFetchedRef.current || outputText || '',
+        savedAt: Date.now(),
+      }))
+    } catch (error) {
+      console.warn('[Translator] Failed to save view state:', error)
+    }
+  }, [conversationMode, focusMode, sttMode, showAlternatives, alternatives, outputText])
 
   // Auto-fetch alternatives for all lines when toggle is ON
   useEffect(() => {

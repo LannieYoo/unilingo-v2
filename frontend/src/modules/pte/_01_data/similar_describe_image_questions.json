@@ -1,0 +1,1790 @@
+[
+  {
+    "id": 1,
+    "title": "Describe Image Similar Practice 1",
+    "promptTitle": "Renewable Energy Share by Source",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "bar",
+    "render": {
+      "kind": "chart",
+      "chartType": "bar",
+      "labels": [
+        "Solar",
+        "Wind",
+        "Hydro",
+        "Biomass"
+      ],
+      "values": [
+        39,
+        60,
+        81,
+        37
+      ],
+      "unit": "units"
+    },
+    "answer": "The bar chart illustrates renewable energy share by source. At first glance, Hydro records the highest figure, whereas Biomass shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Renewable Energy Share by Source",
+      "Hydro is highest",
+      "Biomass is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-bar-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 2,
+    "title": "Describe Image Similar Practice 2",
+    "promptTitle": "Monthly App Downloads by Region",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "line",
+    "render": {
+      "kind": "chart",
+      "chartType": "line",
+      "labels": [
+        "North",
+        "South",
+        "East",
+        "West"
+      ],
+      "values": [
+        67,
+        30,
+        58,
+        21
+      ],
+      "unit": "units"
+    },
+    "answer": "The line chart illustrates monthly app downloads by region. At first glance, North records the highest figure, whereas West shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Monthly App Downloads by Region",
+      "North is highest",
+      "West is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-line-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 3,
+    "title": "Describe Image Similar Practice 3",
+    "promptTitle": "University Library Usage by Faculty",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "pie",
+    "render": {
+      "kind": "chart",
+      "chartType": "pie",
+      "labels": [
+        "Science",
+        "Business",
+        "Arts",
+        "Engineering"
+      ],
+      "values": [
+        30,
+        65,
+        35,
+        70
+      ],
+      "unit": "%"
+    },
+    "answer": "The pie chart illustrates university library usage by faculty. At first glance, Engineering records the highest figure, whereas Science shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "University Library Usage by Faculty",
+      "Engineering is highest",
+      "Science is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-pie-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 4,
+    "title": "Describe Image Similar Practice 4",
+    "promptTitle": "Online Course Completion Rates",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "table",
+    "render": {
+      "kind": "chart",
+      "chartType": "table",
+      "labels": [
+        "Week 1",
+        "Week 2",
+        "Week 3",
+        "Week 4"
+      ],
+      "values": [
+        58,
+        35,
+        77,
+        54
+      ],
+      "unit": "units"
+    },
+    "answer": "The table chart illustrates online course completion rates. At first glance, Week 3 records the highest figure, whereas Week 2 shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Online Course Completion Rates",
+      "Week 3 is highest",
+      "Week 2 is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-graph-core",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 5,
+    "title": "Describe Image Similar Practice 5",
+    "promptTitle": "Household Water Use by Activity",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "bar",
+    "render": {
+      "kind": "chart",
+      "chartType": "bar",
+      "labels": [
+        "Kitchen",
+        "Laundry",
+        "Bathing",
+        "Garden"
+      ],
+      "values": [
+        21,
+        70,
+        54,
+        38
+      ],
+      "unit": "units"
+    },
+    "answer": "The bar chart illustrates household water use by activity. At first glance, Laundry records the highest figure, whereas Kitchen shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Household Water Use by Activity",
+      "Laundry is highest",
+      "Kitchen is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-bar-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 6,
+    "title": "Describe Image Similar Practice 6",
+    "promptTitle": "Commuting Methods of Employees",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "line",
+    "render": {
+      "kind": "chart",
+      "chartType": "line",
+      "labels": [
+        "Car",
+        "Bus",
+        "Train",
+        "Bicycle"
+      ],
+      "values": [
+        49,
+        40,
+        31,
+        22
+      ],
+      "unit": "units"
+    },
+    "answer": "The line chart illustrates commuting methods of employees. At first glance, Car records the highest figure, whereas Bicycle shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Commuting Methods of Employees",
+      "Car is highest",
+      "Bicycle is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-line-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 7,
+    "title": "Describe Image Similar Practice 7",
+    "promptTitle": "Tourist Visits Across Seasons",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "pie",
+    "render": {
+      "kind": "chart",
+      "chartType": "pie",
+      "labels": [
+        "Spring",
+        "Summer",
+        "Autumn",
+        "Winter"
+      ],
+      "values": [
+        77,
+        75,
+        73,
+        71
+      ],
+      "unit": "%"
+    },
+    "answer": "The pie chart illustrates tourist visits across seasons. At first glance, Spring records the highest figure, whereas Winter shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Tourist Visits Across Seasons",
+      "Spring is highest",
+      "Winter is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-pie-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 8,
+    "title": "Describe Image Similar Practice 8",
+    "promptTitle": "Company Sales by Quarter",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "table",
+    "render": {
+      "kind": "chart",
+      "chartType": "table",
+      "labels": [
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4"
+      ],
+      "values": [
+        40,
+        45,
+        50,
+        55
+      ],
+      "unit": "units"
+    },
+    "answer": "The table chart illustrates company sales by quarter. At first glance, Q4 records the highest figure, whereas Q1 shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Company Sales by Quarter",
+      "Q4 is highest",
+      "Q1 is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-graph-core",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 9,
+    "title": "Describe Image Similar Practice 9",
+    "promptTitle": "Daily Screen Time by Age Group",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "bar",
+    "render": {
+      "kind": "chart",
+      "chartType": "bar",
+      "labels": [
+        "Teens",
+        "20s",
+        "30s",
+        "40s+"
+      ],
+      "values": [
+        68,
+        80,
+        27,
+        39
+      ],
+      "unit": "units"
+    },
+    "answer": "The bar chart illustrates daily screen time by age group. At first glance, 20s records the highest figure, whereas 30s shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Daily Screen Time by Age Group",
+      "20s is highest",
+      "30s is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-bar-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 10,
+    "title": "Describe Image Similar Practice 10",
+    "promptTitle": "Farm Output by Crop Type",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "line",
+    "render": {
+      "kind": "chart",
+      "chartType": "line",
+      "labels": [
+        "Wheat",
+        "Rice",
+        "Corn",
+        "Soy"
+      ],
+      "values": [
+        31,
+        50,
+        69,
+        23
+      ],
+      "unit": "units"
+    },
+    "answer": "The line chart illustrates farm output by crop type. At first glance, Corn records the highest figure, whereas Soy shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Farm Output by Crop Type",
+      "Corn is highest",
+      "Soy is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-line-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 11,
+    "title": "Describe Image Similar Practice 11",
+    "promptTitle": "Student Preferences for Study Spaces",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "pie",
+    "render": {
+      "kind": "chart",
+      "chartType": "pie",
+      "labels": [
+        "Home",
+        "Library",
+        "Cafe",
+        "Campus Lounge"
+      ],
+      "values": [
+        59,
+        20,
+        46,
+        72
+      ],
+      "unit": "%"
+    },
+    "answer": "The pie chart illustrates student preferences for study spaces. At first glance, Campus Lounge records the highest figure, whereas Library shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Student Preferences for Study Spaces",
+      "Campus Lounge is highest",
+      "Library is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-pie-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 12,
+    "title": "Describe Image Similar Practice 12",
+    "promptTitle": "Electric Vehicle Charging Sessions",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "table",
+    "render": {
+      "kind": "chart",
+      "chartType": "table",
+      "labels": [
+        "Morning",
+        "Noon",
+        "Evening",
+        "Night"
+      ],
+      "values": [
+        22,
+        55,
+        23,
+        56
+      ],
+      "unit": "units"
+    },
+    "answer": "The table chart illustrates electric vehicle charging sessions. At first glance, Night records the highest figure, whereas Morning shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Electric Vehicle Charging Sessions",
+      "Night is highest",
+      "Morning is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-graph-core",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 13,
+    "title": "Describe Image Similar Practice 13",
+    "promptTitle": "Hospital Visits by Department",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "bar",
+    "render": {
+      "kind": "chart",
+      "chartType": "bar",
+      "labels": [
+        "Emergency",
+        "Pediatrics",
+        "Surgery",
+        "Cardiology"
+      ],
+      "values": [
+        50,
+        25,
+        65,
+        40
+      ],
+      "unit": "units"
+    },
+    "answer": "The bar chart illustrates hospital visits by department. At first glance, Surgery records the highest figure, whereas Pediatrics shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Hospital Visits by Department",
+      "Surgery is highest",
+      "Pediatrics is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-bar-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 14,
+    "title": "Describe Image Similar Practice 14",
+    "promptTitle": "Carbon Emissions by Sector",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "line",
+    "render": {
+      "kind": "chart",
+      "chartType": "line",
+      "labels": [
+        "Transport",
+        "Industry",
+        "Energy",
+        "Agriculture"
+      ],
+      "values": [
+        78,
+        60,
+        42,
+        24
+      ],
+      "unit": "units"
+    },
+    "answer": "The line chart illustrates carbon emissions by sector. At first glance, Transport records the highest figure, whereas Agriculture shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Carbon Emissions by Sector",
+      "Transport is highest",
+      "Agriculture is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-line-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 15,
+    "title": "Describe Image Similar Practice 15",
+    "promptTitle": "Book Sales by Genre",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "pie",
+    "render": {
+      "kind": "chart",
+      "chartType": "pie",
+      "labels": [
+        "Fiction",
+        "History",
+        "Science",
+        "Biography"
+      ],
+      "values": [
+        41,
+        30,
+        84,
+        73
+      ],
+      "unit": "%"
+    },
+    "answer": "The pie chart illustrates book sales by genre. At first glance, Science records the highest figure, whereas History shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Book Sales by Genre",
+      "Science is highest",
+      "History is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-pie-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 16,
+    "title": "Describe Image Similar Practice 16",
+    "promptTitle": "Fitness Club Membership by Plan",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "table",
+    "render": {
+      "kind": "chart",
+      "chartType": "table",
+      "labels": [
+        "Basic",
+        "Standard",
+        "Premium",
+        "Family"
+      ],
+      "values": [
+        69,
+        65,
+        61,
+        57
+      ],
+      "unit": "units"
+    },
+    "answer": "The table chart illustrates fitness club membership by plan. At first glance, Basic records the highest figure, whereas Family shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Fitness Club Membership by Plan",
+      "Basic is highest",
+      "Family is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-graph-core",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 17,
+    "title": "Describe Image Similar Practice 17",
+    "promptTitle": "Internet Traffic by Device",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "bar",
+    "render": {
+      "kind": "chart",
+      "chartType": "bar",
+      "labels": [
+        "Mobile",
+        "Desktop",
+        "Tablet",
+        "TV"
+      ],
+      "values": [
+        32,
+        35,
+        38,
+        41
+      ],
+      "unit": "units"
+    },
+    "answer": "The bar chart illustrates internet traffic by device. At first glance, TV records the highest figure, whereas Mobile shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Internet Traffic by Device",
+      "TV is highest",
+      "Mobile is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-bar-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 18,
+    "title": "Describe Image Similar Practice 18",
+    "promptTitle": "House Prices by City Zone",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "line",
+    "render": {
+      "kind": "chart",
+      "chartType": "line",
+      "labels": [
+        "North",
+        "South",
+        "Central",
+        "Suburban"
+      ],
+      "values": [
+        60,
+        70,
+        80,
+        25
+      ],
+      "unit": "units"
+    },
+    "answer": "The line chart illustrates house prices by city zone. At first glance, Central records the highest figure, whereas Suburban shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "House Prices by City Zone",
+      "Central is highest",
+      "Suburban is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-line-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 19,
+    "title": "Describe Image Similar Practice 19",
+    "promptTitle": "Research Funding by Discipline",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "pie",
+    "render": {
+      "kind": "chart",
+      "chartType": "pie",
+      "labels": [
+        "Medicine",
+        "Physics",
+        "Computing",
+        "Environment"
+      ],
+      "values": [
+        23,
+        40,
+        57,
+        74
+      ],
+      "unit": "%"
+    },
+    "answer": "The pie chart illustrates research funding by discipline. At first glance, Environment records the highest figure, whereas Medicine shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Research Funding by Discipline",
+      "Environment is highest",
+      "Medicine is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-pie-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 20,
+    "title": "Describe Image Similar Practice 20",
+    "promptTitle": "Recycling Rates by Material",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "table",
+    "render": {
+      "kind": "chart",
+      "chartType": "table",
+      "labels": [
+        "Paper",
+        "Glass",
+        "Plastic",
+        "Metal"
+      ],
+      "values": [
+        51,
+        75,
+        34,
+        58
+      ],
+      "unit": "units"
+    },
+    "answer": "The table chart illustrates recycling rates by material. At first glance, Glass records the highest figure, whereas Plastic shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Recycling Rates by Material",
+      "Glass is highest",
+      "Plastic is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-graph-core",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 21,
+    "title": "Describe Image Similar Practice 21",
+    "promptTitle": "Passenger Numbers by Transport Mode",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "bar",
+    "render": {
+      "kind": "chart",
+      "chartType": "bar",
+      "labels": [
+        "Bus",
+        "Rail",
+        "Air",
+        "Ferry"
+      ],
+      "values": [
+        79,
+        45,
+        76,
+        42
+      ],
+      "unit": "units"
+    },
+    "answer": "The bar chart illustrates passenger numbers by transport mode. At first glance, Bus records the highest figure, whereas Ferry shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Passenger Numbers by Transport Mode",
+      "Bus is highest",
+      "Ferry is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-bar-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 22,
+    "title": "Describe Image Similar Practice 22",
+    "promptTitle": "Coffee Consumption by Workplace Team",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "line",
+    "render": {
+      "kind": "chart",
+      "chartType": "line",
+      "labels": [
+        "Sales",
+        "HR",
+        "Tech",
+        "Support"
+      ],
+      "values": [
+        42,
+        80,
+        53,
+        26
+      ],
+      "unit": "units"
+    },
+    "answer": "The line chart illustrates coffee consumption by workplace team. At first glance, HR records the highest figure, whereas Support shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Coffee Consumption by Workplace Team",
+      "HR is highest",
+      "Support is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-line-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 23,
+    "title": "Describe Image Similar Practice 23",
+    "promptTitle": "Language Learners by Target Language",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "pie",
+    "render": {
+      "kind": "chart",
+      "chartType": "pie",
+      "labels": [
+        "English",
+        "French",
+        "Chinese",
+        "Spanish"
+      ],
+      "values": [
+        70,
+        50,
+        30,
+        75
+      ],
+      "unit": "%"
+    },
+    "answer": "The pie chart illustrates language learners by target language. At first glance, Spanish records the highest figure, whereas Chinese shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Language Learners by Target Language",
+      "Spanish is highest",
+      "Chinese is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-pie-chart",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 24,
+    "title": "Describe Image Similar Practice 24",
+    "promptTitle": "Energy Consumption by Appliance",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "chart",
+    "chartType": "table",
+    "render": {
+      "kind": "chart",
+      "chartType": "table",
+      "labels": [
+        "Fridge",
+        "AC",
+        "Lighting",
+        "Washer"
+      ],
+      "values": [
+        33,
+        20,
+        72,
+        59
+      ],
+      "unit": "units"
+    },
+    "answer": "The table chart illustrates energy consumption by appliance. At first glance, Lighting records the highest figure, whereas AC shows the lowest value. Overall, the visual indicates a clear difference among the categories and suggests an uneven distribution across the data set.",
+    "keyPoints": [
+      "Energy Consumption by Appliance",
+      "Lighting is highest",
+      "AC is lowest",
+      "overall comparison"
+    ],
+    "templateHintId": "di-graph-core",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 25,
+    "title": "Describe Image Similar Practice 25",
+    "promptTitle": "Online Shopping Delivery Process",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Online Shopping Delivery Process",
+      "steps": [
+        "Browse products",
+        "Place order",
+        "Package shipment",
+        "Home delivery"
+      ]
+    },
+    "answer": "The image presents online shopping delivery process and explains how the system develops step by step. It begins with browse products, then moves through place order and package shipment. In the final stage, it ends with home delivery, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Online Shopping Delivery Process",
+      "Browse products",
+      "Package shipment",
+      "Home delivery",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 26,
+    "title": "Describe Image Similar Practice 26",
+    "promptTitle": "Water Treatment Cycle",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Water Treatment Cycle",
+      "steps": [
+        "Collect raw water",
+        "Filter impurities",
+        "Disinfect supply",
+        "Distribute clean water"
+      ]
+    },
+    "answer": "The image presents water treatment cycle and explains how the system develops step by step. It begins with collect raw water, then moves through filter impurities and disinfect supply. In the final stage, it ends with distribute clean water, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Water Treatment Cycle",
+      "Collect raw water",
+      "Disinfect supply",
+      "Distribute clean water",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 27,
+    "title": "Describe Image Similar Practice 27",
+    "promptTitle": "University Admission Workflow",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "University Admission Workflow",
+      "steps": [
+        "Submit application",
+        "Review documents",
+        "Receive offer",
+        "Confirm enrollment"
+      ]
+    },
+    "answer": "The image presents university admission workflow and explains how the system develops step by step. It begins with submit application, then moves through review documents and receive offer. In the final stage, it ends with confirm enrollment, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "University Admission Workflow",
+      "Submit application",
+      "Receive offer",
+      "Confirm enrollment",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 28,
+    "title": "Describe Image Similar Practice 28",
+    "promptTitle": "Recycling Plant Operation",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Recycling Plant Operation",
+      "steps": [
+        "Collect waste",
+        "Sort materials",
+        "Process items",
+        "Reuse output"
+      ]
+    },
+    "answer": "The image presents recycling plant operation and explains how the system develops step by step. It begins with collect waste, then moves through sort materials and process items. In the final stage, it ends with reuse output, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Recycling Plant Operation",
+      "Collect waste",
+      "Process items",
+      "Reuse output",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 29,
+    "title": "Describe Image Similar Practice 29",
+    "promptTitle": "Coffee Production Chain",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Coffee Production Chain",
+      "steps": [
+        "Harvest beans",
+        "Dry and roast",
+        "Grind product",
+        "Serve beverage"
+      ]
+    },
+    "answer": "The image presents coffee production chain and explains how the system develops step by step. It begins with harvest beans, then moves through dry and roast and grind product. In the final stage, it ends with serve beverage, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Coffee Production Chain",
+      "Harvest beans",
+      "Grind product",
+      "Serve beverage",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 30,
+    "title": "Describe Image Similar Practice 30",
+    "promptTitle": "Mobile App Development Stages",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Mobile App Development Stages",
+      "steps": [
+        "Plan features",
+        "Design interface",
+        "Build and test",
+        "Launch update"
+      ]
+    },
+    "answer": "The image presents mobile app development stages and explains how the system develops step by step. It begins with plan features, then moves through design interface and build and test. In the final stage, it ends with launch update, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Mobile App Development Stages",
+      "Plan features",
+      "Build and test",
+      "Launch update",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 31,
+    "title": "Describe Image Similar Practice 31",
+    "promptTitle": "Airport Passenger Journey",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Airport Passenger Journey",
+      "steps": [
+        "Check in",
+        "Security screening",
+        "Board aircraft",
+        "Arrive destination"
+      ]
+    },
+    "answer": "The image presents airport passenger journey and explains how the system develops step by step. It begins with check in, then moves through security screening and board aircraft. In the final stage, it ends with arrive destination, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Airport Passenger Journey",
+      "Check in",
+      "Board aircraft",
+      "Arrive destination",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 32,
+    "title": "Describe Image Similar Practice 32",
+    "promptTitle": "Solar Power Generation Process",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Solar Power Generation Process",
+      "steps": [
+        "Capture sunlight",
+        "Convert to electricity",
+        "Store power",
+        "Supply grid"
+      ]
+    },
+    "answer": "The image presents solar power generation process and explains how the system develops step by step. It begins with capture sunlight, then moves through convert to electricity and store power. In the final stage, it ends with supply grid, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Solar Power Generation Process",
+      "Capture sunlight",
+      "Store power",
+      "Supply grid",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 33,
+    "title": "Describe Image Similar Practice 33",
+    "promptTitle": "Food Delivery Platform Flow",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Food Delivery Platform Flow",
+      "steps": [
+        "Receive request",
+        "Assign driver",
+        "Collect meal",
+        "Deliver customer order"
+      ]
+    },
+    "answer": "The image presents food delivery platform flow and explains how the system develops step by step. It begins with receive request, then moves through assign driver and collect meal. In the final stage, it ends with deliver customer order, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Food Delivery Platform Flow",
+      "Receive request",
+      "Collect meal",
+      "Deliver customer order",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 34,
+    "title": "Describe Image Similar Practice 34",
+    "promptTitle": "Job Recruitment Pipeline",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Job Recruitment Pipeline",
+      "steps": [
+        "Post vacancy",
+        "Screen applicants",
+        "Interview candidates",
+        "Make final offer"
+      ]
+    },
+    "answer": "The image presents job recruitment pipeline and explains how the system develops step by step. It begins with post vacancy, then moves through screen applicants and interview candidates. In the final stage, it ends with make final offer, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Job Recruitment Pipeline",
+      "Post vacancy",
+      "Interview candidates",
+      "Make final offer",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 35,
+    "title": "Describe Image Similar Practice 35",
+    "promptTitle": "Paper Recycling Process",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Paper Recycling Process",
+      "steps": [
+        "Collect paper",
+        "Pulp material",
+        "Remove ink",
+        "Create new sheets"
+      ]
+    },
+    "answer": "The image presents paper recycling process and explains how the system develops step by step. It begins with collect paper, then moves through pulp material and remove ink. In the final stage, it ends with create new sheets, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Paper Recycling Process",
+      "Collect paper",
+      "Remove ink",
+      "Create new sheets",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 36,
+    "title": "Describe Image Similar Practice 36",
+    "promptTitle": "Blood Donation Procedure",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "process",
+    "render": {
+      "kind": "process",
+      "title": "Blood Donation Procedure",
+      "steps": [
+        "Register donor",
+        "Medical check",
+        "Collect donation",
+        "Store and distribute"
+      ]
+    },
+    "answer": "The image presents blood donation procedure and explains how the system develops step by step. It begins with register donor, then moves through medical check and collect donation. In the final stage, it ends with store and distribute, so the overall process highlights a clear sequence of actions.",
+    "keyPoints": [
+      "Blood Donation Procedure",
+      "Register donor",
+      "Collect donation",
+      "Store and distribute",
+      "process sequence"
+    ],
+    "templateHintId": "di-process",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 37,
+    "title": "Describe Image Similar Practice 37",
+    "promptTitle": "Campus Layout Map",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "map",
+    "render": {
+      "kind": "map",
+      "title": "Campus Layout Map",
+      "steps": [
+        "Library",
+        "Cafeteria",
+        "Lecture Hall",
+        "Parking Area"
+      ]
+    },
+    "answer": "The image presents campus layout map. It highlights key locations such as library, cafeteria, and lecture hall, while the route finally reaches parking area. Overall, the layout shows how the main areas are arranged and connected.",
+    "keyPoints": [
+      "Campus Layout Map",
+      "Library",
+      "Cafeteria",
+      "Parking Area",
+      "layout connection"
+    ],
+    "templateHintId": "di-map",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 38,
+    "title": "Describe Image Similar Practice 38",
+    "promptTitle": "Shopping Mall Floor Plan",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "map",
+    "render": {
+      "kind": "map",
+      "title": "Shopping Mall Floor Plan",
+      "steps": [
+        "Entrance",
+        "Food Court",
+        "Cinema",
+        "Retail Zone"
+      ]
+    },
+    "answer": "The image presents shopping mall floor plan. It highlights key locations such as entrance, food court, and cinema, while the route finally reaches retail zone. Overall, the layout shows how the main areas are arranged and connected.",
+    "keyPoints": [
+      "Shopping Mall Floor Plan",
+      "Entrance",
+      "Food Court",
+      "Retail Zone",
+      "layout connection"
+    ],
+    "templateHintId": "di-map",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 39,
+    "title": "Describe Image Similar Practice 39",
+    "promptTitle": "Museum Visitor Route",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "map",
+    "render": {
+      "kind": "map",
+      "title": "Museum Visitor Route",
+      "steps": [
+        "Main gate",
+        "History wing",
+        "Art gallery",
+        "Exit shop"
+      ]
+    },
+    "answer": "The image presents museum visitor route. It highlights key locations such as main gate, history wing, and art gallery, while the route finally reaches exit shop. Overall, the layout shows how the main areas are arranged and connected.",
+    "keyPoints": [
+      "Museum Visitor Route",
+      "Main gate",
+      "History wing",
+      "Exit shop",
+      "layout connection"
+    ],
+    "templateHintId": "di-map",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 40,
+    "title": "Describe Image Similar Practice 40",
+    "promptTitle": "City Park Development Map",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "map",
+    "render": {
+      "kind": "map",
+      "title": "City Park Development Map",
+      "steps": [
+        "Lake",
+        "Playground",
+        "Walking path",
+        "Sports field"
+      ]
+    },
+    "answer": "The image presents city park development map. It highlights key locations such as lake, playground, and walking path, while the route finally reaches sports field. Overall, the layout shows how the main areas are arranged and connected.",
+    "keyPoints": [
+      "City Park Development Map",
+      "Lake",
+      "Playground",
+      "Sports field",
+      "layout connection"
+    ],
+    "templateHintId": "di-map",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 41,
+    "title": "Describe Image Similar Practice 41",
+    "promptTitle": "Office Floor Arrangement",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "map",
+    "render": {
+      "kind": "map",
+      "title": "Office Floor Arrangement",
+      "steps": [
+        "Reception",
+        "Meeting room",
+        "Workstations",
+        "Break area"
+      ]
+    },
+    "answer": "The image presents office floor arrangement. It highlights key locations such as reception, meeting room, and workstations, while the route finally reaches break area. Overall, the layout shows how the main areas are arranged and connected.",
+    "keyPoints": [
+      "Office Floor Arrangement",
+      "Reception",
+      "Meeting room",
+      "Break area",
+      "layout connection"
+    ],
+    "templateHintId": "di-map",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 42,
+    "title": "Describe Image Similar Practice 42",
+    "promptTitle": "Transit Hub Direction Map",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "map",
+    "render": {
+      "kind": "map",
+      "title": "Transit Hub Direction Map",
+      "steps": [
+        "Bus bays",
+        "Train platform",
+        "Ticket office",
+        "Taxi rank"
+      ]
+    },
+    "answer": "The image presents transit hub direction map. It highlights key locations such as bus bays, train platform, and ticket office, while the route finally reaches taxi rank. Overall, the layout shows how the main areas are arranged and connected.",
+    "keyPoints": [
+      "Transit Hub Direction Map",
+      "Bus bays",
+      "Train platform",
+      "Taxi rank",
+      "layout connection"
+    ],
+    "templateHintId": "di-map",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 43,
+    "title": "Describe Image Similar Practice 43",
+    "promptTitle": "Busy Farmers Market",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Busy Farmers Market",
+      "focus": "vendors",
+      "details": [
+        "fresh produce",
+        "customers",
+        "open stalls"
+      ]
+    },
+    "answer": "The picture shows busy farmers market. The main focus appears to be vendors, while the background includes fresh produce, customers, open stalls. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Busy Farmers Market",
+      "vendors",
+      "fresh produce",
+      "customers",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 44,
+    "title": "Describe Image Similar Practice 44",
+    "promptTitle": "Modern Classroom Discussion",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Modern Classroom Discussion",
+      "focus": "students",
+      "details": [
+        "teacher",
+        "screen",
+        "group activity"
+      ]
+    },
+    "answer": "The picture shows modern classroom discussion. The main focus appears to be students, while the background includes teacher, screen, group activity. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Modern Classroom Discussion",
+      "students",
+      "teacher",
+      "screen",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 45,
+    "title": "Describe Image Similar Practice 45",
+    "promptTitle": "Construction Site Safety",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Construction Site Safety",
+      "focus": "workers",
+      "details": [
+        "helmets",
+        "machinery",
+        "warning signs"
+      ]
+    },
+    "answer": "The picture shows construction site safety. The main focus appears to be workers, while the background includes helmets, machinery, warning signs. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Construction Site Safety",
+      "workers",
+      "helmets",
+      "machinery",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 46,
+    "title": "Describe Image Similar Practice 46",
+    "promptTitle": "Family Picnic in a Park",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Family Picnic in a Park",
+      "focus": "family members",
+      "details": [
+        "green grass",
+        "food basket",
+        "trees"
+      ]
+    },
+    "answer": "The picture shows family picnic in a park. The main focus appears to be family members, while the background includes green grass, food basket, trees. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Family Picnic in a Park",
+      "family members",
+      "green grass",
+      "food basket",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 47,
+    "title": "Describe Image Similar Practice 47",
+    "promptTitle": "Airport Departure Lounge",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Airport Departure Lounge",
+      "focus": "passengers",
+      "details": [
+        "seating area",
+        "display board",
+        "luggage"
+      ]
+    },
+    "answer": "The picture shows airport departure lounge. The main focus appears to be passengers, while the background includes seating area, display board, luggage. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Airport Departure Lounge",
+      "passengers",
+      "seating area",
+      "display board",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 48,
+    "title": "Describe Image Similar Practice 48",
+    "promptTitle": "Cyclists in a City Street",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Cyclists in a City Street",
+      "focus": "bicycles",
+      "details": [
+        "road lane",
+        "traffic",
+        "buildings"
+      ]
+    },
+    "answer": "The picture shows cyclists in a city street. The main focus appears to be bicycles, while the background includes road lane, traffic, buildings. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Cyclists in a City Street",
+      "bicycles",
+      "road lane",
+      "traffic",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 49,
+    "title": "Describe Image Similar Practice 49",
+    "promptTitle": "Scientists in a Laboratory",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Scientists in a Laboratory",
+      "focus": "researchers",
+      "details": [
+        "equipment",
+        "samples",
+        "workbench"
+      ]
+    },
+    "answer": "The picture shows scientists in a laboratory. The main focus appears to be researchers, while the background includes equipment, samples, workbench. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Scientists in a Laboratory",
+      "researchers",
+      "equipment",
+      "samples",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 50,
+    "title": "Describe Image Similar Practice 50",
+    "promptTitle": "Beach Cleanup Activity",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Beach Cleanup Activity",
+      "focus": "volunteers",
+      "details": [
+        "waste bags",
+        "coastline",
+        "gloves"
+      ]
+    },
+    "answer": "The picture shows beach cleanup activity. The main focus appears to be volunteers, while the background includes waste bags, coastline, gloves. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Beach Cleanup Activity",
+      "volunteers",
+      "waste bags",
+      "coastline",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 2,
+    "difficultyLabel": "Hard"
+  },
+  {
+    "id": 51,
+    "title": "Describe Image Similar Practice 51",
+    "promptTitle": "Office Team Meeting",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Office Team Meeting",
+      "focus": "colleagues",
+      "details": [
+        "table",
+        "presentation",
+        "discussion"
+      ]
+    },
+    "answer": "The picture shows office team meeting. The main focus appears to be colleagues, while the background includes table, presentation, discussion. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Office Team Meeting",
+      "colleagues",
+      "table",
+      "presentation",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 52,
+    "title": "Describe Image Similar Practice 52",
+    "promptTitle": "Rainy Urban Intersection",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Rainy Urban Intersection",
+      "focus": "pedestrians",
+      "details": [
+        "umbrellas",
+        "crosswalk",
+        "vehicles"
+      ]
+    },
+    "answer": "The picture shows rainy urban intersection. The main focus appears to be pedestrians, while the background includes umbrellas, crosswalk, vehicles. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Rainy Urban Intersection",
+      "pedestrians",
+      "umbrellas",
+      "crosswalk",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  },
+  {
+    "id": 53,
+    "title": "Describe Image Similar Practice 53",
+    "promptTitle": "Children in a Library",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Children in a Library",
+      "focus": "bookshelves",
+      "details": [
+        "reading area",
+        "children",
+        "librarian"
+      ]
+    },
+    "answer": "The picture shows children in a library. The main focus appears to be bookshelves, while the background includes reading area, children, librarian. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Children in a Library",
+      "bookshelves",
+      "reading area",
+      "children",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 0,
+    "difficultyLabel": "Easy"
+  },
+  {
+    "id": 54,
+    "title": "Describe Image Similar Practice 54",
+    "promptTitle": "Restaurant Kitchen Scene",
+    "source": "AI-Generated Similar Practice",
+    "visualCategory": "scene",
+    "render": {
+      "kind": "scene",
+      "title": "Restaurant Kitchen Scene",
+      "focus": "chefs",
+      "details": [
+        "cooking station",
+        "ingredients",
+        "orders"
+      ]
+    },
+    "answer": "The picture shows restaurant kitchen scene. The main focus appears to be chefs, while the background includes cooking station, ingredients, orders. Overall, the image gives the impression of an active and realistic everyday scene.",
+    "keyPoints": [
+      "Restaurant Kitchen Scene",
+      "chefs",
+      "cooking station",
+      "ingredients",
+      "overall impression"
+    ],
+    "templateHintId": "di-photo",
+    "preparationTime": 25,
+    "answerTime": 40,
+    "difficulty": 1,
+    "difficultyLabel": "Medium"
+  }
+]

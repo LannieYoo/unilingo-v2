@@ -38,6 +38,40 @@ const normalizeLanguageCode = (lang) => {
 }
 
 /**
+ * 숫자/통화/단위 보호
+ *
+ * 번역 모델이 "$16.8 million"을 "16달러"처럼 (소수점/단위/통화를 떨어뜨려)
+ * 망가뜨리는 일이 잦다. glossary가 전문 용어를 보호하는 것과 동일하게,
+ * 번역 전에 숫자 표현을 플레이스홀더로 치환했다가 번역 후 원본 그대로
+ * 복원해서 모델이 숫자를 건드리지 못하게 한다.
+ */
+// 통화기호?  숫자(콤마/소수점)  단위(million 등)?  퍼센트?
+const NUMERIC_RE = /(?:[$€£₩¥]\s?)?\d[\d,]*(?:\.\d+)?(?:\s?(?:million|billion|trillion|thousand))?%?/gi
+
+const protectNumbers = (text) => {
+  if (!text) return { text, numMap: {} }
+  const numMap = {}
+  let i = 0
+  const protectedText = text.replace(NUMERIC_RE, (match) => {
+    if (!/\d/.test(match)) return match // 숫자 없는 매치는 무시
+    const placeholder = `__NUM${i}__`
+    numMap[placeholder] = match.trim()
+    i++
+    return placeholder
+  })
+  return { text: protectedText, numMap }
+}
+
+const restoreNumbers = (text, numMap) => {
+  if (!text || !numMap) return text
+  let result = text
+  for (const [placeholder, value] of Object.entries(numMap)) {
+    result = result.split(placeholder).join(value)
+  }
+  return result
+}
+
+/**
  * 번역 훅
  */
 export function useTranslation() {
@@ -95,13 +129,16 @@ export function useTranslation() {
 
     // 1. 번역 전 용어 보호
     const { processedText, termMap } = preProcess(text, sourceLang, targetLang)
-    
-    console.log(`[Translation] Calling API:`, { 
+
+    // 1-2. 숫자/통화/단위 보호 (모델이 "$16.8 million"을 망가뜨리지 못하게)
+    const { text: protectedText, numMap } = protectNumbers(processedText)
+
+    console.log(`[Translation] Calling API:`, {
       url: `${API_BASE}/api/translate`,
-      sourceLang, 
-      targetLang, 
-      textLength: processedText.length,
-      isAuthenticated 
+      sourceLang,
+      targetLang,
+      textLength: protectedText.length,
+      isAuthenticated
     })
     
     try {
@@ -118,7 +155,7 @@ export function useTranslation() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          text: processedText.trim(),
+          text: protectedText.trim(),
           source_lang: sourceLang,
           target_lang: targetLang
         })
@@ -145,10 +182,11 @@ export function useTranslation() {
       console.log(`[Translation] API success:`, { translatedText: data.translated_text })
       const translatedText = data.translated_text || null
       
-      // 2. 번역 후 용어 복원
+      // 2. 번역 후 숫자 복원 → 용어 복원
       if (translatedText) {
-        const finalText = postProcess(translatedText, termMap)
-        
+        const numRestored = restoreNumbers(translatedText, numMap)
+        const finalText = postProcess(numRestored, termMap)
+
         // Track usage - count characters in original text (STT type)
         const charCount = text.length
         await trackUsage(charCount, 'stt')

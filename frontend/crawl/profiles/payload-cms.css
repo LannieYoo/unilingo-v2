@@ -1,0 +1,68 @@
+/* Payload CMS — Next.js docs site cleanup */
+/* @md-content-selector: .payload-richtext */
+/* @md-converter: payload */
+
+/* Decorative background grid lines */
+[class*="BackgroundGrid"] {
+    display: none !important;
+}
+
+/* Top announcement banner ("Payload is now part of Figma!") */
+[class*="AnnouncementBar"],
+[class*="announcement"],
+[data-theme="banner"] {
+    display: none !important;
+}
+
+/* Top navigation bar (logo, GitHub stars, search, hamburger) */
+header,
+nav[class*="MainNav"],
+[class*="TopBar"],
+[class*="top-bar"],
+[class*="NavBar"],
+[class*="navbar"] {
+    display: none !important;
+}
+
+/* Docs sidebar navigation */
+aside,
+[class*="sidebar"],
+[class*="Sidebar"],
+[class*="docs-nav"],
+[class*="DocsNav"] {
+    display: none !important;
+}
+
+/* Bottom fixed "Documentation" bar */
+[class*="DocsMobileNav"],
+[class*="docs-mobile"],
+footer[class*="fixed"],
+[class*="BottomNav"] {
+    display: none !important;
+}
+
+/* Site footer */
+footer:not([class*="content"]) {
+    display: none !important;
+}
+
+/* Expand content area and remove sidebar borders */
+main {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    padding: 0 24px !important;
+    border: none !important;
+}
+
+/* Remove divider lines from layout containers */
+[class*="docs"] > div,
+[class*="Docs"] > div,
+[class*="content-wrapper"],
+[class*="ContentWrapper"],
+[class*="Gutter"],
+[class*="gutter"],
+[class*="RenderDocs"],
+main > div,
+main > div > div {
+    border: none !important;
+}

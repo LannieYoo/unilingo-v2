@@ -1,0 +1,57 @@
+{
+  "seed_url": "https://www.apeuni.com",
+  "slug": "pte-repeat-apeuni",
+  "total_urls": 8,
+  "max_depth": 1,
+  "crawled_at": "2026-06-22T13:30:55.516657",
+  "pages": [
+    {
+      "url": "https://www.apeuni.com",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 0,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/pte/login",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/pte/course",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/practice/read_alouds",
+      "title": "PTE APEUni - PTE Test Practice",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/home/index",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/pte/bbs",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "url": "https://www.apeuni.com/pte/user_center/teaching",
+      "title": "Practice PTE with AI Scorings - PTE APEUni",
+      "depth": 1,
+      "status": 200
+    }
+  ]
+}

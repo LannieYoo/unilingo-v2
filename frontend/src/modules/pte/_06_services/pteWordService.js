@@ -4,7 +4,19 @@
  * and saves words to user's dictionary with PTE source tag.
  */
 
+import { translateText } from '../../dictionary/_06_services/service'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ''
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
 
 /**
  * Fetch word detail from Google Free Dictionary API
@@ -18,6 +30,12 @@ export async function fetchWordDetail(word) {
 
     // Try the full word first
     let result = await _fetchSingleWord(cleanWord)
+    if (result) return result
+
+    // If the browser cannot reach the public dictionary directly, use the
+    // application's server-side dictionary proxy/cache before saying a word is
+    // unavailable.  This also avoids a misleading "not found" for valid words.
+    result = await _fetchBackendWord(cleanWord)
     if (result) return result
 
     // For hyphenated/compound words, try each part (longest first)
@@ -45,9 +63,10 @@ export async function fetchWordDetail(word) {
 
 async function _fetchSingleWord(word) {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
-      { signal: AbortSignal.timeout(8000) }
+      {},
+      8000
     )
 
     if (!response.ok) return null
@@ -99,6 +118,42 @@ async function _fetchSingleWord(word) {
   }
 }
 
+async function _fetchBackendWord(word) {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE_URL}/api/dictionary/search?word=${encodeURIComponent(word)}&target_lang=en`,
+      {},
+      5000
+    )
+    if (!response.ok) return null
+
+    const data = await response.json()
+    const meanings = (data.meanings || [])
+      .map((meaning) => ({
+        partOfSpeech: meaning.part_of_speech || meaning.partOfSpeech || 'definition',
+        definitions: (meaning.definitions || [])
+          .map((definition) => ({
+            definition: definition.definition,
+            example: definition.examples?.[0] || definition.example || null,
+          }))
+          .filter((definition) => definition.definition),
+      }))
+      .filter((meaning) => meaning.definitions.length > 0)
+
+    if (meanings.length === 0) return null
+
+    return {
+      word: data.term || word,
+      phonetic: data.pronunciation?.ipa || data.pronunciation?.phonetic || '',
+      audioUrl: data.pronunciation?.audio_url || data.pronunciation?.audioUrl || '',
+      meanings,
+      sourceUrl: null,
+    }
+  } catch {
+    return null
+  }
+}
+
 /**
  * Translate a word using Google Translate free API.
  * @param {string} word - The word to translate
@@ -106,15 +161,43 @@ async function _fetchSingleWord(word) {
  * @returns {Promise<string|null>} Translated text or null
  */
 export async function translateWord(word, targetLang) {
+  const normalizedTarget = targetLang.startsWith('zh') ? 'zh' : targetLang
   try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(word)}`
-    const response = await fetch(url, { signal: AbortSignal.timeout(5000) })
-    if (!response.ok) return null
-    const data = await response.json()
-    return data?.[0]?.[0]?.[0] || null
+    // Prefer the app backend: it can use configured providers and works when
+    // direct third-party calls are blocked by the browser or a corporate proxy.
+    const backendResponse = await fetchWithTimeout(
+      `${API_BASE_URL}/api/translate`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: word, source_lang: 'en', target_lang: normalizedTarget }),
+      },
+      5000
+    )
+    if (backendResponse.ok) {
+      const backendData = await backendResponse.json()
+      const translation = backendData.translated_text?.trim()
+      if (translation && translation.toLowerCase() !== word.trim().toLowerCase()) return translation
+    }
+
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${normalizedTarget}&dt=t&q=${encodeURIComponent(word)}`
+    const response = await fetchWithTimeout(url, {}, 5000)
+    if (response.ok) {
+      const data = await response.json()
+      const translation = data?.[0]
+        ?.map((segment) => segment?.[0])
+        .filter((segment) => typeof segment === 'string')
+        .join('')
+        .trim()
+      if (translation && translation.toLowerCase() !== word.trim().toLowerCase()) return translation
+    }
+
+    // Google Translate may be blocked on some networks.  Reuse the existing
+    // translator's MyMemory/proxy fallbacks so KO and ZH controls still work.
+    return await translateText(word, 'en', normalizedTarget)
   } catch (err) {
-    console.error('[PTE Word Service] Translation error:', err)
-    return null
+    console.warn('[PTE Word Service] Direct translation failed; trying fallbacks:', err)
+    return await translateText(word, 'en', normalizedTarget)
   }
 }
 
