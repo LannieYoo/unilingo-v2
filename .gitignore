@@ -85,3 +85,8 @@ logs/*.log
 
 # Large media (exceeds GitHub 100MB limit - keep local only)
 docs/*.mp4
+
+# Crawl scratch data and browser profiles (regenerable, may contain secrets)
+frontend/crawl/.browser-profile/
+frontend/crawl/.browser-profile-apeuni/
+frontend/crawl/profiles/
