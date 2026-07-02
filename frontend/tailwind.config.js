@@ -18,15 +18,15 @@ export default {
       colors: {
         "primary": "#F94B08", // RGB(249, 75, 8) - 주 메인 강조색
         "background-light": "#f8fafc",
-        "background-dark": "#0a1628",
+        "background-dark": "#0f0f11",
         "card-light": "#ffffff",
-        "card-dark": "#0f1f3a",
+        "card-dark": "#18181b",
         "text-light": "#0f172a",
-        "text-dark": "#e2e8f0",
+        "text-dark": "#e4e4e7",
         "text-muted-light": "#64748b",
-        "text-muted-dark": "#8b9dc3",
+        "text-muted-dark": "#a1a1aa",
         "border-light": "#e2e8f0",
-        "border-dark": "#1a2d4d"
+        "border-dark": "#27272a"
       },
       fontFamily: {
         "display": ["Inter", "sans-serif"]
