@@ -1,505 +1,516 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { apiGet } from '../../common/api'
+import { useAuthStore, GoogleLoginButton } from '../../modules/auth'
 import './home.css'
 
 const API_BASE = '/api'
 
+// Free-to-use imagery (Unsplash). Wide crop for the full-bleed hero banner.
+// If Unsplash fails, fall back to a deterministic Picsum photo, then to the dark gradient.
+const HERO_PHOTO = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=2000&q=80'
+const HERO_PHOTO_FALLBACK = 'https://picsum.photos/seed/unilingo-hero/2000/900'
+
+const LANGS = [
+  { code: 'ko', name: 'Korean' },
+  { code: 'en', name: 'English' },
+  { code: 'zh', name: 'Chinese' },
+]
+
+const VALUE_CHIPS = [
+  { icon: 'translate', label: 'KO · EN · ZH' },
+  { icon: 'conversion_path', label: 'Phrasal verbs' },
+  { icon: 'newspaper', label: 'Daily news' },
+  { icon: 'workspace_premium', label: 'PTE & CELPIP' },
+]
+
+const FEATURES = [
+  { to: '/translator', icon: 'translate', title: 'Translator', desc: 'Instant KO · EN · ZH translation with grammar hints.', accent: 'orange' },
+  { to: '/dictionary', icon: 'menu_book', title: 'Dictionary', desc: 'Definitions, examples, synonyms, and AI-related words.', accent: 'blue' },
+  { to: '/study-lab', icon: 'school', title: 'Study Lab', desc: 'Vocabulary, phrasal verbs, sentence practice & news.', accent: 'teal' },
+  { to: '/text-to-speech', icon: 'record_voice_over', title: 'Text to Speech', desc: 'Natural voices to hear how words really sound.', accent: 'violet' },
+  { to: '/stt-stream', icon: 'mic', title: 'Speech to Text', desc: 'Real-time transcription for speaking practice.', accent: 'rose' },
+  { to: '/pte-core', icon: 'workspace_premium', title: 'PTE Core', desc: 'Task-by-task PTE Core preparation.', accent: 'amber' },
+  { to: '/celpip', icon: 'verified', title: 'CELPIP', desc: 'Exam-realistic CELPIP practice sets.', accent: 'green' },
+  { to: '/speech-to-recording', icon: 'graphic_eq', title: 'Recording', desc: 'Record, replay, and refine your pronunciation.', accent: 'slate' },
+]
+
+function formatNewsDate(value = '') {
+  if (!value) return ''
+  const raw = String(value)
+  const parsed = new Date(raw.includes('T') ? raw : `${raw}T00:00:00Z`)
+  if (Number.isNaN(parsed.getTime())) return raw.slice(0, 10)
+  const diffDays = Math.max(0, Math.floor((Date.now() - parsed.getTime()) / 86400000))
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return '1 day ago'
+  if (diffDays < 30) return `${diffDays} days ago`
+  return raw.slice(0, 10)
+}
+
+function getLevelNumber(difficulty = '') {
+  const match = String(difficulty).match(/\d+/)
+  return match ? match[0] : 'M'
+}
+
 function Home() {
+  const navigate = useNavigate()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  // --- Quick translate ---
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [sourceLang, setSourceLang] = useState('ko')
   const [targetLang, setTargetLang] = useState('en')
   const [isTranslating, setIsTranslating] = useState(false)
-  const [grammarErrors, setGrammarErrors] = useState([])
-  const [isCheckingGrammar, setIsCheckingGrammar] = useState(false)
-  const translateTimeoutRef = useRef(null)
-  const grammarTimeoutRef = useRef(null)
+  const translateTimer = useRef(null)
 
-  /**
-   * 백엔드 번역 API 호출
-   */
-  const translateWithBackend = async (text, sourceCode, targetCode) => {
-    if (!text?.trim() || sourceCode === targetCode) {
-      return sourceCode === targetCode ? text : null
-    }
-    
+  // --- Quick word lookup ---
+  const [word, setWord] = useState('')
+
+  // --- Hero image (with graceful fallbacks) ---
+  const [heroImgSrc, setHeroImgSrc] = useState(HERO_PHOTO)
+  const [heroPhotoOk, setHeroPhotoOk] = useState(true)
+
+  // --- Latest news ---
+  const [articles, setArticles] = useState([])
+  const [newsState, setNewsState] = useState('loading') // loading | ready | empty | error
+  const [activeArticle, setActiveArticle] = useState(null)
+  const [articleDetail, setArticleDetail] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const translate = async (text, from, to) => {
+    if (!text?.trim() || from === to) return from === to ? text : ''
     try {
-      const response = await fetch(`${API_BASE}/translate`, {
+      const res = await fetch(`${API_BASE}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: text.trim(),
-          source_lang: sourceCode,
-          target_lang: targetCode
-        })
+        body: JSON.stringify({ text: text.trim(), source_lang: from, target_lang: to }),
       })
-      
-      if (response.ok) {
-        const data = await response.json()
-        return data.translated_text || null
+      if (res.ok) {
+        const data = await res.json()
+        return data.translated_text || ''
       }
-    } catch (err) {
-      console.error('[Translation] Backend API error:', err)
+    } catch {
+      /* ignore */
     }
-    return null
+    return ''
   }
 
-  // 클립보드 복사 함수
-  const copyToClipboard = async (text) => {
-    if (!text || !text.trim()) {
-      return
-    }
-    
-    try {
-      await navigator.clipboard.writeText(text)
-      // 간단한 피드백 (선택사항: 토스트 메시지 추가 가능)
-      console.log('Copied to clipboard')
-    } catch (err) {
-      console.error('Failed to copy:', err)
-      // Fallback: 구식 방법
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.position = 'fixed'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.select()
-      try {
-        document.execCommand('copy')
-      } catch (fallbackErr) {
-        console.error('Fallback copy failed:', fallbackErr)
-      }
-      document.body.removeChild(textArea)
-    }
-  }
-
-  const languages = [
-    { code: 'ko', name: 'Korean' },
-    { code: 'en', name: 'English' },
-    { code: 'zh', name: 'Chinese (Simplified)' },
-  ]
-
-  // 영어 문법/철자 검사 함수
-  const checkGrammar = async (text) => {
-    if (!text || !text.trim()) {
-      setGrammarErrors([])
-      return
-    }
-    
-    // 영어가 아니면 검사하지 않음
-    const englishMatches = text.match(/[A-Za-z]/g)
-    if (!englishMatches || englishMatches.length < 3) {
-      setGrammarErrors([])
-      return
-    }
-    
-    setIsCheckingGrammar(true)
-    
-    try {
-      // LanguageTool API 사용
-      const response = await fetch('https://api.languagetool.org/v2/check', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          text: text,
-          language: 'en-US',
-        }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Grammar check response:', data)
-        if (data.matches && data.matches.length > 0) {
-          const errors = data.matches.map(match => ({
-            message: match.message,
-            context: match.context?.text || '',
-            offset: match.offset,
-            length: match.length,
-            replacements: match.replacements ? match.replacements.slice(0, 3).map(r => r.value) : [],
-            ruleId: match.rule?.id || '',
-            category: match.rule?.category?.name || '',
-          }))
-          console.log('Grammar errors found:', errors)
-          setGrammarErrors(errors)
-        } else {
-          console.log('No grammar errors found')
-          setGrammarErrors([])
-        }
-      } else {
-        console.log('Grammar API response not ok:', response.status)
-      }
-    } catch (error) {
-      console.error('Grammar check error:', error)
-      setGrammarErrors([])
-    } finally {
-      setIsCheckingGrammar(false)
-    }
-  }
-
-  // 언어 탐지 함수
-  const detectLanguage = (text) => {
-    if (!text || !text.trim()) return null
-    
-    const trimmedText = text.trim()
-    
-    // 각 언어의 문자 개수 계산
-    const koreanMatches = trimmedText.match(/[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/g)
-    const chineseMatches = trimmedText.match(/[\u4E00-\u9FFF]/g)
-    const englishMatches = trimmedText.match(/[A-Za-z]/g)
-    
-    const koreanCount = koreanMatches ? koreanMatches.length : 0
-    const chineseCount = chineseMatches ? chineseMatches.length : 0
-    const englishCount = englishMatches ? englishMatches.length : 0
-    
-    // 우선순위: 한글 > 중국어 > 영어
-    if (koreanCount > 0) return 'ko'
-    if (chineseCount > 0) return 'zh'
-    if (englishCount > 0) return 'en'
-    
-    return null
-  }
-
-  const handleTranslate = async () => {
+  const runTranslate = async () => {
     if (!inputText.trim()) {
+      setOutputText('')
       return
     }
-
     setIsTranslating(true)
-    
-    try {
-      const sourceCode = sourceLang
-      const targetCode = targetLang
-      
-      if (sourceLang === targetLang) {
-        setOutputText(inputText)
-        setIsTranslating(false)
-        return
-      }
-      
-      // 백엔드 API 사용
-      const translatedText = await translateWithBackend(inputText, sourceCode, targetCode)
-      
-      if (translatedText) {
-        setOutputText(translatedText)
-      } else {
-        setOutputText('Translation failed. Please try again.')
-      }
-    } catch (error) {
-      console.error('Translation error:', error)
-      setOutputText('Translation failed. Please try again.')
-    } finally {
-      setIsTranslating(false)
-    }
+    const result = await translate(inputText, sourceLang, targetLang)
+    setOutputText(result || 'Translation unavailable right now.')
+    setIsTranslating(false)
   }
 
-  const handleSwap = () => {
+  // debounced auto-translate
+  useEffect(() => {
+    if (translateTimer.current) clearTimeout(translateTimer.current)
+    if (!inputText.trim()) {
+      setOutputText('')
+      return
+    }
+    translateTimer.current = setTimeout(runTranslate, 550)
+    return () => translateTimer.current && clearTimeout(translateTimer.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputText, sourceLang, targetLang])
+
+  const swapLangs = () => {
     setSourceLang(targetLang)
     setTargetLang(sourceLang)
     setInputText(outputText)
     setOutputText(inputText)
   }
 
-  // 이전 언어 값을 저장
-  const prevSourceLangRef = useRef(sourceLang)
-  const prevTargetLangRef = useRef(targetLang)
+  const submitWord = (event) => {
+    event.preventDefault()
+    const term = word.trim()
+    if (!term) return
+    navigate('/dictionary', { state: { searchTerm: term } })
+  }
 
-  // source와 target이 같아지면 target을 자동으로 변경
   useEffect(() => {
-    if (sourceLang === targetLang) {
-      const otherLang = languages.find(l => l.code !== sourceLang)
-      if (otherLang) setTargetLang(otherLang.code)
-    }
-  }, [sourceLang, targetLang])
-
-  // inputText 변경 시 자동 번역 및 문법 검사
-  useEffect(() => {
-    // 실시간 자동 번역 (debounce)
-    if (translateTimeoutRef.current) {
-      clearTimeout(translateTimeoutRef.current)
-    }
-    if (inputText && inputText.trim()) {
-      translateTimeoutRef.current = setTimeout(() => {
-        handleTranslate()
-      }, 500)
-    } else {
-      setOutputText('')
-    }
-
-    // 영어 입력 시 문법/철자 검사 (debounce)
-    if (grammarTimeoutRef.current) {
-      clearTimeout(grammarTimeoutRef.current)
-    }
-    const detectedLang = detectLanguage(inputText)
-    if (detectedLang === 'en' && inputText && inputText.trim()) {
-      grammarTimeoutRef.current = setTimeout(() => {
-        checkGrammar(inputText)
-      }, 800)
-    } else {
-      setGrammarErrors([])
-    }
-
-    return () => {
-      if (translateTimeoutRef.current) clearTimeout(translateTimeoutRef.current)
-      if (grammarTimeoutRef.current) clearTimeout(grammarTimeoutRef.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputText])
-
-  // 언어 변경 시 입력/출력 텍스트 자동 교체 및 번역
-  useEffect(() => {
-    // 초기 로드 시에는 실행하지 않음
-    if (!inputText.trim() && !outputText.trim()) {
-      prevSourceLangRef.current = sourceLang
-      prevTargetLangRef.current = targetLang
-      return
-    }
-
-    // 언어가 실제로 변경되었는지 확인
-    const sourceLangChanged = prevSourceLangRef.current !== sourceLang
-    const targetLangChanged = prevTargetLangRef.current !== targetLang
-
-    if (!sourceLangChanged && !targetLangChanged) {
-      return
-    }
-
-    // 언어가 변경되었을 때만 실행
-    const timeoutId = setTimeout(async () => {
-      if (isTranslating) return
-
-      if (sourceLangChanged && inputText.trim()) {
-        // 입력 언어가 변경된 경우: 
-        // 1. 현재 입력 텍스트를 이전 입력 언어에서 새 입력 언어로 번역하여 입력 필드에 표시
-        // 2. 그 결과를 새 출력 언어로 번역하여 출력 필드에 표시
-        setIsTranslating(true)
-        try {
-          const prevSourceCode = prevSourceLangRef.current
-          const newSourceCode = sourceLang
-          const targetCode = targetLang
-          
-          // Step 1: 현재 입력 텍스트를 이전 입력 언어에서 새 입력 언어로 번역
-          let translatedInput = inputText
-          
-          if (prevSourceCode !== newSourceCode) {
-            const result = await translateWithBackend(inputText, prevSourceCode, newSourceCode)
-            if (result) {
-              translatedInput = result
-            }
-          }
-          
-          // Step 2: 번역된 입력을 입력 필드에 설정
-          setInputText(translatedInput)
-          
-          // Step 3: 번역된 입력을 새 출력 언어로 번역
-          if (newSourceCode === targetCode) {
-            setOutputText(translatedInput)
-          } else {
-            const finalTranslated = await translateWithBackend(translatedInput, newSourceCode, targetCode)
-            setOutputText(finalTranslated || '')
-          }
-        } catch (error) {
-          console.error('Translation error:', error)
-          setOutputText('')
-        } finally {
-          setIsTranslating(false)
+    let cancelled = false
+    async function loadNews() {
+      try {
+        const response = await apiGet('/api/study-lab/engoo-news', { summary: 1 })
+        if (cancelled) return
+        const list = Array.isArray(response.data?.articles) ? response.data.articles : []
+        if (!list.length) {
+          setNewsState('empty')
+          return
         }
-      } else if (targetLangChanged && inputText.trim()) {
-        // 출력 언어만 변경된 경우: 현재 입력을 새 출력 언어로 번역
-        handleTranslate()
+        setArticles(list)
+        setNewsState('ready')
+      } catch {
+        if (!cancelled) setNewsState('error')
       }
+    }
+    loadNews()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
-      // 이전 언어 값 업데이트
-      prevSourceLangRef.current = sourceLang
-      prevTargetLangRef.current = targetLang
-    }, 100)
+  // one most-recent article per section, filled up to 6 with the next most recent
+  const featuredNews = useMemo(() => {
+    if (!articles.length) return []
+    const byDateDesc = [...articles].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+    const picked = []
+    const seenSection = new Set()
+    for (const article of byDateDesc) {
+      const section = article.section || 'General'
+      if (seenSection.has(section)) continue
+      seenSection.add(section)
+      picked.push(article)
+      if (picked.length >= 6) break
+    }
+    if (picked.length < 6) {
+      const pickedIds = new Set(picked.map((a) => a.id))
+      for (const article of byDateDesc) {
+        if (picked.length >= 6) break
+        if (pickedIds.has(article.id)) continue
+        picked.push(article)
+      }
+    }
+    return picked.slice(0, 6)
+  }, [articles])
 
-    return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceLang, targetLang])
+  const openNews = () => {
+    navigate('/study-lab?tab=news-reading')
+  }
+
+  const openArticle = async (article) => {
+    if (!isAuthenticated) {
+      setActiveArticle(article)
+      setArticleDetail(null)
+      setDetailLoading(false)
+      return
+    }
+    setActiveArticle(article)
+    setArticleDetail(null)
+    setDetailLoading(true)
+    try {
+      const res = await apiGet(`/api/study-lab/engoo-news/${encodeURIComponent(article.id)}`)
+      setArticleDetail(res.data?.article || null)
+    } catch {
+      setArticleDetail(null)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const closeArticle = () => {
+    setActiveArticle(null)
+    setArticleDetail(null)
+    setIsFullscreen(false)
+  }
+
+  useEffect(() => {
+    if (!activeArticle || typeof document === 'undefined') return undefined
+    const onKey = (e) => { if (e.key === 'Escape') closeArticle() }
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [activeArticle])
+
+  const detailArticle = articleDetail || activeArticle
 
   return (
-    <>
-      <div className="flex flex-col items-center text-center gap-4 -mt-6">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tighter" style={{ color: '#3E424D' }}>Instant Translation</h1>
-      </div>
-      
-      <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl shadow-sm relative mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          {/* Left side - Input */}
-          <div className="flex flex-col p-6 border-b md:border-b-0 md:border-r border-border-light dark:border-border-dark">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <select
-                  value={sourceLang}
-                  onChange={(e) => {
-                    const newSourceLang = e.target.value
-                    setSourceLang(newSourceLang)
-                    if (newSourceLang === targetLang) {
-                      const otherLang = languages.find(l => l.code !== newSourceLang)
-                      if (otherLang) setTargetLang(otherLang.code)
-                    }
-                  }}
-                  className="lang-select"
-                >
-                  {languages.map(lang => (
-                    <option key={lang.code} value={lang.code}>{lang.name}</option>
-                  ))}
-                </select>
-              </div>
-              <span className="text-sm text-text-muted-light dark:text-text-muted-dark">{inputText.length} / 5000</span>
+    <div className="home-landing">
+      {/* Hero (full-bleed photo banner) */}
+      <section className="home-hero">
+        {heroPhotoOk ? (
+          <img
+            className="home-hero__bg"
+            src={heroImgSrc}
+            alt=""
+            loading="eager"
+            onError={() => {
+              if (heroImgSrc === HERO_PHOTO) setHeroImgSrc(HERO_PHOTO_FALLBACK)
+              else setHeroPhotoOk(false)
+            }}
+          />
+        ) : null}
+        <span className="home-hero__scrim" aria-hidden="true" />
+
+        <div className="home-hero__inner">
+          <div className="home-hero__copy">
+            <span className="home-hero__eyebrow">Your all-in-one English workspace</span>
+            <h1 className="home-hero__title">
+              Learn, translate, and practice English <span>in one place.</span>
+            </h1>
+            <p className="home-hero__subtitle">
+              Translate instantly, look up any word, and sharpen your skills with vocabulary,
+              phrasal verbs, and real daily news — plus focused PTE Core and CELPIP prep.
+            </p>
+            <div className="home-hero__actions">
+              <Link to="/study-lab" className="home-btn home-btn--primary">
+                <span className="material-symbols-outlined">school</span>
+                Explore Study Lab
+              </Link>
+              <Link to="/translator" className="home-btn home-btn--ghost">
+                <span className="material-symbols-outlined">translate</span>
+                Open full translator
+              </Link>
             </div>
-            
-            <div className="flex-1">
-              <textarea
-                value={inputText}
-                onChange={(e) => {
-                  const newValue = e.target.value
-                  setInputText(newValue)
-                  
-                  const detectedLang = detectLanguage(newValue)
-                  if (newValue && newValue.trim()) {
-                    if (detectedLang === 'ko') {
-                      setSourceLang('ko')
-                      setTargetLang('en')
-                    } else if (detectedLang === 'en') {
-                      setSourceLang('en')
-                      setTargetLang('ko')
-                    } else if (detectedLang === 'zh') {
-                      setSourceLang('zh')
-                      setTargetLang('en')
-                    }
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
-                    e.preventDefault()
-                  }
-                }}
-                placeholder="Enter text to translate..."
-                className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-md bg-transparent text-lg placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark focus:outline-none focus:ring-0 border-none p-0"
-                rows={8}
-              />
-            </div>
-            
-            {/* Grammar errors */}
-            {grammarErrors.length > 0 && (
-              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                <div className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-                  Grammar & Spelling Issues ({grammarErrors.length})
-                </div>
-                <div className="space-y-2">
-                  {grammarErrors.map((error, index) => (
-                    <div key={index} className="text-sm">
-                      <div className="text-yellow-900 dark:text-yellow-100">{error.message}</div>
-                      {error.replacements.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-2">
-                          {error.replacements.map((replacement, idx) => (
-                            <button
-                              key={idx}
-                              className="px-2 py-1 bg-primary text-white text-xs rounded hover:bg-primary/90"
-                              onClick={() => {
-                                const before = inputText.substring(0, error.offset)
-                                const after = inputText.substring(error.offset + error.length)
-                                const newText = before + replacement + after
-                                setInputText(newText)
-                                setTimeout(() => checkGrammar(newText), 100)
-                              }}
-                            >
-                              {replacement}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {isCheckingGrammar && (
-              <div className="mt-2 text-sm text-text-muted-light dark:text-text-muted-dark italic">Checking grammar...</div>
-            )}
-            
-            <div className="flex justify-between items-center mt-4">
-              <div className="flex gap-2">
-                <button className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                  <span className="material-symbols-outlined text-xl">volume_up</span>
-                </button>
-                <button 
-                  onClick={() => copyToClipboard(inputText)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  aria-label="Copy input text"
-                >
-                  <span className="material-symbols-outlined text-xl">content_copy</span>
-                </button>
-              </div>
-              <button
-                onClick={handleTranslate}
-                disabled={isTranslating || !inputText.trim()}
-                className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-5 bg-primary hover:bg-primary/90 text-white text-sm font-semibold tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="truncate">{isTranslating ? 'Translating...' : 'Translate'}</span>
-              </button>
+            <div className="home-hero__chips">
+              {VALUE_CHIPS.map((chip) => (
+                <span key={chip.label} className="home-chip">
+                  <span className="material-symbols-outlined">{chip.icon}</span>
+                  {chip.label}
+                </span>
+              ))}
             </div>
           </div>
-          
-          {/* Right side - Output */}
-          <div className="flex flex-col p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <select
-                  value={targetLang}
-                  onChange={(e) => setTargetLang(e.target.value)}
-                  className="lang-select"
-                >
-                  {languages.filter(lang => lang.code !== sourceLang).map(lang => (
-                    <option key={lang.code} value={lang.code}>{lang.name}</option>
-                  ))}
-                </select>
+
+          {/* Floating UI cards over the photo */}
+          <div className="home-hero__visual" aria-hidden="true">
+            <div className="home-float home-float--translate">
+              <div className="home-float__head">
+                <span className="material-symbols-outlined">translate</span>
+                Translate
               </div>
-              <div className="flex gap-2">
-                <button className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                  <span className="material-symbols-outlined text-xl">volume_up</span>
-                </button>
-                <button 
-                  onClick={() => copyToClipboard(outputText)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  aria-label="Copy translation"
-                >
-                  <span className="material-symbols-outlined text-xl">content_copy</span>
-                </button>
-              </div>
+              <div className="home-float__ko">안녕하세요, 반갑습니다</div>
+              <div className="home-float__en">Hello, nice to meet you</div>
             </div>
-            
-            <div className="flex-1">
-              <textarea
-                value={outputText}
-                readOnly
-                placeholder="Translation will appear here."
-                className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-md bg-transparent text-lg placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark focus:outline-none focus:ring-0 border-none p-0 min-h-[192px]"
-                rows={8}
-              />
+            <div className="home-float home-float--word">
+              <div className="home-float__word">resilient</div>
+              <div className="home-float__ipa">/rɪˈzɪliənt/</div>
+              <div className="home-float__gloss">회복력 있는 · 잘 견디는</div>
             </div>
           </div>
         </div>
-        {/* Swap button in the middle - Desktop */}
-        <button
-          onClick={handleSwap}
-          className="hidden md:flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-card-dark border border-border-light dark:border-border-dark text-primary hover:bg-slate-100 dark:hover:bg-slate-800 shadow-md transition-colors z-10"
-          aria-label="Swap languages"
-        >
-          <span className="material-symbols-outlined text-xl">swap_horiz</span>
-        </button>
-        {/* Swap button in the middle - Mobile */}
-        <button
-          onClick={handleSwap}
-          className="md:hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-card-dark border border-border-light dark:border-border-dark text-primary hover:bg-slate-100 dark:hover:bg-slate-800 shadow-md transition-colors z-10 flex"
-          aria-label="Swap languages"
-        >
-          <span className="material-symbols-outlined text-xl">swap_horiz</span>
-        </button>
-      </div>
-    </>
+      </section>
+
+      {/* Try it now */}
+      <section className="home-section">
+        <div className="home-section__head">
+          <div>
+            <h2>Try it right now</h2>
+            <p>No sign-in needed — translate a line or look up a word.</p>
+          </div>
+        </div>
+        <div className="home-quicktools">
+          <div className="home-quick-card">
+            <div className="home-quick-card__head">
+              <span className="material-symbols-outlined">translate</span>
+              Quick translate
+            </div>
+            <div className="home-quick-langs">
+              <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)} aria-label="Source language">
+                {LANGS.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
+              </select>
+              <button type="button" className="home-swap" onClick={swapLangs} aria-label="Swap languages">
+                <span className="material-symbols-outlined">swap_horiz</span>
+              </button>
+              <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} aria-label="Target language">
+                {LANGS.filter((l) => l.code !== sourceLang).map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
+              </select>
+            </div>
+            <textarea
+              className="home-quick-input"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Type text to translate..."
+              rows={2}
+            />
+            <div className="home-quick-output">
+              {isTranslating ? <span className="home-quick-muted">Translating…</span>
+                : outputText ? outputText
+                : <span className="home-quick-muted">Translation appears here.</span>}
+            </div>
+            <Link to="/translator" className="home-quick-link">Open full translator →</Link>
+          </div>
+
+          <form className="home-quick-card" onSubmit={submitWord}>
+            <div className="home-quick-card__head">
+              <span className="material-symbols-outlined">menu_book</span>
+              Quick word lookup
+            </div>
+            <div className="home-word-row">
+              <input
+                className="home-word-input"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                placeholder="Enter a word (e.g. resilient)"
+              />
+              <button type="submit" className="home-btn home-btn--primary home-word-btn">
+                <span className="material-symbols-outlined">search</span>
+                Look up
+              </button>
+            </div>
+            <p className="home-quick-hint">Opens the full dictionary with definitions, examples, and AI-related words.</p>
+            <div className="home-word-samples">
+              {['meticulous', 'inevitable', 'thrive'].map((sample) => (
+                <button
+                  key={sample}
+                  type="button"
+                  className="home-word-sample"
+                  onClick={() => navigate('/dictionary', { state: { searchTerm: sample } })}
+                >
+                  {sample}
+                </button>
+              ))}
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* Latest news */}
+      <section className="home-section">
+        <div className="home-section__head">
+          <div>
+            <h2>Latest daily news</h2>
+            <p>Fresh Engoo articles across every topic — read and study new words.</p>
+          </div>
+          <button type="button" className="home-btn home-btn--ghost home-section__cta" onClick={openNews}>
+            View all news
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+
+        {newsState === 'loading' ? (
+          <div className="home-news-grid">
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="home-news-card home-news-card--skeleton" />)}
+          </div>
+        ) : newsState === 'ready' ? (
+          <div className="home-news-grid">
+            {featuredNews.map((article) => (
+              <button type="button" key={article.id} className="home-news-card" onClick={() => openArticle(article)}>
+                <div className="home-news-thumb">
+                  {article.imageUrl
+                    ? <img src={article.imageUrl} alt="" loading="lazy" />
+                    : <span className="home-news-thumb__fallback">Engoo</span>}
+                  {article.difficulty ? <span className="home-news-level">Lv {getLevelNumber(article.difficulty)}</span> : null}
+                </div>
+                <div className="home-news-body">
+                  {article.section ? <span className="home-news-section">{article.section}</span> : null}
+                  <strong className="home-news-title">{article.title}</strong>
+                  <span className="home-news-date">{formatNewsDate(article.date)}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="home-news-empty">
+            <span className="material-symbols-outlined">newspaper</span>
+            <p>{newsState === 'empty' ? 'No news articles yet — check back soon.' : 'Could not load news right now.'}</p>
+            <button type="button" className="home-btn home-btn--ghost" onClick={openNews}>Go to News Reading</button>
+          </div>
+        )}
+      </section>
+
+      {/* Feature grid */}
+      <section className="home-section">
+        <div className="home-section__head">
+          <div>
+            <h2>Everything you need to study</h2>
+            <p>Jump straight into any tool.</p>
+          </div>
+        </div>
+        <div className="home-feature-grid">
+          {FEATURES.map((f) => (
+            <Link key={f.to} to={f.to} className={`home-feature-card home-feature-card--${f.accent}`}>
+              <span className="home-feature-icon material-symbols-outlined">{f.icon}</span>
+              <span className="home-feature-title">{f.title}</span>
+              <span className="home-feature-desc">{f.desc}</span>
+              <span className="home-feature-go material-symbols-outlined">arrow_forward</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* News article modal */}
+      {activeArticle && typeof document !== 'undefined'
+        ? createPortal(
+          <div className="home-news-modal" role="presentation" onClick={closeArticle}>
+            <div
+              className={`home-news-modal__card ${isFullscreen ? 'home-news-modal__card--full' : ''}`}
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="home-news-modal__bar">
+                <span className="home-news-modal__bar-title">{detailArticle?.title || 'Article'}</span>
+                <div className="home-news-modal__bar-actions">
+                  <button
+                    type="button"
+                    className="home-news-modal__icon"
+                    onClick={() => setIsFullscreen((v) => !v)}
+                    aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                    title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                  >
+                    <span className="material-symbols-outlined">{isFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
+                  </button>
+                  <button type="button" className="home-news-modal__icon" onClick={closeArticle} aria-label="Close article">
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="home-news-modal__scroll">
+                {detailArticle?.imageUrl ? (
+                  <div className="home-news-modal__hero">
+                    <img src={detailArticle.imageUrl} alt="" />
+                  </div>
+                ) : null}
+
+                <div className="home-news-modal__content">
+                  <div className="home-news-modal__meta">
+                    {detailArticle?.section ? <span className="home-news-section">{detailArticle.section}</span> : null}
+                    {detailArticle?.difficulty ? <span className="home-news-modal__level">Lv {getLevelNumber(detailArticle.difficulty)}</span> : null}
+                    {detailArticle?.date ? <span className="home-news-date">{formatNewsDate(detailArticle.date)}</span> : null}
+                  </div>
+                  <h2 className="home-news-modal__title">{detailArticle?.title}</h2>
+
+                  {!isAuthenticated ? (
+                    <div className="home-news-modal__lock">
+                      <span className="material-symbols-outlined">lock</span>
+                      <p>Log in to read the full article.</p>
+                      <GoogleLoginButton />
+                    </div>
+                  ) : detailLoading ? (
+                    <div className="home-news-modal__loading">
+                      <span className="home-news-modal__spinner" />
+                      Loading article…
+                    </div>
+                  ) : detailArticle?.body?.length ? (
+                    <>
+                      <div className="home-news-modal__body">
+                        {detailArticle.body.map((paragraph, index) => (
+                          <p key={index}>{paragraph}</p>
+                        ))}
+                      </div>
+                      <div className="home-news-modal__actions">
+                        <button type="button" className="home-btn home-btn--primary" onClick={openNews}>
+                          <span className="material-symbols-outlined">open_in_new</span>
+                          Study in News Reading
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="home-news-modal__empty">Full text is not available here. Open it in the News Reading page.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+        : null}
+    </div>
   )
 }
 
 export default Home
-

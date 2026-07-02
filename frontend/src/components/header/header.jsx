@@ -44,7 +44,7 @@ function Header() {
       id: 'tools',
       label: 'Tools',
       items: [
-        { path: '/', label: 'Translator', name: 'home' },
+        { path: '/translator', label: 'Translator', name: 'home' },
         { path: '/dictionary', label: 'Dictionary', name: 'dictionary' },
         { path: '/text-to-speech', label: 'Text to Speech', name: 'textToSpeech' },
         { path: '/stt-stream', label: 'Speech to Text', name: 'speechToText' },

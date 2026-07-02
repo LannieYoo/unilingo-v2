@@ -176,10 +176,10 @@ html.dark body {
 }
 
 .dark .header-bg {
-  background: rgba(15, 23, 42, 0.78);
+  background: rgba(24, 24, 27, 0.8);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(30, 58, 100, 0.25);
+  border-bottom: 1px solid rgba(63, 63, 70, 0.3);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.2),
     0 4px 12px rgba(0, 0, 0, 0.15);

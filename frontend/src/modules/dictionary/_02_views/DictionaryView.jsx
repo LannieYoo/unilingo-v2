@@ -118,17 +118,19 @@ export function DictionaryView() {
     })
   }, [isListening])
 
-  // Handle location state for pre-filling search term and target language
+  // Handle location state for pre-filling search term and target language.
+  // When a search term is provided (e.g. from the home quick-lookup), run the
+  // search automatically so results appear without an extra click.
   useEffect(() => {
     if (location.state?.searchTerm) {
-      setSearchTerm(location.state.searchTerm)
       if (location.state.targetLang) {
         setTargetLang(location.state.targetLang)
       }
+      searchWithWordRef.current(location.state.searchTerm)
       // Clear the state to prevent re-triggering
       window.history.replaceState({}, document.title)
     }
-  }, [location.state, setSearchTerm, setTargetLang])
+  }, [location.state, setTargetLang])
 
   const handleKeyDown = (e) => {
     if (!showSuggestions || suggestions.length === 0) {

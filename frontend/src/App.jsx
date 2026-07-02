@@ -12,6 +12,7 @@ import { TranslatorView, TranslationHistoryView } from './modules/translator'
 import { RecordingView } from './modules/recording'
 import { PtePrepView } from './modules/pte'
 import { CelpipPrepView } from './modules/celpip'
+import { StudyLabView } from './modules/study_lab'
 import { DictionaryView, DictionaryHistoryView } from './modules/dictionary'
 import { AdminView } from './modules/admin'
 
@@ -328,7 +329,7 @@ function AppContent() {
       <Layout>
         <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
           <Routes>
-            <Route path="/" element={<Navigate to="/translator" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/dictionary" element={<DictionaryView />} />
             <Route path="/dictionary/history" element={<DictionaryHistoryView />} />
             <Route path="/text-to-speech" element={<TextToSpeech />} />
@@ -343,6 +344,7 @@ function AppContent() {
             <Route path="/speech-to-recording" element={<RecordingView />} />
             <Route path="/pte-core" element={<PtePrepView />} />
             <Route path="/celpip" element={<CelpipPrepView />} />
+            <Route path="/study-lab" element={<StudyLabView />} />
             <Route path="/translator" element={<TranslatorView />} />
             <Route path="/translator/history" element={<TranslationHistoryView />} />
             <Route path="/stt-stream" element={<SttStreamView />} />
