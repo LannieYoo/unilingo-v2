@@ -4,7 +4,7 @@ import { useWebSpeechInput } from '../../../common/hooks/useWebSpeechInput'
 import { analyzeSpeechDiagnostics } from '../_07_utils/readAloudAnalyzer'
 import { analyzeAnswerShortQuestion } from '../_07_utils/answerShortQuestionAnalyzer'
 import { blobToWAV, decodeBlobToPCM } from '../_07_utils/audioDecoder'
-import { translateWord } from '../_06_services/pteWordService'
+import { translateWord, fetchWordDetail } from '../_06_services/pteWordService'
 
 const WHISPER_SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
 
@@ -26,6 +26,85 @@ function createEnglishUtterance(text, options = {}) {
   utterance.lang = 'en-US'
   if (options.rate) utterance.rate = options.rate
   return utterance
+}
+
+function primeAudioOutput() {
+  try {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext
+    if (!AudioContextCtor) return
+    const context = new AudioContextCtor()
+    const gain = context.createGain()
+    const oscillator = context.createOscillator()
+    gain.gain.value = 0
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    if (context.state === 'suspended') context.resume()
+    oscillator.start()
+    oscillator.stop(context.currentTime + 0.08)
+    setTimeout(() => context.close().catch(() => {}), 120)
+  } catch {
+    // Ignore audio priming failures and continue with normal playback.
+  }
+}
+
+function chooseEnglishVoice(voices = []) {
+  if (!voices.length) return null
+  return (
+    voices.find((voice) => voice.lang === 'en-CA')
+    || voices.find((voice) => voice.lang === 'en-US')
+    || voices.find((voice) => voice.lang === 'en-GB')
+    || voices.find((voice) => voice.lang?.startsWith('en-'))
+    || null
+  )
+}
+
+async function loadSpeechVoices(timeoutMs = 1200) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return []
+  const existingVoices = window.speechSynthesis.getVoices()
+  if (existingVoices.length) return existingVoices
+
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.speechSynthesis.removeEventListener?.('voiceschanged', handleVoicesChanged)
+      clearTimeout(timeoutId)
+      resolve(window.speechSynthesis.getVoices())
+    }
+    const handleVoicesChanged = () => finish()
+    const timeoutId = setTimeout(finish, timeoutMs)
+
+    window.speechSynthesis.addEventListener?.('voiceschanged', handleVoicesChanged)
+  })
+}
+
+function isQuestionAudioProbablyPlayable(audioUrl) {
+  if (typeof document === 'undefined' || !audioUrl) return false
+  const probe = document.createElement('audio')
+  const lowerUrl = audioUrl.toLowerCase()
+
+  if (lowerUrl.endsWith('.m4a') || lowerUrl.includes('.m4a?')) {
+    return Boolean(
+      probe.canPlayType('audio/mp4; codecs="mp4a.40.2"')
+      || probe.canPlayType('audio/x-m4a')
+      || probe.canPlayType('audio/aac'),
+    )
+  }
+
+  if (lowerUrl.endsWith('.mp3') || lowerUrl.includes('.mp3?')) {
+    return Boolean(probe.canPlayType('audio/mpeg'))
+  }
+
+  if (lowerUrl.endsWith('.wav') || lowerUrl.includes('.wav?')) {
+    return Boolean(probe.canPlayType('audio/wav'))
+  }
+
+  if (lowerUrl.endsWith('.ogg') || lowerUrl.includes('.ogg?')) {
+    return Boolean(probe.canPlayType('audio/ogg'))
+  }
+
+  return true
 }
 
 function shuffleArray(arr) {
@@ -172,6 +251,7 @@ export default function AnswerShortQuestionPractice({
   const [showAnswer, setShowAnswer] = useState(false)
   const [feedbackLang, setFeedbackLang] = useState('en')
   const [translatedTextMap, setTranslatedTextMap] = useState({})
+  const [wordPopup, setWordPopup] = useState(null)
   const [isPromptPlaying, setIsPromptPlaying] = useState(false)
   const [promptProgress, setPromptProgress] = useState(0)
 
@@ -258,6 +338,7 @@ export default function AnswerShortQuestionPractice({
     setShowAnswer(false)
     setError(null)
     setLoading(false)
+    setWordPopup(null)
     browserTextRef.current = ''
     browserInterimRef.current = ''
     setStatus(nextStatus)
@@ -298,7 +379,7 @@ export default function AnswerShortQuestionPractice({
     }
   }, [handleStartRecording, status])
 
-  const fallbackToSpeechPrompt = useCallback((autoRecord = false) => {
+  const fallbackToSpeechPrompt = useCallback(async (autoRecord = false) => {
     const promptText = currentQuestion?.text || ''
     if (!promptText) {
       setError('Prompt audio could not be played. You can still start recording manually.')
@@ -306,7 +387,19 @@ export default function AnswerShortQuestionPractice({
       return
     }
 
+    if (!window.speechSynthesis || typeof window.speechSynthesis.speak !== 'function') {
+      setError('Question audio is unavailable in this browser. You can still start recording manually.')
+      handlePromptFinished()
+      return
+    }
+
     const utterance = createEnglishUtterance(promptText, { rate: 0.96 })
+    const voices = await loadSpeechVoices()
+    const englishVoice = chooseEnglishVoice(voices)
+    if (englishVoice) {
+      utterance.voice = englishVoice
+      utterance.lang = englishVoice.lang || 'en-US'
+    }
     speechUtteranceRef.current = utterance
     const estimatedDurationMs = Math.max(1200, Math.round(promptText.split(/\s+/).filter(Boolean).length * 420))
     promptAutoRecordRef.current = autoRecord
@@ -317,21 +410,33 @@ export default function AnswerShortQuestionPractice({
       handlePromptFinished()
     }
     setIsPromptPlaying(true)
-    window.speechSynthesis?.cancel?.()
-    window.speechSynthesis?.speak?.(utterance)
+    primeAudioOutput()
+    window.speechSynthesis.cancel()
+    setTimeout(() => {
+      try {
+        window.speechSynthesis.resume?.()
+        window.speechSynthesis.speak(utterance)
+      } catch {
+        setError('Question audio could not be played in this browser. You can still start recording manually.')
+        handlePromptFinished()
+      }
+    }, 50)
   }, [currentQuestion, handlePromptFinished, startPromptProgress])
 
   const playPrompt = useCallback((autoRecord = false) => {
     if (!currentQuestion || status === 'recording' || status === 'processing') return
     stopPrompt()
     setError(null)
-    setStatus('prompting')
+    if (status !== 'completed') {
+      setStatus('prompting')
+    }
     promptAutoRecordRef.current = autoRecord
     const fallbackDurationMs = Math.max(1200, Math.round((currentQuestion.text || '').split(/\s+/).filter(Boolean).length * 420))
     startPromptProgress(fallbackDurationMs)
 
-    if (currentQuestion.audioUrl) {
+    if (currentQuestion.audioUrl && isQuestionAudioProbablyPlayable(currentQuestion.audioUrl)) {
       const audio = new Audio(currentQuestion.audioUrl)
+      audio.preload = 'auto'
       promptAudioRef.current = audio
       audio.onloadedmetadata = () => {
         if (Number.isFinite(audio.duration) && audio.duration > 0) {
@@ -348,19 +453,23 @@ export default function AnswerShortQuestionPractice({
         if (promptAudioRef.current === audio) {
           promptAudioRef.current = null
         }
-        fallbackToSpeechPrompt(autoRecord)
+        void fallbackToSpeechPrompt(autoRecord)
       }
       setIsPromptPlaying(true)
-      audio.play().catch(() => {
-        if (promptAudioRef.current === audio) {
-          promptAudioRef.current = null
-        }
-        fallbackToSpeechPrompt(autoRecord)
-      })
+      primeAudioOutput()
+      audio.load()
+      setTimeout(() => {
+        audio.play().catch(() => {
+          if (promptAudioRef.current === audio) {
+            promptAudioRef.current = null
+          }
+          void fallbackToSpeechPrompt(autoRecord)
+        })
+      }, 60)
       return
     }
 
-    fallbackToSpeechPrompt(autoRecord)
+    void fallbackToSpeechPrompt(autoRecord)
   }, [currentQuestion, fallbackToSpeechPrompt, handlePromptFinished, startPromptProgress, status, stopPrompt])
 
   const handleStopRecording = useCallback(() => {
@@ -451,10 +560,11 @@ export default function AnswerShortQuestionPractice({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
       if (promptTimerRef.current) clearInterval(promptTimerRef.current)
-      stopPrompt()
+      if (promptAudioRef.current) promptAudioRef.current.pause()
+      if (window.speechSynthesis) window.speechSynthesis.cancel()
       webSpeech.stop()
     }
-  }, [stopPrompt, webSpeech])
+  }, [webSpeech])
 
   const handleNext = useCallback(() => {
     setCurrentIdx((prev) => (prev + 1) % Math.max(questions.length, 1))
@@ -508,6 +618,40 @@ export default function AnswerShortQuestionPractice({
     if (feedbackLang === 'en') return text
     return translatedTextMap[`${feedbackLang}:${text}`] || text
   }, [feedbackLang, translatedTextMap])
+
+  const handleWordClick = async (word, e) => {
+    e.stopPropagation()
+    const rect = e.target.getBoundingClientRect()
+    setWordPopup({ word, loading: true, x: rect.left, y: rect.bottom + window.scrollY + 5 })
+    
+    const detail = await fetchWordDetail(word)
+    if (detail) {
+       setWordPopup(prev => prev?.word === word ? { ...prev, loading: false, detail } : prev)
+    } else {
+       setWordPopup(prev => prev?.word === word ? { ...prev, loading: false, error: 'Not found' } : prev)
+    }
+  }
+
+  const renderInteractiveText = (text) => {
+    if (!text) return null
+    return text.split(/(\b[\w'-]+\b)/g).map((part, i) => {
+      if (/^[\w'-]+$/.test(part)) {
+        return (
+          <span 
+            key={i} 
+            className="pte-interactive-word" 
+            onClick={(e) => handleWordClick(part, e)}
+            style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'all 0.2s' }}
+            onMouseEnter={(e) => e.target.style.textDecorationColor = '#94a3b8'}
+            onMouseLeave={(e) => e.target.style.textDecorationColor = 'transparent'}
+          >
+            {part}
+          </span>
+        )
+      }
+      return <span key={i}>{part}</span>
+    })
+  }
 
   const stageHeadline = status === 'ready'
     ? 'Play the question once, then answer immediately'
@@ -566,12 +710,27 @@ export default function AnswerShortQuestionPractice({
         <div className="pte-asq-prompt-card__header">
           <div>
             <div className="pte-asq-prompt-card__label">Question Audio</div>
-            <h4>{status === 'completed' ? 'Question Transcript' : 'Listen first, then answer in one or two words.'}</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <h4>{status === 'completed' ? 'Question Transcript' : 'Listen first, then answer in one or two words.'}</h4>
+              {status === 'completed' && (
+                <div className="pte-ra-tips__lang-toggle" style={{ transform: 'scale(0.85)', transformOrigin: 'left center' }}>
+                  {LANG_OPTIONS.map((lang) => (
+                    <button
+                      key={`answer-${lang.code}`}
+                      className={`pte-word-popup__lang-btn ${feedbackLang === lang.code ? 'pte-word-popup__lang-btn--active' : ''}`}
+                      onClick={() => setFeedbackLang(lang.code)}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="pte-asq-prompt-card__actions">
             <button
               className="pte-card__practice-btn pte-card__practice-btn--real"
-              onClick={() => playPrompt(status !== 'completed')}
+              onClick={() => playPrompt(false)}
               disabled={status === 'recording' || status === 'processing'}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '1.05rem' }}>play_arrow</span>
@@ -587,7 +746,14 @@ export default function AnswerShortQuestionPractice({
         </div>
 
         {status === 'completed' ? (
-          <p className="pte-asq-prompt-card__text">{t(currentQuestion.text)}</p>
+          <div className="pte-asq-prompt-card__text" style={{ fontSize: '1.05rem', lineHeight: '1.6', color: '#1e293b' }}>
+            <p>{renderInteractiveText(currentQuestion.text)}</p>
+            {feedbackLang !== 'en' && (
+              <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#64748b', marginTop: '8px' }}>
+                {t(currentQuestion.text)}
+              </p>
+            )}
+          </div>
         ) : (
           <p className="pte-asq-prompt-card__text pte-asq-prompt-card__text--muted">
             The transcript stays hidden until your answer is recorded and analyzed.
@@ -869,6 +1035,84 @@ export default function AnswerShortQuestionPractice({
             </div>
           </div>
         </div>
+      )}
+
+      {wordPopup && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, zIndex: 999 }} 
+            onClick={() => setWordPopup(null)} 
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: Math.min(wordPopup.x, window.innerWidth - 300),
+              top: wordPopup.y,
+              zIndex: 1000,
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              width: '280px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 700 }}>{wordPopup.word}</h3>
+              <button 
+                onClick={() => setWordPopup(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+              </button>
+            </div>
+            
+            {wordPopup.loading ? (
+              <div style={{ padding: '20px 0', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
+                Searching dictionary...
+              </div>
+            ) : wordPopup.error ? (
+              <div style={{ padding: '10px 0', color: '#ef4444', fontSize: '0.9rem' }}>
+                Definition not found.
+              </div>
+            ) : wordPopup.detail ? (
+              <div>
+                {wordPopup.detail.phonetic && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#64748b' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{wordPopup.detail.phonetic}</span>
+                    {wordPopup.detail.phonetics?.[0]?.audio && (
+                      <button 
+                        onClick={() => {
+                          const audio = new Audio(wordPopup.detail.phonetics[0].audio)
+                          audio.play().catch(() => {})
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', display: 'flex', padding: 0 }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>volume_up</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {wordPopup.detail.meanings?.slice(0, 2).map((meaning, idx) => (
+                    <div key={idx} style={{ marginBottom: '12px' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3b82f6', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        {meaning.partOfSpeech}
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                        {meaning.definitions?.slice(0, 2).map((def, dIdx) => (
+                          <li key={dIdx} style={{ marginBottom: '4px' }}>{def.definition}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </>
       )}
     </div>
   )

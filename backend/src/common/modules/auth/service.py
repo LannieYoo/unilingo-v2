@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 import httpx
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, Integer, Index, ForeignKey, Text, func, desc
+from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, Integer, Index, ForeignKey, Text, func, desc, inspect, text
 
 from ..database import Base, get_db
 from .dto import (
@@ -107,8 +107,16 @@ class CelpipTestLogModel(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False, index=True)
     test_id = Column(String(100), nullable=False, index=True)
+    section_id = Column(String(50), nullable=True, index=True)
+    test_type = Column(String(120), nullable=True)
     score = Column(Integer, nullable=False, default=0)
-    answers = Column(Text, nullable=True) # JSON string of answers
+    total_questions = Column(Integer, nullable=False, default=0)
+    correct_count = Column(Integer, nullable=False, default=0)
+    incorrect_count = Column(Integer, nullable=False, default=0)
+    time_spent_seconds = Column(Integer, nullable=False, default=0)
+    attempt_number = Column(Integer, nullable=False, default=1)
+    answers = Column(Text, nullable=True)  # JSON string of answers
+    answer_details = Column(Text, nullable=True)  # JSON string of per-question results
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     user = relationship("UserModel")
 
@@ -469,19 +477,76 @@ class DictionaryLogRepository:
 def get_dictionary_log_repository(db_session: Session) -> DictionaryLogRepository:
     return DictionaryLogRepository(db_session)
 
-    def get_celpip_test_log_repository(self) -> 'CelpipTestLogRepository':
-        return CelpipTestLogRepository(self._db)
-
 class CelpipTestLogRepository:
     def __init__(self, db: Session):
         self._db = db
 
-    def save_log(self, user_id: int, test_id: str, score: int, answers: str):
+    @staticmethod
+    def _parse_json_field(value: Optional[str]):
+        if not value:
+            return None
+        try:
+            return json.loads(value)
+        except (TypeError, json.JSONDecodeError):
+            return value
+
+    @classmethod
+    def _serialize_log(cls, log_like):
+        created_at = getattr(log_like, 'created_at', None)
+        if isinstance(log_like, dict):
+            get_value = log_like.get
+            created_at = log_like.get('created_at')
+        else:
+            get_value = lambda key, default=None: getattr(log_like, key, default)
+
+        return {
+            'id': get_value('id'),
+            'user_id': get_value('user_id'),
+            'test_id': get_value('test_id'),
+            'section_id': get_value('section_id'),
+            'test_type': get_value('test_type'),
+            'score': get_value('score', 0) or 0,
+            'total_questions': get_value('total_questions', 0) or 0,
+            'correct_count': get_value('correct_count', 0) or 0,
+            'incorrect_count': get_value('incorrect_count', 0) or 0,
+            'time_spent_seconds': get_value('time_spent_seconds', 0) or 0,
+            'attempt_number': get_value('attempt_number', 1) or 1,
+            'answers': cls._parse_json_field(get_value('answers')),
+            'answer_details': cls._parse_json_field(get_value('answer_details')),
+            'created_at': created_at.isoformat() if isinstance(created_at, datetime) else (str(created_at) if created_at else None),
+        }
+
+    def save_log(
+        self,
+        user_id: int,
+        test_id: str,
+        score: int,
+        answers: Optional[str] = None,
+        section_id: Optional[str] = None,
+        test_type: Optional[str] = None,
+        total_questions: int = 0,
+        correct_count: int = 0,
+        incorrect_count: int = 0,
+        time_spent_seconds: int = 0,
+        answer_details: Optional[str] = None,
+    ):
+        prior_attempts = self._db.query(func.count(CelpipTestLogModel.id)).filter(
+            CelpipTestLogModel.user_id == user_id,
+            CelpipTestLogModel.test_id == test_id,
+        ).scalar() or 0
         model = CelpipTestLogModel(
             user_id=user_id,
             test_id=test_id,
+            section_id=section_id,
+            test_type=test_type,
             score=score,
-            answers=answers
+            total_questions=total_questions,
+            correct_count=correct_count,
+            incorrect_count=incorrect_count,
+            time_spent_seconds=time_spent_seconds,
+            attempt_number=prior_attempts + 1,
+            answers=answers,
+            answer_details=answer_details,
         )
         self._db.add(model)
         self._db.commit()
@@ -489,17 +554,53 @@ class CelpipTestLogRepository:
         return model
 
     def get_logs_by_user(self, user_id: int):
-        logs = self._db.query(CelpipTestLogModel).filter(CelpipTestLogModel.user_id == user_id).all()
-        return [
-            {
-                'id': log.id,
-                'test_id': log.test_id,
-                'score': log.score,
-                'answers': log.answers,
-                'created_at': log.created_at.isoformat()
-            }
-            for log in logs
+        try:
+            logs = (
+                self._db.query(CelpipTestLogModel)
+                .filter(CelpipTestLogModel.user_id == user_id)
+                .order_by(CelpipTestLogModel.created_at.asc(), CelpipTestLogModel.id.asc())
+                .all()
+            )
+            return [self._serialize_log(log) for log in logs]
+        except Exception as exc:
+            logger.warning("CELPIP log query fallback activated for user %s: %s", user_id, exc)
+
+        inspector = inspect(self._db.bind)
+        if not inspector.has_table('celpip_test_logs'):
+            return []
+
+        available_columns = {column['name'] for column in inspector.get_columns('celpip_test_logs')}
+        select_columns = [
+            column_name
+            for column_name in [
+                'id',
+                'user_id',
+                'test_id',
+                'section_id',
+                'test_type',
+                'score',
+                'total_questions',
+                'correct_count',
+                'incorrect_count',
+                'time_spent_seconds',
+                'attempt_number',
+                'answers',
+                'answer_details',
+                'created_at',
+            ]
+            if column_name in available_columns
         ]
+
+        if not select_columns:
+            return []
+
+        order_by_clauses = [column_name for column_name in ['created_at', 'id'] if column_name in available_columns]
+        query = f"SELECT {', '.join(select_columns)} FROM celpip_test_logs WHERE user_id = :user_id"
+        if order_by_clauses:
+            query = f"{query} ORDER BY {', '.join(order_by_clauses)} ASC"
+
+        rows = self._db.execute(text(query), {'user_id': user_id}).mappings().all()
+        return [self._serialize_log(dict(row)) for row in rows]
 
 class JWTHelper:
     def __init__(self):
@@ -673,6 +774,9 @@ class AuthService:
     
     def get_user_by_id(self, user_id: int) -> Optional[DUser]:
         return self._user_repo.get_by_id(user_id)
+
+    def get_celpip_test_log_repository(self) -> 'CelpipTestLogRepository':
+        return CelpipTestLogRepository(self._db)
 
 
 def get_auth_service(db: Session) -> AuthService:

@@ -5,7 +5,7 @@ import { useAI } from '../../../common/hooks/useAI'
 import { analyzeSpeechDiagnostics } from '../_07_utils/readAloudAnalyzer'
 import { analyzeRespondSituation } from '../_07_utils/respondSituationAnalyzer'
 import { blobToWAV, decodeBlobToPCM } from '../_07_utils/audioDecoder'
-import { translateWord } from '../_06_services/pteWordService'
+import { translateWord, fetchWordDetail } from '../_06_services/pteWordService'
 import { buildModelAnswerVariants } from '../_07_utils/modelAnswerVariants'
 import PteGrammarNoteChip from './PteGrammarNoteChip'
 
@@ -154,6 +154,84 @@ function ScoreRing({ label, score, color }) {
         <span>/90</span>
         <label>{label}</label>
       </div>
+
+      {wordPopup && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, zIndex: 999 }} 
+            onClick={() => setWordPopup(null)} 
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: Math.min(wordPopup.x, window.innerWidth - 300),
+              top: wordPopup.y,
+              zIndex: 1000,
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              width: '280px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 700 }}>{wordPopup.word}</h3>
+              <button 
+                onClick={() => setWordPopup(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+              </button>
+            </div>
+            
+            {wordPopup.loading ? (
+              <div style={{ padding: '20px 0', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
+                Searching dictionary...
+              </div>
+            ) : wordPopup.error ? (
+              <div style={{ padding: '10px 0', color: '#ef4444', fontSize: '0.9rem' }}>
+                Definition not found.
+              </div>
+            ) : wordPopup.detail ? (
+              <div>
+                {wordPopup.detail.phonetic && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#64748b' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{wordPopup.detail.phonetic}</span>
+                    {wordPopup.detail.phonetics?.[0]?.audio && (
+                      <button 
+                        onClick={() => {
+                          const audio = new Audio(wordPopup.detail.phonetics[0].audio)
+                          audio.play().catch(() => {})
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', display: 'flex', padding: 0 }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>volume_up</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {wordPopup.detail.meanings?.slice(0, 2).map((meaning, idx) => (
+                    <div key={idx} style={{ marginBottom: '12px' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3b82f6', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        {meaning.partOfSpeech}
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                        {meaning.definitions?.slice(0, 2).map((def, dIdx) => (
+                          <li key={dIdx} style={{ marginBottom: '4px' }}>{def.definition}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -235,6 +313,8 @@ export default function RespondSituationPractice({
   const [serverTranscript, setServerTranscript] = useState('')
   const [showHint, setShowHint] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
+  const [isScriptRevealed, setIsScriptRevealed] = useState(false)
+  const [wordPopup, setWordPopup] = useState(null)
   const [feedbackLang, setFeedbackLang] = useState('en')
   const [translatedTextMap, setTranslatedTextMap] = useState({})
 
@@ -286,6 +366,8 @@ export default function RespondSituationPractice({
     setServerTranscript('')
     setShowHint(false)
     setShowAnswer(false)
+    setIsScriptRevealed(false)
+    setWordPopup(null)
     setError(null)
     setLoading(false)
     browserTextRef.current = ''
@@ -297,9 +379,21 @@ export default function RespondSituationPractice({
   useEffect(() => {
     if (!currentQuestion) return
     resetViewForQuestion('preparing', currentQuestion)
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(currentQuestion.text)
+        utterance.lang = 'en-US'
+        utterance.rate = 1.0
+        window.speechSynthesis.speak(utterance)
+      }, 50)
+    }
   }, [currentIdx, questionMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStartRecording = async () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
     if (!currentQuestion) return
     browserTextRef.current = ''
     browserInterimRef.current = ''
@@ -372,6 +466,9 @@ export default function RespondSituationPractice({
       if (timerRef.current) clearInterval(timerRef.current)
       if (isRecordingRef.current) stopRecordingRef.current?.()
       stopWebSpeechRef.current?.()
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
     }
   }, [])
 
@@ -431,6 +528,41 @@ export default function RespondSituationPractice({
     if (feedbackLang === 'en') return text
     return translatedTextMap[`${feedbackLang}:${text}`] || text
   }, [feedbackLang, translatedTextMap])
+
+  const handleWordClick = async (word, e) => {
+    e.stopPropagation()
+    const rect = e.target.getBoundingClientRect()
+    // position roughly below the word
+    setWordPopup({ word, loading: true, x: rect.left, y: rect.bottom + window.scrollY + 5 })
+    
+    const detail = await fetchWordDetail(word)
+    if (detail) {
+       setWordPopup(prev => prev?.word === word ? { ...prev, loading: false, detail } : prev)
+    } else {
+       setWordPopup(prev => prev?.word === word ? { ...prev, loading: false, error: 'Not found' } : prev)
+    }
+  }
+
+  const renderInteractiveText = (text) => {
+    if (!text) return null
+    return text.split(/(\b[\w'-]+\b)/g).map((part, i) => {
+      if (/^[\w'-]+$/.test(part)) {
+        return (
+          <span 
+            key={i} 
+            className="pte-interactive-word" 
+            onClick={(e) => handleWordClick(part, e)}
+            style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'all 0.2s' }}
+            onMouseEnter={(e) => e.target.style.textDecorationColor = '#94a3b8'}
+            onMouseLeave={(e) => e.target.style.textDecorationColor = 'transparent'}
+          >
+            {part}
+          </span>
+        )
+      }
+      return <span key={i}>{part}</span>
+    })
+  }
 
   const transcribeOnServer = useCallback(async (recording) => {
     const wavBlob = await blobToWAV(recording.blob)
@@ -666,7 +798,16 @@ export default function RespondSituationPractice({
 
       <div className="pte-rts-prompt">
         <div className="pte-rts-prompt__label">Situation</div>
-        <p>{t(currentQuestion.text)}</p>
+        <div>
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.6', color: '#1e293b' }}>
+            {renderInteractiveText(currentQuestion.text)}
+          </p>
+          {feedbackLang !== 'en' && (
+            <p style={{ fontSize: '0.95rem', lineHeight: '1.5', color: '#64748b', marginTop: '8px' }}>
+              {t(currentQuestion.text)}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="pte-di-practice__meta" style={{ display: 'flex', justifyContent: 'flex-end', fontSize: '0.75rem', marginTop: '-12px', marginBottom: 0, color: '#9ca3af' }}>

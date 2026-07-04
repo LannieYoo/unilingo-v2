@@ -420,14 +420,14 @@
 }
 
 .dark .page-layout__subtitle {
-  color: #8b9dc3;
+  color: #a1a1aa;
 }
 
 .dark .page-layout__box {
-  background: rgba(15, 31, 58, 0.75);
+  background: rgba(24, 24, 27, 0.82);
   backdrop-filter: blur(12px) saturate(150%);
   -webkit-backdrop-filter: blur(12px) saturate(150%);
-  border-color: rgba(30, 58, 100, 0.3);
+  border-color: rgba(82, 82, 91, 0.28);
   color: #e2e8f0;
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.15),
@@ -435,7 +435,7 @@
 }
 
 .dark .page-layout__box:hover {
-  border-color: rgba(59, 130, 246, 0.25);
+  border-color: rgba(113, 113, 122, 0.34);
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.2),
     0 8px 24px -4px rgba(0, 0, 0, 0.25);
@@ -443,17 +443,17 @@
 }
 
 .dark .page-layout__footer {
-  border-top-color: #1a2d4d;
+  border-top-color: #27272a;
 }
 
 .dark .page-select {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #18181b;
+  border-color: #27272a;
   color: #e2e8f0;
 }
 
 .dark .page-select:hover {
-  border-color: #2a3d5d;
+  border-color: #3f3f46;
 }
 
 .dark .page-select:focus {
@@ -462,48 +462,48 @@
 }
 
 .dark .page-textarea {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #18181b;
+  border-color: #27272a;
   color: #e2e8f0;
 }
 
 .dark .page-textarea::placeholder {
-  color: #4a6085;
+  color: #71717a;
 }
 
 .dark .page-textarea--readonly {
-  background: #0a1628;
-  border-color: #1a2d4d;
+  background: #111113;
+  border-color: #27272a;
 }
 
 .dark .page-input {
-  background: #0f1f3a;
-  border-color: #1a2d4d;
+  background: #18181b;
+  border-color: #27272a;
   color: #e2e8f0;
 }
 
 .dark .page-input::placeholder {
-  color: #4a6085;
+  color: #71717a;
 }
 
 .dark .page-btn--secondary {
-  background: #162a4a;
-  color: #8b9dc3;
-  border-color: #1a2d4d;
+  background: #18181b;
+  color: #a1a1aa;
+  border-color: #27272a;
 }
 
 .dark .page-btn--secondary:hover:not(:disabled) {
-  background: #1a2d4d;
+  background: #27272a;
   color: #e2e8f0;
 }
 
 .dark .page-label {
-  color: #8b9dc3;
+  color: #a1a1aa;
 }
 
 .dark .page-note {
-  background: #0a1628;
-  color: #8b9dc3;
+  background: #111113;
+  color: #a1a1aa;
 }
 
 .dark .page-warning {

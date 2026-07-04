@@ -115,7 +115,7 @@ class WordNetService:
                         synonyms.add(synonym)
             return list(synonyms)[:10]
         except Exception as e:
-            logger.error(f"Get synonyms error: {e}")
+            logger.warning(f"Get synonyms unavailable: {e}")
             return []
     
     def get_antonyms(self, word: str) -> List[str]:
@@ -131,7 +131,7 @@ class WordNetService:
                             antonyms.add(antonym.name().replace('_', ' '))
             return list(antonyms)[:10]
         except Exception as e:
-            logger.error(f"Get antonyms error: {e}")
+            logger.warning(f"Get antonyms unavailable: {e}")
             return []
 
 

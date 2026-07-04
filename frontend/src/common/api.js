@@ -9,6 +9,24 @@
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
+function hasAuthorizationHeader(headers) {
+  if (!headers) return false;
+
+  if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+    return headers.has('Authorization');
+  }
+
+  if (Array.isArray(headers)) {
+    return headers.some(([key]) => String(key).toLowerCase() === 'authorization');
+  }
+
+  if (typeof headers === 'object') {
+    return Object.keys(headers).some((key) => key.toLowerCase() === 'authorization');
+  }
+
+  return false;
+}
+
 /**
  * API fetch wrapper with trace ID support
  * 
@@ -56,7 +74,7 @@ export async function apiFetch(url, options = {}) {
     }
     
     // Handle 401 Unauthorized - token expired
-    if (response.status === 401) {
+    if (response.status === 401 && hasAuthorizationHeader(headers)) {
       // Import auth store dynamically to avoid circular dependency
       const { useAuthStore } = await import('../modules/auth/_05_stores/authStore');
       const store = useAuthStore.getState();

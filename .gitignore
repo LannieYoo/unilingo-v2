@@ -87,6 +87,7 @@ logs/*.log
 docs/*.mp4
 
 # Crawl scratch data and browser profiles (regenerable, may contain secrets)
+frontend/crawl/
 frontend/crawl/.browser-profile/
 frontend/crawl/.browser-profile-apeuni/
 frontend/crawl/profiles/

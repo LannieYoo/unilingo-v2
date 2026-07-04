@@ -1067,20 +1067,57 @@ def save_celpip_test_log():
             
         test_id = data.get('test_id')
         score = data.get('score')
+        section_id = data.get('section_id')
+        test_type = data.get('test_type')
+        total_questions = data.get('total_questions', 0)
+        correct_count = data.get('correct_count', score or 0)
+        incorrect_count = data.get('incorrect_count', 0)
+        time_spent_seconds = data.get('time_spent_seconds', 0)
         answers = data.get('answers')
+        answer_details = data.get('answer_details')
         if isinstance(answers, (dict, list)):
             import json
             answers = json.dumps(answers, ensure_ascii=False)
+        if isinstance(answer_details, (dict, list)):
+            import json
+            answer_details = json.dumps(answer_details, ensure_ascii=False)
             
         db = next(get_db())
         try:
             auth_service = get_auth_service(db)
             repo = auth_service.get_celpip_test_log_repository()
             
-            # Since get_celpip_test_log_repository is a method on AuthService, use that to get the repo
-            repo.save_log(user_id=current_user.id, test_id=test_id, score=score, answers=answers)
+            log = repo.save_log(
+                user_id=current_user.id,
+                test_id=test_id,
+                section_id=section_id,
+                test_type=test_type,
+                score=score,
+                total_questions=total_questions,
+                correct_count=correct_count,
+                incorrect_count=incorrect_count,
+                time_spent_seconds=time_spent_seconds,
+                answers=answers,
+                answer_details=answer_details,
+            )
             
-            return jsonify({'status': 'success'}), 200
+            return jsonify({
+                'status': 'success',
+                'log': {
+                    'id': log.id,
+                    'user_id': log.user_id,
+                    'test_id': log.test_id,
+                    'section_id': log.section_id,
+                    'test_type': log.test_type,
+                    'score': log.score,
+                    'total_questions': log.total_questions,
+                    'correct_count': log.correct_count,
+                    'incorrect_count': log.incorrect_count,
+                    'time_spent_seconds': log.time_spent_seconds,
+                    'attempt_number': log.attempt_number,
+                    'created_at': log.created_at.isoformat() if log.created_at else None,
+                }
+            }), 200
         finally:
             db.close()
     except Exception as e:
@@ -1102,12 +1139,20 @@ def get_celpip_test_logs():
             auth_service = get_auth_service(db)
             repo = auth_service.get_celpip_test_log_repository()
             logs = repo.get_logs_by_user(current_user.id)
-            
             return jsonify({'logs': logs}), 200
         finally:
             db.close()
-    except Exception as e:
-        return jsonify({'error': {'code': 'INTERNAL_ERROR', 'message': str(e), 'trace_id': trace_id}}), 500
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'logs': [],
+            'warning': {
+                'code': 'CELPIP_LOGS_UNAVAILABLE',
+                'message': 'CELPIP logs are temporarily unavailable.',
+                'trace_id': trace_id,
+            }
+        }), 200
 
 __all__ = [
     'router', 'admin_router',

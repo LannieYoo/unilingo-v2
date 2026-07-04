@@ -22,6 +22,19 @@ export const useAuthStore = create(
       _rehydrationValidating: false, // Flag to prevent race with TokenRefreshManager
 
       // Actions
+      setRehydrationValidating: (_rehydrationValidating) => set({ _rehydrationValidating }),
+
+      resetAuthState: () => set({
+        user: null,
+        tokens: null,
+        isAuthenticated: false,
+        isAdmin: false,
+        tokenExpired: false,
+        sessionExpired: false,
+        pendingApproval: false,
+        error: null,
+      }),
+
       setUser: (user) => {
         const isAdmin = user && ADMIN_USER && user.email === ADMIN_USER;
         set({ user, isAuthenticated: !!user, isAdmin });
@@ -243,14 +256,14 @@ export const useAuthStore = create(
           if (state?.tokens?.access_token) {
             // Tokens exist → validate with server
             console.log('[Auth] Hydrated with stored tokens, validating with server...');
-            useAuthStore.setState({ _rehydrationValidating: true });
+            state.setRehydrationValidating?.(true);
             setTimeout(async () => {
               try {
-                await useAuthStore.getState().fetchUser();
+                await state.fetchUser?.();
               } catch (e) {
                 console.error('[Auth] Rehydration fetchUser failed:', e);
               } finally {
-                useAuthStore.setState({ _rehydrationValidating: false });
+                state.setRehydrationValidating?.(false);
               }
             }, 0);
           } else if (state?.isAuthenticated || state?.user) {
@@ -259,15 +272,7 @@ export const useAuthStore = create(
             // survived in localStorage. Clear everything to prevent fake login appearance.
             console.log('[Auth] Inconsistent state detected: authenticated but no tokens. Clearing auth state.');
             setTimeout(() => {
-              useAuthStore.setState({
-                user: null,
-                tokens: null,
-                isAuthenticated: false,
-                isAdmin: false,
-                tokenExpired: false,
-                sessionExpired: false,
-                error: null,
-              });
+              state.resetAuthState?.();
             }, 0);
           } else {
             console.log('[Auth] Hydrated without tokens (not logged in)');

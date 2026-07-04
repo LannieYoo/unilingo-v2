@@ -522,7 +522,7 @@ export function TranslatorView() {
       }
     } catch (err) {
       console.error('OCR failed:', err)
-      alert('Failed to extract text from image. Please try another image.')
+      alert(err.message || 'Failed to extract text from image. Please try another image.')
     } finally {
       // Clear file input
       if (fileInputRef.current) {
@@ -620,7 +620,7 @@ export function TranslatorView() {
           }
         } catch (err) {
           console.error('OCR failed:', err)
-          alert('Failed to extract text from image. Please try another image.')
+          alert(err.message || 'Failed to extract text from image. Please try another image.')
         }
 
         break
@@ -1304,7 +1304,7 @@ export function TranslatorView() {
                   <span className="translator-help-icon">📷</span>
                   <div className="translator-help-text">
                     <strong>OCR Button</strong>
-                    Click "Upload Image" to upload and translate text from image files. (Processed securely on-device)
+                    Click "Upload Image" to upload and translate text from image files. (Processed locally in your browser)
                   </div>
                 </div>
                 <div className="translator-help-item">

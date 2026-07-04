@@ -33,8 +33,36 @@ import '../_10_styles/pte.css'
 
 /* Whisper server URL — uses ngrok proxy in production */
 const WHISPER_SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
+const PTE_ACTIVE_TAB_STORAGE_KEY = 'unilingo.pte.activeTab'
+const PTE_FORCE_DEFAULT_TAB_STORAGE_KEY = 'unilingo.pte.forceDefaultTab'
 
 const SPEECH_SAFE_PREFIX = ', '
+
+function getPreferredUiLang() {
+  if (typeof navigator === 'undefined') return 'en'
+  const lang = navigator.language?.toLowerCase?.() || 'en'
+  if (lang.startsWith('ko')) return 'ko'
+  if (lang.startsWith('zh')) return 'zh'
+  return 'en'
+}
+
+const PRACTICE_ACCESS_COPY = {
+  en: {
+    accessNote: 'Practice is available after login and administrator approval.',
+    noRealQuestionsNote: 'Verified real questions have not been added yet.',
+    noSimilarQuestionsNote: 'Similar practice questions have not been added yet.',
+  },
+  ko: {
+    accessNote: '문제풀이는 로그인 후 관리자 승인 완료 시 이용 가능합니다.',
+    noRealQuestionsNote: '검증된 실전 문제가 아직 추가되지 않았습니다.',
+    noSimilarQuestionsNote: '유사 연습 문제가 아직 추가되지 않았습니다.',
+  },
+  zh: {
+    accessNote: '练习功能需登录并经管理员批准后方可使用。',
+    noRealQuestionsNote: '尚未添加已验证的真题。',
+    noSimilarQuestionsNote: '尚未添加相似练习题。',
+  },
+}
 
 function getSafeSpeechText(text = '') {
   const trimmed = text.toString().trim()
@@ -4301,7 +4329,7 @@ function PracticeMockModal({ isOpen, onClose, item, color, initialMode }) {
 }
 
 /* ─── Question Type Card ─── */
-function QuestionCard({ item, color, onPractice, onOpenTemplate }) {
+function QuestionCard({ item, color, onPractice, onOpenTemplate, canStartPractice, practiceCopy }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const realCount = item.abbr === 'RA'
@@ -4335,6 +4363,11 @@ function QuestionCard({ item, color, onPractice, onOpenTemplate }) {
   const repeatSimilarCount = item.abbr === 'RS' ? similarRepeatSentenceQuestions.length : 0
   const hasPractice = item.abbr === 'RA' || item.abbr === 'RS' || item.abbr === 'DI' || item.abbr === 'RtS' || item.abbr === 'ASQ' || item.abbr === 'SWT' || item.abbr === 'WE'
   const templates = getTemplatesForQuestion(item.abbr)
+  const similarPracticeCount = item.abbr === 'RS' ? repeatSimilarCount : similarCount
+  const realDisabled = !canStartPractice || realCount === 0
+  const similarDisabled = !canStartPractice || similarPracticeCount === 0
+  const realTitle = !canStartPractice ? practiceCopy.accessNote : realCount === 0 ? practiceCopy.noRealQuestionsNote : undefined
+  const similarTitle = !canStartPractice ? practiceCopy.accessNote : similarPracticeCount === 0 ? practiceCopy.noSimilarQuestionsNote : undefined
 
   return (
     <div className={`pte-card ${isExpanded ? 'pte-card--expanded' : ''}`}>
@@ -4384,8 +4417,8 @@ function QuestionCard({ item, color, onPractice, onOpenTemplate }) {
                   e.stopPropagation()
                   if (realCount > 0) onPractice(item, 'real')
                 }}
-                disabled={realCount === 0}
-                title={realCount === 0 ? 'Verified real questions have not been added yet.' : undefined}
+                disabled={realDisabled}
+                title={realTitle}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>quiz</span>
                 Real Questions ({realCount})
@@ -4398,13 +4431,19 @@ function QuestionCard({ item, color, onPractice, onOpenTemplate }) {
                   e.stopPropagation()
                   onPractice(item, 'similar')
                 }}
-                disabled={(item.abbr === 'RS' ? repeatSimilarCount : similarCount) === 0}
+                disabled={similarDisabled}
+                title={similarTitle}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>auto_awesome</span>
-                Similar Practice ({item.abbr === 'RS' ? repeatSimilarCount : similarCount})
+                Similar Practice ({similarPracticeCount})
               </button>
             )}
           </div>
+          {hasPractice && !canStartPractice && (
+            <div className="pte-card__access-note">
+              {practiceCopy.accessNote}
+            </div>
+          )}
           {templates.length > 0 && (
             <div className="pte-card__template-row">
               {(item.abbr === 'DI' ? templates : templates.slice(0, 3)).map((template, index) => (
@@ -4442,13 +4481,32 @@ function QuestionCard({ item, color, onPractice, onOpenTemplate }) {
 
 /* ─── Main View ─── */
 export function PtePrepView() {
-  const [activeTab, setActiveTab] = useState('speaking-writing')
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const isAdmin = useAuthStore((state) => state.isAdmin)
+  const user = useAuthStore((state) => state.user)
+  const [activeTab, setActiveTab] = useState(() => {
+    const defaultTab = TABS[0]?.id || 'speaking-writing'
+    if (typeof window === 'undefined') return defaultTab
+
+    const shouldForceDefault = window.sessionStorage.getItem(PTE_FORCE_DEFAULT_TAB_STORAGE_KEY) === '1'
+    if (shouldForceDefault) {
+      window.sessionStorage.removeItem(PTE_FORCE_DEFAULT_TAB_STORAGE_KEY)
+      return defaultTab
+    }
+
+    const savedTab = window.localStorage.getItem(PTE_ACTIVE_TAB_STORAGE_KEY)
+    return TABS.some((tab) => tab.id === savedTab) ? savedTab : defaultTab
+  })
   const [showInfo, setShowInfo] = useState(false)
   const [practiceItem, setPracticeItem] = useState(null)
   const [templateItem, setTemplateItem] = useState(null)
   const [initialMode, setInitialMode] = useState('real')
+  const uiLang = useMemo(() => getPreferredUiLang(), [])
+  const practiceCopy = PRACTICE_ACCESS_COPY[uiLang] || PRACTICE_ACCESS_COPY.en
+  const canStartPractice = Boolean(isAdmin || (isAuthenticated && user?.is_approved))
 
   const handlePractice = (item, mode = 'real') => {
+    if (!canStartPractice) return
     setInitialMode(mode)
     setPracticeItem(item)
   }
@@ -4456,6 +4514,25 @@ export function PtePrepView() {
   const handleOpenTemplate = (item, templateId) => {
     setTemplateItem({ item, templateId })
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(PTE_ACTIVE_TAB_STORAGE_KEY, activeTab)
+  }, [activeTab])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const defaultTab = TABS[0]?.id || 'speaking-writing'
+    const handleExamPrepNav = (event) => {
+      if (event?.detail?.target === 'pteCore') {
+        setActiveTab(defaultTab)
+      }
+    }
+
+    window.addEventListener('unilingo:exam-prep-nav', handleExamPrepNav)
+    return () => window.removeEventListener('unilingo:exam-prep-nav', handleExamPrepNav)
+  }, [])
 
   const activeTabData = TABS.find(t => t.id === activeTab)
   const questions = QUESTION_TYPES[activeTab] || []
@@ -4533,6 +4610,8 @@ export function PtePrepView() {
                 color={activeTabData?.color}
                 onPractice={handlePractice}
                 onOpenTemplate={handleOpenTemplate}
+                canStartPractice={canStartPractice}
+                practiceCopy={practiceCopy}
               />
             ))}
           </div>

@@ -1,4 +1,6 @@
 import GENERATED_LISTENING from './celpip_listening_generated.json'
+import GENERATED_READING from './celpip_reading_generated.json'
+import GENERATED_SPEAKING from './celpip_speaking_crawled.json'
 
 export const CELPIP_SECTIONS = [
   {
@@ -942,6 +944,106 @@ const READING_FOCUS = {
   },
 }
 
+const READING_STRATEGY_COPY = {
+  Correspondence: {
+    en: 'Find the sender purpose, the requested action, and the exact deadline or condition.',
+    ko: '보낸 목적, 요청 행동, 정확한 마감/조건을 함께 확인하세요.',
+    zh: '找出发送目的、要求的行动，以及准确的截止时间或条件。',
+  },
+  'Apply a Diagram': {
+    en: 'Compare each option against every condition in the question before choosing.',
+    ko: '답을 고르기 전에 질문 조건을 선택지마다 하나씩 대조하세요.',
+    zh: '选择前，把题目中的每个条件逐项对照选项。',
+  },
+  Information: {
+    en: 'Watch rule words such as must, only, except, unless, and at least.',
+    ko: 'must, only, except, unless, at least 같은 규칙 단어를 놓치지 마세요.',
+    zh: '注意 must、only、except、unless、at least 等规则词。',
+  },
+  Viewpoints: {
+    en: 'Connect each reason to the correct side and avoid answers that are too extreme.',
+    ko: '각 근거가 어느 입장에 연결되는지 확인하고 지나치게 극단적인 답은 피하세요.',
+    zh: '把每个理由连接到正确立场，并避免过于极端的答案。',
+  },
+}
+
+const READING_DISTRACTORS = {
+  Correspondence: [
+    'The reader does not need to take any action.',
+    'The message is only a general advertisement.',
+    'The deadline has already been cancelled.',
+  ],
+  'Apply a Diagram': [
+    'The most expensive option is always correct.',
+    'All options include the same features.',
+    'The diagram gives no useful comparison.',
+  ],
+  Information: [
+    'The rule applies to everyone with no exceptions.',
+    'The action is optional and has no time limit.',
+    'The notice is only background information.',
+  ],
+  Viewpoints: [
+    'Everyone in the text completely agrees.',
+    'The writer gives no reasons for either side.',
+    'The text announces a final official decision.',
+  ],
+}
+
+function getReadingSentences(passage = '') {
+  return passage
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
+}
+
+function rotateReadingOptions(answer, distractors, seed) {
+  const options = [answer, ...distractors].filter(Boolean).slice(0, 4)
+  const offset = options.length ? seed % options.length : 0
+  return [...options.slice(offset), ...options.slice(0, offset)]
+}
+
+function enrichReadingQuestion(mock, question, index) {
+  const questionObject = typeof question === 'string' ? { prompt: question } : { ...(question || {}) }
+  const sentences = getReadingSentences(mock.passage)
+  const fallbackAnswer = sentences[index] || sentences[sentences.length - 1] || mock.title
+  const answer = questionObject.answer || questionObject.correctAnswer || fallbackAnswer
+  const distractors = questionObject.options?.length
+    ? questionObject.options.filter((option) => {
+      const text = typeof option === 'string' ? option : option.text
+      return text && text !== answer
+    })
+    : READING_DISTRACTORS[mock.type] || READING_DISTRACTORS.Information
+  const options = questionObject.options?.length
+    ? questionObject.options
+    : rotateReadingOptions(answer, distractors, `${mock.id}-${index}`.length + index)
+  const strategyCopy = READING_STRATEGY_COPY[mock.type] || READING_STRATEGY_COPY.Information
+
+  return {
+    prompt: questionObject.prompt || questionObject.question || '',
+    answer,
+    difficulty: questionObject.difficulty || (index % 3 === 0 ? 'easy' : index % 3 === 1 ? 'medium' : 'hard'),
+    strategy: questionObject.strategy || strategyCopy.en,
+    strategyKo: questionObject.strategyKo || strategyCopy.ko,
+    strategyZh: questionObject.strategyZh || strategyCopy.zh,
+    options,
+  }
+}
+
+function enrichReadingMock(mock) {
+  const focus = READING_FOCUS[mock.type] || READING_FOCUS.Information
+  return {
+    ...mock,
+    time: mock.time || `${focus.count} questions`,
+    focus: mock.focus && !/[가-힣]/.test(mock.focus) ? mock.focus : focus.en,
+    focusKo: mock.focusKo || (mock.focus && /[가-힣]/.test(mock.focus) ? mock.focus : focus.ko),
+    focusZh: mock.focusZh || focus.zh,
+    questions: Array.isArray(mock.questions)
+      ? mock.questions.map((question, index) => enrichReadingQuestion(mock, question, index))
+      : [],
+  }
+}
+
 const WRITING_FOCUS = {
   Email: {
     en: 'Use clear purpose, polite tone, details, and a direct request',
@@ -1104,17 +1206,21 @@ function createWritingMock([type, title, prompt], index) {
   }
 }
 
+function getSpeakingTime(type) {
+  return type === 'Comparing and Persuading' || type === 'Difficult Situation'
+    ? '60 sec prep / 60 sec speak'
+    : type === 'Giving Advice' || type === 'Expressing Opinions'
+      ? '30 sec prep / 90 sec speak'
+      : '30 sec prep / 60 sec speak'
+}
+
 function createSpeakingMock([type, title, prompt], index) {
   const focus = SPEAKING_FOCUS[type]
   return {
     id: `sp-extra-${String(index + 1).padStart(2, '0')}`,
     type,
     title,
-    time: type === 'Comparing and Persuading' || type === 'Difficult Situation'
-      ? '60 sec prep / 60 sec speak'
-      : type === 'Giving Advice' || type === 'Expressing Opinions'
-        ? '30 sec prep / 90 sec speak'
-        : '30 sec prep / 60 sec speak',
+    time: getSpeakingTime(type),
     focus: focus.en,
     focusKo: focus.ko,
     focusZh: focus.zh,
@@ -1122,6 +1228,19 @@ function createSpeakingMock([type, title, prompt], index) {
   }
 }
 
-CELPIP_MOCK_TESTS.reading.push(...READING_EXTRA_TOPICS.map(createReadingMock))
+function enrichSpeakingMock(mock) {
+  const focus = SPEAKING_FOCUS[mock.type] || SPEAKING_FOCUS['Expressing Opinions']
+  return {
+    ...mock,
+    time: mock.time || getSpeakingTime(mock.type),
+    focus: mock.focus && !/[가-힣]/.test(mock.focus) ? mock.focus : focus.en,
+    focusKo: mock.focusKo || focus.ko,
+    focusZh: mock.focusZh || focus.zh,
+  }
+}
+
+CELPIP_MOCK_TESTS.reading = [
+  ...GENERATED_READING,
+].map(enrichReadingMock)
 CELPIP_MOCK_TESTS.writing.push(...WRITING_EXTRA_TOPICS.map(createWritingMock))
-CELPIP_MOCK_TESTS.speaking.push(...SPEAKING_EXTRA_TOPICS.map(createSpeakingMock))
+CELPIP_MOCK_TESTS.speaking = GENERATED_SPEAKING.map(enrichSpeakingMock)

@@ -1,0 +1,2322 @@
+[
+  {
+    "id": "sp-crawled-001",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to learn something completely new in a short amount of time. What was the experience like?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-002",
+    "type": "Personal Experience",
+    "title": "Describe a situation when you helped a",
+    "prompt": "Describe a situation when you helped a stranger. What happened and how did you feel afterward?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-003",
+    "type": "Personal Experience",
+    "title": "Tell me about a memorable trip you",
+    "prompt": "Tell me about a memorable trip you took that did not go as planned. What happened?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-004",
+    "type": "Personal Experience",
+    "title": "Talk about a time you received unexpected",
+    "prompt": "Talk about a time you received unexpected good news. How did it change your day?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-005",
+    "type": "Personal Experience",
+    "title": "Describe a situation when you had to",
+    "prompt": "Describe a situation when you had to work closely with someone you did not get along with. How did you handle it?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-006",
+    "type": "Personal Experience",
+    "title": "Tell me about a time when you",
+    "prompt": "Tell me about a time when you had to make a quick decision under pressure. What did you decide and what was the outcome?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-007",
+    "type": "Personal Experience",
+    "title": "Talk about a cultural event or celebration",
+    "prompt": "Talk about a cultural event or celebration you attended that left a strong impression on you. What made it special?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-008",
+    "type": "Personal Experience",
+    "title": "Describe a time when you tried a",
+    "prompt": "Describe a time when you tried a new food for the first time and it surprised you. What was the food and what happened?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-009",
+    "type": "Personal Experience",
+    "title": "Tell me about a moment when you",
+    "prompt": "Tell me about a moment when you overcame a fear. What were you afraid of and how did you face it?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-010",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you got",
+    "prompt": "Talk about a time when you got lost in an unfamiliar place. How did you find your way?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-011",
+    "type": "Personal Experience",
+    "title": "Describe a situation when someone gave you",
+    "prompt": "Describe a situation when someone gave you advice that turned out to be very helpful. What was the advice?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-012",
+    "type": "Personal Experience",
+    "title": "Tell me about a challenging project you",
+    "prompt": "Tell me about a challenging project you completed at work or school. What made it difficult?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-013",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to adapt to a major change in your life. How did you adjust?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-014",
+    "type": "Personal Experience",
+    "title": "Describe a moment when you felt proud",
+    "prompt": "Describe a moment when you felt proud of something you accomplished. What did you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-015",
+    "type": "Personal Experience",
+    "title": "Tell me about a time when you",
+    "prompt": "Tell me about a time when you had a misunderstanding with someone. How was it resolved?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-016",
+    "type": "Describing a Scene",
+    "title": "see a picture of a busy farmers'",
+    "prompt": "You see a picture of a busy farmers' market on a Saturday morning. Describe what is happening in the scene.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-017",
+    "type": "Describing a Scene",
+    "title": "see a picture of a family having",
+    "prompt": "You see a picture of a family having a barbecue in their backyard on a warm summer evening. Describe what you see.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-018",
+    "type": "Describing a Scene",
+    "title": "see a picture of people waiting at",
+    "prompt": "You see a picture of people waiting at a bus stop during a snowstorm. Describe the scene in detail.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-019",
+    "type": "Describing a Scene",
+    "title": "see a picture of a classroom where",
+    "prompt": "You see a picture of a classroom where students are working on a group project. Describe what is happening.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-020",
+    "type": "Describing a Scene",
+    "title": "see a picture of a park where",
+    "prompt": "You see a picture of a park where various people are enjoying outdoor activities on a sunny day. Describe the scene.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-021",
+    "type": "Describing a Scene",
+    "title": "see a picture of a hospital emergency",
+    "prompt": "You see a picture of a hospital emergency room with staff and patients. Describe what you see happening.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-022",
+    "type": "Describing a Scene",
+    "title": "see a picture of a construction site",
+    "prompt": "You see a picture of a construction site in a residential neighbourhood. Describe the scene.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-023",
+    "type": "Describing a Scene",
+    "title": "see a picture of a beach boardwalk",
+    "prompt": "You see a picture of a beach boardwalk with shops, performers, and visitors. Describe what is going on.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-024",
+    "type": "Describing a Scene",
+    "title": "see a picture of an office where",
+    "prompt": "You see a picture of an office where coworkers are having a meeting around a conference table. Describe the scene.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-025",
+    "type": "Describing a Scene",
+    "title": "see a picture of a neighbourhood street",
+    "prompt": "You see a picture of a neighbourhood street during a power outage at night. Describe what you see happening.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-026",
+    "type": "Making Predictions",
+    "title": "Looking at the picture of a couple",
+    "prompt": "Looking at the picture of a couple arguing in a restaurant, what do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-027",
+    "type": "Making Predictions",
+    "title": "student is nervously waiting outside a professor's",
+    "prompt": "A student is nervously waiting outside a professor's office holding a failed exam. What do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-028",
+    "type": "Making Predictions",
+    "title": "driver has just gotten a flat tire",
+    "prompt": "A driver has just gotten a flat tire on a highway during rush hour. What do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-029",
+    "type": "Making Predictions",
+    "title": "Two neighbours are standing by a fence",
+    "prompt": "Two neighbours are standing by a fence looking at a large tree that has fallen between their properties. What will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-030",
+    "type": "Making Predictions",
+    "title": "store manager is watching security footage of",
+    "prompt": "A store manager is watching security footage of a customer putting items in their bag. What do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-031",
+    "type": "Making Predictions",
+    "title": "child has just knocked over a display",
+    "prompt": "A child has just knocked over a display of glass jars at a grocery store. What do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-032",
+    "type": "Making Predictions",
+    "title": "An employee is packing up their desk",
+    "prompt": "An employee is packing up their desk while coworkers watch from nearby. What do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-033",
+    "type": "Making Predictions",
+    "title": "group of hikers has reached a fork",
+    "prompt": "A group of hikers has reached a fork in the trail and their map is wet and hard to read. What will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-034",
+    "type": "Making Predictions",
+    "title": "woman at an airport check-in counter has",
+    "prompt": "A woman at an airport check-in counter has just been told her flight is cancelled. What do you think will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-035",
+    "type": "Making Predictions",
+    "title": "dog has just escaped through an open",
+    "prompt": "A dog has just escaped through an open gate while the owner is on a phone call in the yard. What will happen next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-036",
+    "type": "Comparing and Persuading",
+    "title": "friend can either take a cooking class",
+    "prompt": "Your friend can either take a cooking class or a photography class this semester. Compare these two options and persuade them to choose one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-037",
+    "type": "Comparing and Persuading",
+    "title": "colleague is deciding between working from home",
+    "prompt": "A colleague is deciding between working from home permanently or returning to the office full-time. Compare both options and convince them to choose one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-038",
+    "type": "Comparing and Persuading",
+    "title": "family is deciding between spending the holidays",
+    "prompt": "Your family is deciding between spending the holidays at a cottage by a lake or visiting a big city. Compare both and persuade them to pick one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-039",
+    "type": "Comparing and Persuading",
+    "title": "friend is choosing between buying a used",
+    "prompt": "A friend is choosing between buying a used car or leasing a new one. Compare the two options and convince them which is better.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-040",
+    "type": "Comparing and Persuading",
+    "title": "roommate wants to either adopt a cat",
+    "prompt": "Your roommate wants to either adopt a cat or adopt a dog. Compare the two and persuade them to choose one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-041",
+    "type": "Comparing and Persuading",
+    "title": "classmate is deciding between studying abroad for",
+    "prompt": "A classmate is deciding between studying abroad for a semester or doing a local internship. Compare both options and persuade them.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-042",
+    "type": "Comparing and Persuading",
+    "title": "manager is considering switching the team to",
+    "prompt": "Your manager is considering switching the team to a four-day workweek or keeping the current five-day schedule with flexible hours. Compare both and argue for one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-043",
+    "type": "Comparing and Persuading",
+    "title": "friend is debating whether to join a",
+    "prompt": "A friend is debating whether to join a gym or start exercising outdoors. Compare both options and convince them to pick one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-044",
+    "type": "Comparing and Persuading",
+    "title": "family member wants to either renovate their",
+    "prompt": "Your family member wants to either renovate their current kitchen or move to a house with a bigger kitchen. Compare both and persuade them.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-045",
+    "type": "Comparing and Persuading",
+    "title": "coworker is choosing between attending an online",
+    "prompt": "A coworker is choosing between attending an online conference or travelling to an in-person one. Compare the two and argue for one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-046",
+    "type": "Comparing and Persuading",
+    "title": "friend is deciding between hosting a large",
+    "prompt": "Your friend is deciding between hosting a large birthday party at a hall or having a small dinner at a restaurant. Compare and persuade them.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-047",
+    "type": "Comparing and Persuading",
+    "title": "relative is debating between taking the bus",
+    "prompt": "A relative is debating between taking the bus to work every day or buying an electric bicycle. Compare both options and convince them.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-048",
+    "type": "Comparing and Persuading",
+    "title": "classmate is deciding between learning French or",
+    "prompt": "Your classmate is deciding between learning French or learning Mandarin as a second language. Compare both and persuade them to choose one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-049",
+    "type": "Comparing and Persuading",
+    "title": "friend wants to either volunteer at a",
+    "prompt": "A friend wants to either volunteer at a local food bank or tutor children at a community centre. Compare the two and argue for one.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-050",
+    "type": "Comparing and Persuading",
+    "title": "sibling is choosing between living alone in",
+    "prompt": "Your sibling is choosing between living alone in a small apartment or sharing a larger apartment with a roommate. Compare and persuade them.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-051",
+    "type": "Difficult Situation",
+    "title": "ordered furniture online and it arrived damaged",
+    "prompt": "You ordered furniture online and it arrived damaged. The company says they cannot send a replacement for three weeks. What would you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-052",
+    "type": "Difficult Situation",
+    "title": "are at a restaurant with a group",
+    "prompt": "You are at a restaurant with a group of friends and realize you left your wallet at home after the meal has been served. How would you handle this?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-053",
+    "type": "Difficult Situation",
+    "title": "upstairs neighbour plays loud music late at",
+    "prompt": "Your upstairs neighbour plays loud music late at night and you have an important exam the next morning. What would you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-054",
+    "type": "Difficult Situation",
+    "title": "discover that a coworker has been taking",
+    "prompt": "You discover that a coworker has been taking credit for your work during team meetings. How would you deal with this situation?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-055",
+    "type": "Difficult Situation",
+    "title": "booked a hotel room for a family",
+    "prompt": "You booked a hotel room for a family vacation but when you arrive, the hotel says they have no record of your reservation and they are fully booked. What would you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-056",
+    "type": "Difficult Situation",
+    "title": "close friend borrowed money from you two",
+    "prompt": "A close friend borrowed money from you two months ago and has not mentioned paying it back. How would you handle this?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-057",
+    "type": "Difficult Situation",
+    "title": "are on a bus and notice another",
+    "prompt": "You are on a bus and notice another passenger left their laptop bag behind after getting off. The bus is still moving. What would you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-058",
+    "type": "Difficult Situation",
+    "title": "manager assigns you to a project with",
+    "prompt": "Your manager assigns you to a project with a coworker who consistently misses deadlines. What would you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-059",
+    "type": "Difficult Situation",
+    "title": "catch your child's babysitter using their phone",
+    "prompt": "You catch your child's babysitter using their phone instead of supervising your child when you come home early. How would you handle this?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-060",
+    "type": "Difficult Situation",
+    "title": "bought a concert ticket online but when",
+    "prompt": "You bought a concert ticket online but when you arrive at the venue, security says the ticket is invalid. What would you do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-061",
+    "type": "Expressing Opinions",
+    "title": "Do you think children should be required",
+    "prompt": "Do you think children should be required to learn a musical instrument in school? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-062",
+    "type": "Expressing Opinions",
+    "title": "Do you think working from home is",
+    "prompt": "Do you think working from home is better for productivity than working in an office? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-063",
+    "type": "Expressing Opinions",
+    "title": "Do you think social media has a",
+    "prompt": "Do you think social media has a positive or negative effect on friendships? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-064",
+    "type": "Expressing Opinions",
+    "title": "Do you think university education should be",
+    "prompt": "Do you think university education should be free for all students? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-065",
+    "type": "Expressing Opinions",
+    "title": "Do you think people should be required",
+    "prompt": "Do you think people should be required to pass a test before they are allowed to have pets? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-066",
+    "type": "Expressing Opinions",
+    "title": "Do you think it is better to",
+    "prompt": "Do you think it is better to live in a small town or a large city? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-067",
+    "type": "Expressing Opinions",
+    "title": "Do you think companies should be required",
+    "prompt": "Do you think companies should be required to offer paid parental leave to all employees? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-068",
+    "type": "Expressing Opinions",
+    "title": "Do you think handwriting skills are still",
+    "prompt": "Do you think handwriting skills are still important in the digital age? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-069",
+    "type": "Expressing Opinions",
+    "title": "Do you think governments should ban single-use",
+    "prompt": "Do you think governments should ban single-use plastics entirely? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-070",
+    "type": "Expressing Opinions",
+    "title": "Do you think it is more important",
+    "prompt": "Do you think it is more important to save money or to enjoy life while you are young? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-071",
+    "type": "Expressing Opinions",
+    "title": "Do you think public transit should be",
+    "prompt": "Do you think public transit should be free for everyone? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-072",
+    "type": "Expressing Opinions",
+    "title": "Do you think students learn better in",
+    "prompt": "Do you think students learn better in a traditional classroom or through online courses? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-073",
+    "type": "Expressing Opinions",
+    "title": "Do you think people should be allowed",
+    "prompt": "Do you think people should be allowed to work a four-day workweek instead of five? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-074",
+    "type": "Expressing Opinions",
+    "title": "Do you think zoos serve an important",
+    "prompt": "Do you think zoos serve an important purpose, or should they be closed? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-075",
+    "type": "Expressing Opinions",
+    "title": "Do you think cooking at home is",
+    "prompt": "Do you think cooking at home is always healthier than eating at restaurants? Explain your reasons.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-076",
+    "type": "Unusual Situation",
+    "title": "arrive at work one morning and find",
+    "prompt": "You arrive at work one morning and find that your entire office has been rearranged overnight with no explanation. Describe the situation and explain what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-077",
+    "type": "Unusual Situation",
+    "title": "are walking in your neighbourhood and notice",
+    "prompt": "You are walking in your neighbourhood and notice that every house on the street has placed the same unusual item on their front lawn. Describe what you see and what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-078",
+    "type": "Unusual Situation",
+    "title": "go to pick up your car from",
+    "prompt": "You go to pick up your car from a parking lot and find a different car of the same colour parked in your spot with your keys inside it. Describe the situation and explain what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-079",
+    "type": "Unusual Situation",
+    "title": "open your mailbox and find a handwritten",
+    "prompt": "You open your mailbox and find a handwritten letter addressed to you from someone you have never heard of, thanking you for something you did not do. Describe the situation and what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-080",
+    "type": "Unusual Situation",
+    "title": "arrive at a friend's house for dinner",
+    "prompt": "You arrive at a friend's house for dinner and discover they have prepared a meal using only ingredients you have never seen before. Describe the situation and explain what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-081",
+    "type": "Unusual Situation",
+    "title": "wake up one morning and discover that",
+    "prompt": "You wake up one morning and discover that the street you live on has been temporarily renamed after you. Describe the situation and what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-082",
+    "type": "Unusual Situation",
+    "title": "return home from vacation and find that",
+    "prompt": "You return home from vacation and find that your garden has grown wildly out of control with plants you never planted. Describe what you see and what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-083",
+    "type": "Unusual Situation",
+    "title": "are at a library studying and suddenly",
+    "prompt": "You are at a library studying and suddenly all the lights go off while a strange announcement plays over the speakers. Describe the situation and what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-084",
+    "type": "Unusual Situation",
+    "title": "go to your regular coffee shop and",
+    "prompt": "You go to your regular coffee shop and the barista insists you already placed and paid for an order that you did not make. Describe the situation and explain what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-085",
+    "type": "Unusual Situation",
+    "title": "receive a package at your door containing",
+    "prompt": "You receive a package at your door containing a gift-wrapped box with a note that says it is from your future self. Describe the situation and what you would do.",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-086",
+    "type": "Giving Advice",
+    "title": "friend has just been offered two jobs",
+    "prompt": "A friend has just been offered two jobs — one pays more but requires a long commute, and the other is closer to home but pays less. What would you advise them to do?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-087",
+    "type": "Giving Advice",
+    "title": "colleague is thinking about going back to",
+    "prompt": "A colleague is thinking about going back to school to get a master's degree while still working full-time. What advice would you give?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-088",
+    "type": "Giving Advice",
+    "title": "neighbour is considering adopting a pet but",
+    "prompt": "Your neighbour is considering adopting a pet but has never owned one before. What would you suggest they think about before making a decision?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-089",
+    "type": "Giving Advice",
+    "title": "friend wants to start their own small",
+    "prompt": "A friend wants to start their own small bakery business but is worried about the financial risk. What would you advise?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-090",
+    "type": "Giving Advice",
+    "title": "coworker has been offered a chance to",
+    "prompt": "A coworker has been offered a chance to transfer to a different city for a promotion. They are unsure because their family lives here. What advice would you give?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-091",
+    "type": "Giving Advice",
+    "title": "cousin is about to move to Canada",
+    "prompt": "Your cousin is about to move to Canada from another country and asks how to prepare for the first winter. What suggestions would you make?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-092",
+    "type": "Giving Advice",
+    "title": "classmate is struggling to choose between studying",
+    "prompt": "A classmate is struggling to choose between studying engineering and studying medicine. What would you advise them to consider?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-093",
+    "type": "Unusual Situation",
+    "title": "Ready to Practice These Questions with AI",
+    "prompt": "Ready to Practice These Questions with AI Feedback?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-094",
+    "type": "Giving Advice",
+    "title": "friend is having trouble sleeping and feels",
+    "prompt": "A friend is having trouble sleeping and feels tired all the time. What advice would you give them to improve their sleep habits?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-095",
+    "type": "Giving Advice",
+    "title": "Someone you know is thinking about selling",
+    "prompt": "Someone you know is thinking about selling their car and using only public transit to save money. What would you suggest?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-096",
+    "type": "Giving Advice",
+    "title": "relative wants to learn English faster but",
+    "prompt": "A relative wants to learn English faster but finds it difficult to practice outside of class. What advice would you give them?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-097",
+    "type": "Giving Advice",
+    "title": "friend just had a disagreement with their",
+    "prompt": "A friend just had a disagreement with their landlord about repairs that need to be done. What would you suggest they do next?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-098",
+    "type": "Giving Advice",
+    "title": "sibling wants to save enough money to",
+    "prompt": "Your sibling wants to save enough money to travel to Europe within a year but does not have a budget plan. What advice would you give?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-099",
+    "type": "Giving Advice",
+    "title": "coworker is feeling burned out at work",
+    "prompt": "A coworker is feeling burned out at work and is thinking about quitting without another job lined up. What would you advise?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-100",
+    "type": "Unusual Situation",
+    "title": "friend's teenage child wants to drop out",
+    "prompt": "A friend's teenage child wants to drop out of high school to pursue a career in music. Your friend asks for your opinion. What would you say?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-101",
+    "type": "Giving Advice",
+    "title": "Someone you know is debating whether to",
+    "prompt": "Someone you know is debating whether to buy a condo downtown or rent a larger house in the suburbs. What would you advise?",
+    "source": "CELPIP Simulator",
+    "sourceUrl": "https://www.celpipsimulator.com/resources/celpip-speaking-questions"
+  },
+  {
+    "id": "sp-crawled-102",
+    "type": "Giving Advice",
+    "title": "cousin is moving to a new city",
+    "prompt": "Your cousin is moving to a new city for work. Give advice on how they can quickly adjust to the new environment.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-103",
+    "type": "Giving Advice",
+    "title": "friend is considering learning a new language",
+    "prompt": "A friend is considering learning a new language. Offer guidance on how they can start learning and stay motivated.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-104",
+    "type": "Giving Advice",
+    "title": "younger sibling is about to start university",
+    "prompt": "Your younger sibling is about to start university. Offer advice on how to succeed in their studies.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-105",
+    "type": "Giving Advice",
+    "title": "family member is planning a road trip",
+    "prompt": "A family member is planning a road trip. Provide suggestions on how to prepare for the trip and stay safe.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-106",
+    "type": "Giving Advice",
+    "title": "friend is having trouble managing their time",
+    "prompt": "Your friend is having trouble managing their time between work and personal life. Offer tips on balancing both.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-107",
+    "type": "Giving Advice",
+    "title": "coworker is struggling with staying organized at",
+    "prompt": "A coworker is struggling with staying organized at work. Give advice on how they can improve their organizational skills.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-108",
+    "type": "Giving Advice",
+    "title": "friend is planning a surprise party for",
+    "prompt": "Your friend is planning a surprise party for someone. Offer advice on how to organize a successful surprise party.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-109",
+    "type": "Giving Advice",
+    "title": "family member is preparing for an important",
+    "prompt": "Your family member is preparing for an important exam. Give them tips on how to study effectively.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-110",
+    "type": "Giving Advice",
+    "title": "colleague is dealing with stress from work",
+    "prompt": "A colleague is dealing with stress from work. Provide suggestions on how to manage stress.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-111",
+    "type": "Giving Advice",
+    "title": "cousin is planning a trip to your",
+    "prompt": "Your cousin is planning a trip to your country. Offer advice on what places to visit and how to enjoy the trip.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-112",
+    "type": "Giving Advice",
+    "title": "coworker is thinking about starting their own",
+    "prompt": "A coworker is thinking about starting their own business. Offer advice on the steps to take before starting.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-113",
+    "type": "Giving Advice",
+    "title": "sibling is preparing to study abroad",
+    "prompt": "Your sibling is preparing to study abroad. Provide suggestions on how to make the most of their time in a foreign country.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-114",
+    "type": "Giving Advice",
+    "title": "family member is thinking of switching careers",
+    "prompt": "A family member is thinking of switching careers. Offer guidance on what they should consider before making the change.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-115",
+    "type": "Giving Advice",
+    "title": "friend is planning a beach vacation",
+    "prompt": "Your friend is planning a beach vacation. Provide advice on how to prepare and enjoy their time at the beach.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-116",
+    "type": "Giving Advice",
+    "title": "neighbor is looking for ways to be",
+    "prompt": "Your neighbor is looking for ways to be more environmentally friendly. Offer advice on how they can reduce their environmental impact.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-117",
+    "type": "Giving Advice",
+    "title": "friend is considering buying a house",
+    "prompt": "Your friend is considering buying a house. Provide advice on what factors they should consider before making the purchase.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-118",
+    "type": "Giving Advice",
+    "title": "colleague is thinking about applying for a",
+    "prompt": "A colleague is thinking about applying for a promotion. Offer tips on how they can prepare for the interview and make a strong case.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-119",
+    "type": "Giving Advice",
+    "title": "sibling is preparing for their first job",
+    "prompt": "Your sibling is preparing for their first job interview. Provide tips on how to answer common interview questions and make a good impression.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-120",
+    "type": "Giving Advice",
+    "title": "friend is planning to buy a computer",
+    "prompt": "Your friend is planning to buy a computer. Offer advice on what to consider when choosing a new computer.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-121",
+    "type": "Giving Advice",
+    "title": "family member is thinking about getting into",
+    "prompt": "A family member is thinking about getting into photography as a hobby. Give advice on how to start.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-122",
+    "type": "Giving Advice",
+    "title": "friend is struggling with keeping up with",
+    "prompt": "Your friend is struggling with keeping up with their household chores. Offer tips on how to manage housework effectively.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-123",
+    "type": "Giving Advice",
+    "title": "colleague is planning to ask their boss",
+    "prompt": "A colleague is planning to ask their boss for a raise. Offer advice on how to approach the conversation.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-124",
+    "type": "Giving Advice",
+    "title": "friend wants to start a blog",
+    "prompt": "Your friend wants to start a blog. Give advice on how to create content and attract readers.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-125",
+    "type": "Giving Advice",
+    "title": "neighbor is considering joining a gym",
+    "prompt": "Your neighbor is considering joining a gym. Provide tips on how to choose the right gym and stay motivated.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-126",
+    "type": "Giving Advice",
+    "title": "friend is planning a hiking trip",
+    "prompt": "Your friend is planning a hiking trip. Give advice on how to prepare for the trip and what essentials to bring.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-127",
+    "type": "Giving Advice",
+    "title": "family member is planning to switch to",
+    "prompt": "A family member is planning to switch to a healthier diet. Offer tips on how to make healthier food choices.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-128",
+    "type": "Giving Advice",
+    "title": "colleague is moving to a different country",
+    "prompt": "Your colleague is moving to a different country for work. Provide advice on how to adapt to the new culture and environment.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-129",
+    "type": "Giving Advice",
+    "title": "friend wants to start saving money for",
+    "prompt": "Your friend wants to start saving money for retirement. Offer advice on how to plan and invest wisely.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-130",
+    "type": "Giving Advice",
+    "title": "family member is struggling with public speaking",
+    "prompt": "A family member is struggling with public speaking. Give them tips on how to improve their confidence when speaking in front of others.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-131",
+    "type": "Giving Advice",
+    "title": "friend is thinking about starting a YouTube",
+    "prompt": "Your friend is thinking about starting a YouTube channel. Provide advice on how to create engaging content and grow their audience.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-132",
+    "type": "Giving Advice",
+    "title": "friend is considering joining an online dating",
+    "prompt": "Your friend is considering joining an online dating platform. Offer advice on how to stay safe and meet compatible people.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-133",
+    "type": "Giving Advice",
+    "title": "family member is trying to build a",
+    "prompt": "A family member is trying to build a healthier sleep routine. Give advice on how to improve their sleep quality and habits.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-134",
+    "type": "Giving Advice",
+    "title": "colleague is preparing for a major presentation",
+    "prompt": "Your colleague is preparing for a major presentation. Provide tips on how to structure the presentation and engage the audience.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-135",
+    "type": "Giving Advice",
+    "title": "friend wants to improve their cooking skills",
+    "prompt": "Your friend wants to improve their cooking skills. Offer advice on how to start and develop their culinary techniques.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-136",
+    "type": "Giving Advice",
+    "title": "neighbor is thinking about adopting a sustainable",
+    "prompt": "A neighbor is thinking about adopting a sustainable lifestyle. Provide tips on how they can reduce waste and live more sustainably.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-137",
+    "type": "Giving Advice",
+    "title": "friend is preparing for a job interview",
+    "prompt": "Your friend is preparing for a job interview. Offer advice on how to answer difficult questions and make a good impression.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-138",
+    "type": "Giving Advice",
+    "title": "colleague is planning to give a presentation",
+    "prompt": "Your colleague is planning to give a presentation to senior management. Provide tips on how to prepare and present effectively.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-139",
+    "type": "Giving Advice",
+    "title": "cousin is considering becoming a vegetarian",
+    "prompt": "Your cousin is considering becoming a vegetarian. Give advice on how to make the transition and maintain a balanced diet.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-140",
+    "type": "Giving Advice",
+    "title": "neighbor is about to host their first",
+    "prompt": "A neighbor is about to host their first large family gathering. Provide tips on how to organize and entertain guests.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-141",
+    "type": "Giving Advice",
+    "title": "family member is struggling to quit smoking",
+    "prompt": "A family member is struggling to quit smoking. Offer advice on how they can quit successfully.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-142",
+    "type": "Giving Advice",
+    "title": "friend is preparing to run a marathon",
+    "prompt": "Your friend is preparing to run a marathon. Give advice on how to train and avoid injuries.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-143",
+    "type": "Giving Advice",
+    "title": "colleague is looking for ways to improve",
+    "prompt": "A colleague is looking for ways to improve their productivity at work. Offer tips on how they can stay focused and achieve more.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-144",
+    "type": "Giving Advice",
+    "title": "neighbor is looking for ways to reduce",
+    "prompt": "Your neighbor is looking for ways to reduce their carbon footprint. Provide suggestions on how they can live a more eco-friendly lifestyle.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-145",
+    "type": "Giving Advice",
+    "title": "family member is thinking of adopting a",
+    "prompt": "A family member is thinking of adopting a new hobby. Offer advice on how to find a hobby that suits their interests and schedule.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-146",
+    "type": "Giving Advice",
+    "title": "friend is trying to organize a surprise",
+    "prompt": "Your friend is trying to organize a surprise birthday party for their partner. Offer tips on how to keep it a secret and make it special.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-147",
+    "type": "Giving Advice",
+    "title": "friend is planning their wedding",
+    "prompt": "Your friend is planning their wedding. Provide suggestions on how to plan the event and manage the stress.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-148",
+    "type": "Giving Advice",
+    "title": "family member is preparing to take a",
+    "prompt": "A family member is preparing to take a long international flight. Offer tips on how to stay comfortable and deal with jet lag.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-149",
+    "type": "Giving Advice",
+    "title": "friend is trying to stay organized while",
+    "prompt": "Your friend is trying to stay organized while working from home. Provide advice on how to create a productive work environment.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-150",
+    "type": "Giving Advice",
+    "title": "colleague is planning to attend a professional",
+    "prompt": "A colleague is planning to attend a professional networking event. Offer tips on how to make connections and leave a positive impression.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-151",
+    "type": "Giving Advice",
+    "title": "friend is thinking about buying a bicycle",
+    "prompt": "Your friend is thinking about buying a bicycle for commuting. Provide advice on how to choose the right bike and stay safe on the road.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-152",
+    "type": "Giving Advice",
+    "title": "neighbor is struggling with maintaining their garden",
+    "prompt": "A neighbor is struggling with maintaining their garden. Offer tips on how to care for plants and keep a garden healthy.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-153",
+    "type": "Giving Advice",
+    "title": "sibling is thinking about studying abroad",
+    "prompt": "Your sibling is thinking about studying abroad. Offer advice on how to choose the right program and prepare for living in a new country.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-154",
+    "type": "Giving Advice",
+    "title": "friend is starting their own business",
+    "prompt": "A friend is starting their own business. Provide suggestions on how to create a solid business plan and attract customers.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-155",
+    "type": "Giving Advice",
+    "title": "colleague is nervous about an upcoming job",
+    "prompt": "Your colleague is nervous about an upcoming job performance review. Offer tips on how to prepare and respond to feedback.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-156",
+    "type": "Giving Advice",
+    "title": "friend is planning their first solo trip",
+    "prompt": "Your friend is planning their first solo trip. Offer advice on how to stay safe and make the most of their adventure.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-157",
+    "type": "Giving Advice",
+    "title": "neighbor is considering homeschooling their children",
+    "prompt": "A neighbor is considering homeschooling their children. Provide tips on how to create a curriculum and maintain a structured learning environment.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-158",
+    "type": "Giving Advice",
+    "title": "cousin is preparing for a big exam",
+    "prompt": "Your cousin is preparing for a big exam. Offer advice on how to study effectively and manage test anxiety.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-159",
+    "type": "Giving Advice",
+    "title": "colleague is looking to improve their public",
+    "prompt": "Your colleague is looking to improve their public speaking skills. Offer tips on how to overcome nervousness and deliver a strong presentation.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-160",
+    "type": "Giving Advice",
+    "title": "family member is thinking of renovating their",
+    "prompt": "A family member is thinking of renovating their home. Provide advice on how to plan the project and choose the right contractors.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-161",
+    "type": "Giving Advice",
+    "title": "neighbor is thinking about starting a vegetable",
+    "prompt": "A neighbor is thinking about starting a vegetable garden. Give tips on how to grow their own food and maintain the garden.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-162",
+    "type": "Giving Advice",
+    "title": "cousin is planning a backpacking trip across",
+    "prompt": "Your cousin is planning a backpacking trip across Europe. Provide advice on how to pack efficiently and stay within budget.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-163",
+    "type": "Giving Advice",
+    "title": "colleague is considering enrolling in an online",
+    "prompt": "Your colleague is considering enrolling in an online course. Give advice on how to choose the right course and stay disciplined with self-paced learning.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-164",
+    "type": "Giving Advice",
+    "title": "family member is looking to declutter their",
+    "prompt": "A family member is looking to declutter their home. Offer tips on how to organize and maintain a clutter-free space.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-165",
+    "type": "Giving Advice",
+    "title": "friend is thinking about adopting a pet",
+    "prompt": "Your friend is thinking about adopting a pet. Provide advice on how to prepare for pet ownership and choose the right pet.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-166",
+    "type": "Giving Advice",
+    "title": "cousin is trying to get better at",
+    "prompt": "Your cousin is trying to get better at cooking. Give advice on how to improve their skills and experiment with new recipes.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-167",
+    "type": "Giving Advice",
+    "title": "colleague is preparing to negotiate a raise",
+    "prompt": "Your colleague is preparing to negotiate a raise at work. Provide tips on how to prepare for the conversation and present their case effectively.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-168",
+    "type": "Giving Advice",
+    "title": "family member is planning a road trip",
+    "prompt": "A family member is planning a road trip. Offer advice on how to plan the route, stay safe, and make the trip enjoyable.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-169",
+    "type": "Giving Advice",
+    "title": "friend is trying to cut down on",
+    "prompt": "Your friend is trying to cut down on their screen time. Provide tips on how to develop healthier habits and reduce digital distractions.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-170",
+    "type": "Giving Advice",
+    "title": "cousin is preparing for a big family",
+    "prompt": "Your cousin is preparing for a big family reunion. Provide advice on how to organize the event and ensure it runs smoothly.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-171",
+    "type": "Giving Advice",
+    "title": "friend is considering investing in the stock",
+    "prompt": "A friend is considering investing in the stock market. Offer tips on how to start and make informed investment decisions.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-172",
+    "type": "Giving Advice",
+    "title": "colleague is looking to improve their work-life",
+    "prompt": "Your colleague is looking to improve their work-life balance. Provide suggestions on how to set boundaries and manage their time more effectively.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-173",
+    "type": "Giving Advice",
+    "title": "family member is thinking about starting a",
+    "prompt": "A family member is thinking about starting a podcast. Offer advice on how to plan the content and grow an audience.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-174",
+    "type": "Giving Advice",
+    "title": "friend is preparing to redecorate their home",
+    "prompt": "Your friend is preparing to redecorate their home. Provide suggestions on how to choose the right color scheme and furnishings.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-175",
+    "type": "Giving Advice",
+    "title": "neighbor is looking for ways to reduce",
+    "prompt": "A neighbor is looking for ways to reduce food waste. Offer tips on how to plan meals and store food more efficiently.",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-176",
+    "type": "Personal Experience",
+    "title": "Describe a time when you volunteered for",
+    "prompt": "Describe a time when you volunteered for a community service project. What did you do, and how did it impact you?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-177",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to give a presentation. How did you prepare, and how did it go?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-178",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you set",
+    "prompt": "Talk about a time when you set a personal goal for yourself. How did you achieve it, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-179",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to resolve a conflict with a friend or family member. How did you handle it, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-180",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to learn a new skill for your job. How did you approach it, and how has it benefited you?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-181",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to make a difficult decision. What was the situation, and what factors did you consider?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-182",
+    "type": "Personal Experience",
+    "title": "Describe a time when you received constructive",
+    "prompt": "Describe a time when you received constructive feedback. How did you respond, and what did you learn from it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-183",
+    "type": "Personal Experience",
+    "title": "Recall an experience where you had to",
+    "prompt": "Recall an experience where you had to manage your time effectively to meet a deadline. What strategies did you use?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-184",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you helped",
+    "prompt": "Talk about a time when you helped someone achieve their goals. How did you support them, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-185",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to adapt to a major change in your life. How did you cope, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-186",
+    "type": "Personal Experience",
+    "title": "Recall a time when you took on",
+    "prompt": "Recall a time when you took on a leadership role. What challenges did you face, and how did you overcome them?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-187",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you learned",
+    "prompt": "Talk about a time when you learned from a mistake. What happened, and how did you apply what you learned in the future?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-188",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to collaborate with people from different cultural backgrounds. How did it influence your approach to teamwork?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-189",
+    "type": "Personal Experience",
+    "title": "Recall an instance where you had to",
+    "prompt": "Recall an instance where you had to solve a problem creatively. What was the challenge, and what solution did you come up with?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-190",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you helped",
+    "prompt": "Talk about a time when you helped someone in need. What was the situation, and how did your assistance make a difference?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-191",
+    "type": "Personal Experience",
+    "title": "Describe a time when you improved a",
+    "prompt": "Describe a time when you improved a process at work or school. What steps did you take, and what was the impact?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-192",
+    "type": "Personal Experience",
+    "title": "Recall an occasion when you had to",
+    "prompt": "Recall an occasion when you had to step out of your comfort zone. What motivated you, and what did you learn from the experience?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-193",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to balance multiple responsibilities. How did you manage your time, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-194",
+    "type": "Personal Experience",
+    "title": "Describe a time when you received praise",
+    "prompt": "Describe a time when you received praise for your work. How did it make you feel, and how did it motivate you going forward?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-195",
+    "type": "Personal Experience",
+    "title": "Recall a time when you mentored or",
+    "prompt": "Recall a time when you mentored or coached someone. What was the situation, and how did you help them succeed?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-196",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to handle criticism. How did you react, and how did you use the feedback to improve?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-197",
+    "type": "Personal Experience",
+    "title": "Describe an instance where you worked under",
+    "prompt": "Describe an instance where you worked under pressure to meet a tight deadline. How did you manage the stress, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-198",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to make a significant sacrifice for something important. What was the situation, and was it worth it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-199",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you overcame",
+    "prompt": "Talk about a time when you overcame a fear. What was the fear, and how did you push through it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-200",
+    "type": "Personal Experience",
+    "title": "Describe a time when you took a",
+    "prompt": "Describe a time when you took a risk and tried something new. What was the result, and what did you learn from the experience?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-201",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to persuade someone to see things from your perspective. How did you approach it, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-202",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you were",
+    "prompt": "Talk about a time when you were part of a successful project or event. What was your contribution, and what did you learn from the experience?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-203",
+    "type": "Personal Experience",
+    "title": "Describe a time when you worked towards",
+    "prompt": "Describe a time when you worked towards improving a personal weakness. How did you go about it, and what progress did you make?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-204",
+    "type": "Personal Experience",
+    "title": "Recall an experience where you had to",
+    "prompt": "Recall an experience where you had to demonstrate resilience in the face of adversity. What was the situation, and how did you persevere?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-205",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you achieved",
+    "prompt": "Talk about a time when you achieved something you didn’t think was possible. What motivated you to keep going, and how did it feel to accomplish it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-206",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to motivate others. How did you inspire them, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-207",
+    "type": "Personal Experience",
+    "title": "Recall a time when you took initiative",
+    "prompt": "Recall a time when you took initiative to solve a problem without being asked. What was the situation, and what did you do?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-208",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you handled",
+    "prompt": "Talk about a time when you handled a difficult customer or client. How did you resolve the issue?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-209",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to learn something quickly. How did you approach it, and how did you succeed?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-210",
+    "type": "Personal Experience",
+    "title": "Recall a situation where you made a",
+    "prompt": "Recall a situation where you made a significant contribution to a team project. What was your role, and how did it impact the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-211",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to manage a limited budget. How did you allocate resources, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-212",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to navigate a cultural difference. How did you handle it, and what did you learn?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-213",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to stay calm under pressure. What was the situation, and how did you manage it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-214",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you received",
+    "prompt": "Talk about a time when you received an unexpected opportunity. How did you take advantage of it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-215",
+    "type": "Personal Experience",
+    "title": "Describe a time when you set a",
+    "prompt": "Describe a time when you set a challenging goal. How did you stay motivated to achieve it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-216",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to give or receive bad news. How did you handle the situation, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-217",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to negotiate a deal or agreement. What strategies did you use, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-218",
+    "type": "Personal Experience",
+    "title": "Describe an instance where you had to",
+    "prompt": "Describe an instance where you had to resolve a misunderstanding. How did you clarify the situation?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-219",
+    "type": "Personal Experience",
+    "title": "Recall a time when you worked with",
+    "prompt": "Recall a time when you worked with someone who had a different working style. How did you adapt?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-220",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you failed",
+    "prompt": "Talk about a time when you failed at something. What happened, and how did you bounce back?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-221",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you were praised",
+    "prompt": "Describe a situation where you were praised for your communication skills. What was the context, and what did you say or do?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-222",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to organize an event. What challenges did you face, and how did you overcome them?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-223",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to teach someone a new skill. How did you ensure they understood it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-224",
+    "type": "Personal Experience",
+    "title": "Describe a time when you faced a",
+    "prompt": "Describe a time when you faced a professional setback. How did you recover, and what did you learn?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-225",
+    "type": "Personal Experience",
+    "title": "Recall an occasion where you had to",
+    "prompt": "Recall an occasion where you had to deal with ambiguity. How did you make decisions with limited information?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-226",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to change your approach to achieve success. What prompted the change, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-227",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you exceeded expectations",
+    "prompt": "Describe a situation where you exceeded expectations. What was your strategy, and how did it pay off?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-228",
+    "type": "Personal Experience",
+    "title": "Recall a time when you made a",
+    "prompt": "Recall a time when you made a difficult ethical decision. What was the situation, and how did you navigate it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-229",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you worked",
+    "prompt": "Talk about a time when you worked on a project that failed. What went wrong, and how did you handle the aftermath?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-230",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to learn from someone else’s expertise. How did you collaborate, and what did you gain from it?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-231",
+    "type": "Personal Experience",
+    "title": "Recall an experience where you had to",
+    "prompt": "Recall an experience where you had to take responsibility for a mistake. How did you address it, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-232",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to manage a personal crisis. How did you keep things in control?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-233",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you faced opposition",
+    "prompt": "Describe a situation where you faced opposition to your ideas. How did you handle it, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-234",
+    "type": "Personal Experience",
+    "title": "Recall a time when you mentored or",
+    "prompt": "Recall a time when you mentored or guided someone in their career. What advice did you give, and how did they respond?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-235",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to make a major lifestyle change. What prompted it, and how did you adapt?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-236",
+    "type": "Personal Experience",
+    "title": "Describe a time when you collaborated with",
+    "prompt": "Describe a time when you collaborated with a difficult colleague. How did you find common ground?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-237",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to stay committed to a long-term project. How did you maintain focus?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-238",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to manage multiple projects at once. How did you prioritize your tasks?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-239",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you helped implement",
+    "prompt": "Describe a situation where you helped implement a new system or process. What was your role, and how did it improve things?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-240",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to make a decision based on limited information. What approach did you take, and how did it turn out?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-241",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to motivate yourself to accomplish something difficult. How did you stay on track?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-242",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to deal with a sudden change in your work or personal life. How did you adapt, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-243",
+    "type": "Personal Experience",
+    "title": "Recall an occasion where you had to",
+    "prompt": "Recall an occasion where you had to work with a team under strict time constraints. How did you ensure success?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-244",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you received",
+    "prompt": "Talk about a time when you received unexpected recognition for your work. How did it feel, and what impact did it have on you?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-245",
+    "type": "Personal Experience",
+    "title": "Describe a time when you helped improve",
+    "prompt": "Describe a time when you helped improve the efficiency of a process. What steps did you take, and what were the results?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-246",
+    "type": "Personal Experience",
+    "title": "Recall a time when you were faced",
+    "prompt": "Recall a time when you were faced with a moral dilemma. What did you do, and how did you justify your actions?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-247",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you learned",
+    "prompt": "Talk about a time when you learned something valuable from a difficult situation. How did the experience shape your future actions?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-248",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to mediate a disagreement. How did you handle both sides, and what was the resolution?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-249",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to rely on others to achieve a goal. How did you ensure everyone contributed effectively?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-250",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you handled",
+    "prompt": "Talk about a time when you handled a high-pressure situation successfully. What skills did you use?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-251",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to work with limited resources. How did you make the best of the situation?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-252",
+    "type": "Personal Experience",
+    "title": "Recall an instance where you helped someone",
+    "prompt": "Recall an instance where you helped someone improve in a specific area. What approach did you take?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-253",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you took",
+    "prompt": "Talk about a time when you took on more responsibility than usual. How did you manage it, and what did you learn?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-254",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to take a risk to achieve a goal. What was the outcome, and would you do it again?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-255",
+    "type": "Personal Experience",
+    "title": "Recall a situation where you had to",
+    "prompt": "Recall a situation where you had to apologize for something you did. How did you handle it, and what was the response?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-256",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you worked",
+    "prompt": "Talk about a time when you worked on a project outside your comfort zone. How did you grow from the experience?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-257",
+    "type": "Personal Experience",
+    "title": "Describe a time when you set a",
+    "prompt": "Describe a time when you set a personal or professional boundary. How did you communicate it, and what was the reaction?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-258",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to make a quick decision under pressure. What factors did you consider, and how did it turn out?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-259",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you took",
+    "prompt": "Talk about a time when you took ownership of a complex project. What challenges did you face, and how did you overcome them?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-260",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you helped improve",
+    "prompt": "Describe a situation where you helped improve team morale. What did you do, and how did the team respond?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-261",
+    "type": "Personal Experience",
+    "title": "Recall a time when you made a",
+    "prompt": "Recall a time when you made a significant life change. How did it affect you, and how did you adjust?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-262",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you were",
+    "prompt": "Talk about a time when you were faced with an unexpected obstacle. How did you find a solution?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-263",
+    "type": "Personal Experience",
+    "title": "Describe a time when you worked with",
+    "prompt": "Describe a time when you worked with someone you didn’t get along with. How did you manage the relationship?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-264",
+    "type": "Personal Experience",
+    "title": "Recall an experience where you had to",
+    "prompt": "Recall an experience where you had to meet a tight deadline. How did you handle the pressure, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-265",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to learn something outside your expertise. How did you approach it, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-266",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to give critical feedback. How did you deliver it, and how was it received?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-267",
+    "type": "Personal Experience",
+    "title": "Recall a time when you took part",
+    "prompt": "Recall a time when you took part in a challenging competition. How did you prepare, and what did you learn from the experience?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-268",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to work with limited guidance. How did you ensure you stayed on track?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-269",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to handle an emergency. What did you do, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-270",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to persuade others to see things your way. How did you convince them, and what was the result?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-271",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to make a significant investment in your future. What was the investment, and how has it paid off?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-272",
+    "type": "Personal Experience",
+    "title": "Describe a situation where you had to",
+    "prompt": "Describe a situation where you had to change your mindset to succeed. What did you do, and what was the impact?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-273",
+    "type": "Personal Experience",
+    "title": "Recall a time when you had to",
+    "prompt": "Recall a time when you had to collaborate with someone remotely. What challenges did you face, and how did you overcome them?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-274",
+    "type": "Personal Experience",
+    "title": "Talk about a time when you had",
+    "prompt": "Talk about a time when you had to resolve a difficult technical problem. How did you approach it, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-275",
+    "type": "Personal Experience",
+    "title": "Describe a time when you had to",
+    "prompt": "Describe a time when you had to manage conflicting priorities. How did you decide what to focus on, and what was the outcome?",
+    "source": "HZad Education",
+    "sourceUrl": "https://hzadeducation.com/2024/09/11/100-celpip-speaking-part-1-and-2-questions/"
+  },
+  {
+    "id": "sp-crawled-276",
+    "type": "Giving Advice",
+    "title": "Add reasons or examples  Explain why",
+    "prompt": "Add reasons or examples : Explain why each suggestion is useful with a reason or real-life example.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-277",
+    "type": "Personal Experience",
+    "title": "Choose your story fast  Quickly pick",
+    "prompt": "Choose your story fast : Quickly pick a clear memory or situation you want to talk about.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-278",
+    "type": "Personal Experience",
+    "title": "Add details Describe what you saw heard",
+    "prompt": "Add details: Describe what you saw, heard, or felt to make the story more vivid.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-279",
+    "type": "Describing a Scene",
+    "title": "Focus on some details Choose a few",
+    "prompt": "Focus on some details: Choose a few important elements in the image to describe. You don’t need to cover everything—just focus on what stands out.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-280",
+    "type": "Describing a Scene",
+    "title": "Build a picture Speak in a way",
+    "prompt": "Build a picture: Speak in a way that helps the listener visualize the scene. Describe the setting, atmosphere, and layout of the image.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-281",
+    "type": "Describing a Scene",
+    "title": "Describe peoples appearance actions and feelings Talk",
+    "prompt": "Describe people’s appearance, actions, and feelings: Talk about what the people look like, what they are doing, and how they might be feeling based on their expressions or body language.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-282",
+    "type": "Making Predictions",
+    "title": "Ask yourself What are the people likely",
+    "prompt": "Ask yourself: What are the people likely to do next? How might they feel afterward?",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-283",
+    "type": "Comparing and Persuading",
+    "title": "Compare the features and benefits of both",
+    "prompt": "Compare the features and benefits of both options : Evaluate the advantages of each to determine which one better aligns with your preferences.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-284",
+    "type": "Comparing and Persuading",
+    "title": "Plan strong reasons and supporting details to",
+    "prompt": "Plan strong reasons and supporting details to explain why your option is better: Identify compelling arguments and examples that highlight why your choice is superior.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-285",
+    "type": "Comparing and Persuading",
+    "title": "Use clear persuasive language and expand on",
+    "prompt": "Use clear, persuasive language and expand on the information provided: Explain your reasoning clearly and confidently, adding details to strengthen your argument.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-286",
+    "type": "Difficult Situation",
+    "title": "Clearly describe the issue or situation Give",
+    "prompt": "Clearly describe the issue or situation: Give enough background so the listener understands what led to the decision.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-287",
+    "type": "Difficult Situation",
+    "title": "Support your decision with clear and logical",
+    "prompt": "Support your decision with clear and logical reasons: Explain why the decision was necessary, using facts or reasoning to strengthen your point.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-288",
+    "type": "Unusual Situation",
+    "title": "Highlight the unique features of the image",
+    "prompt": "Highlight the unique features of the image: Describe the aspects of the picture that stand out or are unusual.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-289",
+    "type": "Unusual Situation",
+    "title": "Focus on what you can clearly describe",
+    "prompt": "Focus on what you can clearly describe: Concentrate on the details you can explain well, making them vivid for the listener.",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  },
+  {
+    "id": "sp-crawled-290",
+    "type": "Unusual Situation",
+    "title": "CELPIP Vs IELTS  Which English Proficiency",
+    "prompt": "CELPIP Vs IELTS – Which English Proficiency Test is right for you?",
+    "source": "Gurully",
+    "sourceUrl": "https://www.gurully.com/blog/celpip-speaking-test/"
+  }
+]

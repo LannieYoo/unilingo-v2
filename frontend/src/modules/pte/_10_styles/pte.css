@@ -759,6 +759,26 @@
   transform: translateY(-1px);
 }
 
+.pte-card__practice-btn:disabled,
+.pte-card__practice-btn:disabled:hover {
+  opacity: 0.58;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.pte-card__access-note {
+  margin-top: 0.7rem;
+  color: #b45309;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.dark .pte-card__access-note {
+  color: #fbbf24;
+}
+
 /* ─── Template Practice Modal ─── */
 .pte-template-modal {
   background: var(--bg-secondary, #fff);

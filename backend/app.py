@@ -31,6 +31,7 @@ from backend.src.common.modules import (
 from backend.src.common.modules.errors import errors_bp
 from backend.src.common.modules.usage import usage_bp
 from backend.src.common.modules.phrasal_verbs.router import phrasal_verbs_bp
+from backend.src.common.modules.study_lab import study_lab_bp
 from backend.src.common.supabase import Base
 from backend.src.common.trace_middleware import setup_trace_middleware
 from backend.src.common.usage_middleware import setup_usage_middleware
@@ -92,6 +93,7 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(errors_bp)
     app.register_blueprint(usage_bp)
     app.register_blueprint(phrasal_verbs_bp)
+    app.register_blueprint(study_lab_bp)
     
     # Create database tables
     try:
@@ -100,6 +102,7 @@ def create_app(config_name: str = None) -> Flask:
         from backend.src.common.modules.auth.service import UserModel, LoginLogModel, SttLogModel, TranslationLogModel, DictionaryLogModel, CelpipTestLogModel
         from backend.src.common.modules.errors.service import ErrorEventModel
         from backend.src.common.modules.usage.service import UsageLog, GuestUsageLog
+        from backend.src.common.modules.study_lab.service import EngooNewsArticleModel
         
         if SUPABASE_DB_URI:
             from urllib.parse import quote_plus
@@ -124,11 +127,14 @@ def create_app(config_name: str = None) -> Flask:
             inspector = inspect(engine)
             existing_columns = [c['name'] for c in inspector.get_columns('users')]
             with engine.connect() as conn:
-                # Rename old cpu column to gpu if it exists
-                if 'daily_cpu_limit_minutes' in existing_columns:
+                # Rename old cpu column to gpu if it exists. Some dev databases
+                # may already have both columns from a previous partial migration.
+                if 'daily_cpu_limit_minutes' in existing_columns and 'daily_gpu_limit_minutes' not in existing_columns:
                     conn.execute(text("ALTER TABLE users RENAME COLUMN daily_cpu_limit_minutes TO daily_gpu_limit_minutes"))
                     conn.commit()
                     app.logger.info("Migration: Renamed daily_cpu_limit_minutes to daily_gpu_limit_minutes")
+                elif 'daily_cpu_limit_minutes' in existing_columns and 'daily_gpu_limit_minutes' in existing_columns:
+                    app.logger.info("Migration: daily_gpu_limit_minutes already exists; keeping legacy daily_cpu_limit_minutes unchanged")
                 # Add gpu column if it doesn't exist (fresh install)
                 elif 'daily_gpu_limit_minutes' not in existing_columns:
                     conn.execute(text("ALTER TABLE users ADD COLUMN daily_gpu_limit_minutes INTEGER DEFAULT NULL"))
@@ -142,6 +148,35 @@ def create_app(config_name: str = None) -> Flask:
                         conn.execute(text("ALTER TABLE dictionary_logs ADD COLUMN search_source VARCHAR(20) NOT NULL DEFAULT 'dictionary'"))
                         conn.commit()
                         app.logger.info("Migration: Added search_source column to dictionary_logs table")
+
+                # Expand CELPIP score logging table for per-attempt analytics
+                if inspector.has_table('celpip_test_logs'):
+                    celpip_columns = [c['name'] for c in inspector.get_columns('celpip_test_logs')]
+                    celpip_migrations = {
+                        'section_id': "ALTER TABLE celpip_test_logs ADD COLUMN section_id VARCHAR(50)",
+                        'test_type': "ALTER TABLE celpip_test_logs ADD COLUMN test_type VARCHAR(120)",
+                        'total_questions': "ALTER TABLE celpip_test_logs ADD COLUMN total_questions INTEGER NOT NULL DEFAULT 0",
+                        'correct_count': "ALTER TABLE celpip_test_logs ADD COLUMN correct_count INTEGER NOT NULL DEFAULT 0",
+                        'incorrect_count': "ALTER TABLE celpip_test_logs ADD COLUMN incorrect_count INTEGER NOT NULL DEFAULT 0",
+                        'time_spent_seconds': "ALTER TABLE celpip_test_logs ADD COLUMN time_spent_seconds INTEGER NOT NULL DEFAULT 0",
+                        'attempt_number': "ALTER TABLE celpip_test_logs ADD COLUMN attempt_number INTEGER NOT NULL DEFAULT 1",
+                        'answer_details': "ALTER TABLE celpip_test_logs ADD COLUMN answer_details TEXT",
+                    }
+                    for column_name, statement in celpip_migrations.items():
+                        if column_name not in celpip_columns:
+                            conn.execute(text(statement))
+                            conn.commit()
+                            app.logger.info(f"Migration: Added {column_name} column to celpip_test_logs table")
+
+                    conn.execute(text(
+                        "UPDATE celpip_test_logs "
+                        "SET correct_count = COALESCE(NULLIF(correct_count, 0), score), "
+                        "incorrect_count = COALESCE(incorrect_count, 0), "
+                        "total_questions = COALESCE(total_questions, 0), "
+                        "time_spent_seconds = COALESCE(time_spent_seconds, 0), "
+                        "attempt_number = COALESCE(attempt_number, 1)"
+                    ))
+                    conn.commit()
         else:
             app.logger.warning("SUPABASE_DB_URI not configured. Skipping table creation.")
     except Exception as e:

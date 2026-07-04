@@ -3,7 +3,7 @@
  * Words NOT in this set (and length >= 5) are considered "difficult"
  * for non-native speakers / language learners.
  */
-const COMMON_WORDS = new Set([
+export const COMMON_WORDS_LIST = [
   // Pronouns & determiners
   'i','me','my','mine','we','us','our','ours','you','your','yours',
   'he','him','his','she','her','hers','it','its','they','them','their','theirs',
@@ -104,7 +104,9 @@ const COMMON_WORDS = new Set([
   'taken','thing','those','three','times','today','under','water',
   'where','while','world','would','years','young','place','point',
   'began','dinner','evening','information','morning',
-])
+]
+
+const COMMON_WORDS = new Set(COMMON_WORDS_LIST)
 
 /**
  * Check if a word is "difficult" (not in common words set).
