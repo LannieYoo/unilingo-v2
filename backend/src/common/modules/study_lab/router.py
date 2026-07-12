@@ -40,6 +40,15 @@ _DB_SYNC_CACHE = {
 }
 VALID_USER_STATE_KEYS = {'phrasalVerbFavorites', 'celpipVocabularyFavorites', 'pteVocabularyFavorites'}
 
+DESCRIBING_PICTURES_DATA_FILE = ENGOO_NEWS_DATA_FILE.parent / 'describingPicturesData.json'
+DESCRIBING_PICTURES_HEADERS_FILE = ENGOO_NEWS_DATA_FILE.parent / 'describingPicturesHeaders.json'
+DESCRIBING_PICTURES_TEMPLATES = {
+    'overview': 'General scene description: what/where overview, main subject, actions, background details, overall impression.',
+    'people': 'People-focused description: who is in the picture, appearance and clothing, what they are doing, their feelings or relationship.',
+    'place': 'Place and objects description: what kind of place it is, objects you can see, their positions (foreground/background/left/right), what the place is used for.',
+    'story': 'Speculation and storytelling: what is happening now, what probably happened before, what might happen next, and why you think so.',
+}
+
 
 def clean_text(value=''):
     text = str(value or '')
@@ -533,6 +542,104 @@ def get_engoo_news_article(article_id):
     return jsonify({'article': article}), 200
 
 
+def load_article_for_llm(article_id):
+    """Load an article (DB first, JSON fallback) and build plain text for LLM prompts."""
+    article = None
+    try:
+        db, db_generator = get_db_session()
+        try:
+            article = get_article(db, article_id)
+        finally:
+            close_db_session(db, db_generator)
+    except Exception:
+        article = None
+
+    if not article:
+        article = next((item for item in load_saved_engoo_news() if item.get('id') == article_id), None)
+
+    if not article:
+        return None, None
+
+    body = article.get('body') or []
+    if not isinstance(body, list):
+        body = [str(body)]
+    text = '\n\n'.join(str(paragraph) for paragraph in body if paragraph)
+    return article, text
+
+
+@router.route('/engoo-news/<path:article_id>/study-guide', methods=['GET'])
+@token_required
+def get_engoo_news_study_guide(article_id):
+    """라니서버(RAG)로 기사 핵심 표현/구문 학습 포인트 생성."""
+    from ..phrasal_verbs.service import get_phrasal_verbs_service
+
+    target_lang = request.args.get('lang') or 'ko'
+    article, text = load_article_for_llm(article_id)
+    if not article:
+        return jsonify({
+            'error': {
+                'code': 'ENGOO_ARTICLE_NOT_FOUND',
+                'message': 'Engoo news article was not found.',
+                'article_id': article_id,
+            }
+        }), 404
+    if not text:
+        return jsonify({
+            'error': {
+                'code': 'ENGOO_ARTICLE_BODY_EMPTY',
+                'message': 'Article body is not available yet.',
+                'article_id': article_id,
+            }
+        }), 409
+
+    service = get_phrasal_verbs_service()
+    result = service.get_news_study_points(article.get('title') or '', text, target_lang)
+    return jsonify({
+        'article_id': article_id,
+        'items': result.get('items') or [],
+        'source': result.get('source', 'unknown'),
+        'model': result.get('model', ''),
+        'cached': bool(result.get('cached')),
+    }), 200
+
+
+@router.route('/engoo-news/<path:article_id>/quiz', methods=['GET'])
+@token_required
+def get_engoo_news_quiz(article_id):
+    """라니서버(RAG)로 기사 기반 CELPIP 스타일 듣기 문제 생성."""
+    from ..phrasal_verbs.service import get_phrasal_verbs_service
+
+    target_lang = request.args.get('lang') or 'ko'
+    count = max(3, min(request.args.get('count', default=5, type=int) or 5, 8))
+    article, text = load_article_for_llm(article_id)
+    if not article:
+        return jsonify({
+            'error': {
+                'code': 'ENGOO_ARTICLE_NOT_FOUND',
+                'message': 'Engoo news article was not found.',
+                'article_id': article_id,
+            }
+        }), 404
+    if not text:
+        return jsonify({
+            'error': {
+                'code': 'ENGOO_ARTICLE_BODY_EMPTY',
+                'message': 'Article body is not available yet.',
+                'article_id': article_id,
+            }
+        }), 409
+
+    service = get_phrasal_verbs_service()
+    result = service.get_news_quiz(article.get('title') or '', text, target_lang, count)
+    return jsonify({
+        'article_id': article_id,
+        'questions': result.get('questions') or [],
+        'source': result.get('source', 'unknown'),
+        'model': result.get('model', ''),
+        'cached': bool(result.get('cached')),
+    }), 200
+
+
 @router.route('/engoo-news/sync', methods=['POST'])
 @admin_required
 def sync_engoo_news():
@@ -621,3 +728,402 @@ def sync_engoo_news():
                 'trace_id': trace_id,
             }
         }), 500
+
+
+# ── Engoo Describing Pictures ────────────────────────────
+
+def clean_material_text(value=''):
+    text = clean_text(value)
+    return re.sub(r'\*([^*]+)\*', r'\1', text)
+
+
+def load_describing_pictures():
+    if not DESCRIBING_PICTURES_DATA_FILE.exists():
+        return []
+    try:
+        with DESCRIBING_PICTURES_DATA_FILE.open('r', encoding='utf-8') as file:
+            data = json.load(file)
+        return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def save_describing_pictures(entries):
+    DESCRIBING_PICTURES_DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with DESCRIBING_PICTURES_DATA_FILE.open('w', encoding='utf-8') as file:
+        json.dump(entries, file, ensure_ascii=False, indent=2)
+        file.write('\n')
+
+
+def load_describing_pictures_headers():
+    if not DESCRIBING_PICTURES_HEADERS_FILE.exists():
+        return {'courses': []}
+    try:
+        with DESCRIBING_PICTURES_HEADERS_FILE.open('r', encoding='utf-8') as file:
+            data = json.load(file)
+        if isinstance(data, dict) and isinstance(data.get('courses'), list):
+            return data
+        return {'courses': []}
+    except (json.JSONDecodeError, OSError):
+        return {'courses': []}
+
+
+def detect_course_level(course_name=''):
+    name = str(course_name or '').lower()
+    if 'advanced' in name:
+        return 'Advanced'
+    return 'Intermediate'
+
+
+def normalize_describing_pictures_headers(raw):
+    """Normalize a raw Engoo lesson_headers/by_course payload into course/lesson id lists."""
+    references = (raw or {}).get('references') or {}
+
+    def deref(value):
+        if isinstance(value, dict) and value.get('_ref'):
+            return references.get(value['_ref'])
+        return value
+
+    courses = []
+    for group in (raw or {}).get('data', []):
+        course = deref(group.get('course')) or {}
+        name_text = deref(course.get('name_text')) or {}
+        course_name = clean_material_text(name_text.get('text', ''))
+        lesson_ids = []
+        lesson_titles = {}
+        for lesson_ref in group.get('lessons', []):
+            lesson = deref(lesson_ref) or {}
+            lesson_id = lesson.get('master_id') or lesson.get('id')
+            if not lesson_id or lesson_id in lesson_ids:
+                continue
+            lesson_ids.append(lesson_id)
+            title_text = deref(lesson.get('title_text')) or {}
+            title = clean_material_text(title_text.get('text', '')) if isinstance(title_text, dict) else ''
+            if title:
+                lesson_titles[lesson_id] = title
+        if lesson_ids:
+            courses.append({
+                'courseName': course_name or 'Describing Pictures',
+                'level': detect_course_level(course_name),
+                'lessonIds': lesson_ids,
+                'lessonTitles': lesson_titles,
+            })
+    return {'courses': courses}
+
+
+def parse_describing_pictures_lesson(detail, lesson_id, level):
+    """Parse one Engoo lesson payload into per-picture study entries."""
+    references = detail.get('references') or {}
+
+    def deref(value):
+        if isinstance(value, dict) and value.get('_ref'):
+            return references.get(value['_ref'])
+        return value
+
+    def text_field(container, key):
+        obj = deref((container or {}).get(key)) or {}
+        return clean_material_text(obj.get('text', '')) if isinstance(obj, dict) else ''
+
+    def pick_translation(translations, *langs):
+        for lang in langs:
+            for item in translations or []:
+                item = deref(item) or {}
+                if item.get('language') == lang:
+                    values = item.get('translations')
+                    if isinstance(values, list) and values:
+                        return clean_material_text(values[0])
+                    value = item.get('translation')
+                    if value:
+                        return clean_material_text(value)
+        return ''
+
+    data = detail.get('data') or {}
+    lesson_title = text_field(data, 'title_text')
+    entries = []
+
+    for index, exercise in enumerate(data.get('exercises', [])):
+        exercise = deref(exercise) or {}
+        exercise_title = text_field(exercise, 'title_text')
+        prompt = ''
+        image_url = ''
+        image_attribution = ''
+        alt_text = ''
+        vocabulary = []
+
+        for section in exercise.get('sections', []):
+            section = deref(section) or {}
+            section_type = section.get('_type')
+            if section_type == 'AsideSection':
+                prompt = prompt or text_field(section, 'aside_text')
+            elif section_type == 'MediaSection':
+                for media_entry in section.get('media_entries', []):
+                    media_entry = deref(media_entry) or {}
+                    image = deref(media_entry.get('image')) or {}
+                    if image.get('url') and not image_url:
+                        image_url = image.get('url')
+                        image_attribution = clean_material_text(image.get('attribution', ''))
+                        alt_text = clean_material_text(image.get('alt_text') or image.get('alt_text_generated') or '')
+            elif section_type == 'VocabSection':
+                for vocab_ref in section.get('vocab_section_words', []):
+                    vocab_item = deref(vocab_ref) or {}
+                    word = deref(vocab_item.get('word')) or deref(vocab_item.get('local_word')) or {}
+                    word_text = clean_material_text(word.get('word', ''))
+                    if not word_text:
+                        continue
+                    examples = []
+                    for sentence_ref in (vocab_item.get('vocab_section_word_sentences') or [])[:2]:
+                        sentence_item = deref(sentence_ref) or {}
+                        word_sentence = deref(sentence_item.get('word_sentence')) or {}
+                        sentence = deref(word_sentence.get('sentence')) or deref(sentence_item.get('local_sentence')) or {}
+                        sentence_text = clean_material_text(sentence.get('text', ''))
+                        if not sentence_text:
+                            continue
+                        sentence_translations = sentence.get('translations') or []
+                        examples.append({
+                            'text': sentence_text,
+                            'ko': pick_translation(sentence_translations, 'ko'),
+                            'zh': pick_translation(sentence_translations, 'zh-Hans', 'zh-Hant', 'zh'),
+                        })
+                    pronunciations = word.get('pronunciations') or []
+                    vocabulary.append({
+                        'word': word_text,
+                        'definition': clean_material_text(word.get('definition', '')),
+                        'partOfSpeech': word.get('part_of_speech') or '',
+                        'pronunciation': pronunciations[0] if pronunciations else '',
+                        'ko': pick_translation(word.get('translations'), 'ko'),
+                        'zh': pick_translation(word.get('translations'), 'zh-Hans', 'zh-Hant', 'zh'),
+                        'examples': examples,
+                    })
+
+        if not image_url:
+            continue
+
+        entry_id = 'dp-{0}-{1}'.format(lesson_id, index)
+        section_slug = 'describing-pictures-{0}'.format(level.lower())
+        local_image = download_article_image(section_slug, entry_id, image_url)
+        entries.append({
+            'id': entry_id,
+            'lessonId': lesson_id,
+            'lessonTitle': lesson_title,
+            'exerciseTitle': exercise_title or lesson_title,
+            'level': level,
+            'order': index,
+            'prompt': prompt,
+            'imageUrl': local_image,
+            'imageAttribution': image_attribution,
+            'altText': alt_text,
+            'vocabulary': vocabulary,
+        })
+
+    return entries
+
+
+def summarize_picture_entry(entry):
+    return {
+        'id': entry.get('id'),
+        'lessonId': entry.get('lessonId'),
+        'lessonTitle': entry.get('lessonTitle'),
+        'exerciseTitle': entry.get('exerciseTitle'),
+        'level': entry.get('level'),
+        'order': entry.get('order'),
+        'imageUrl': entry.get('imageUrl'),
+        'vocabCount': len(entry.get('vocabulary') or []),
+    }
+
+
+@router.route('/describing-pictures', methods=['GET'])
+def get_describing_pictures():
+    entries = load_describing_pictures()
+    headers = load_describing_pictures_headers()
+    imported_lessons = {entry.get('lessonId') for entry in entries}
+    total_lessons = sum(len(course.get('lessonIds') or []) for course in headers.get('courses', []))
+    level_counts = {}
+    for entry in entries:
+        level = entry.get('level') or 'Unknown'
+        level_counts[level] = level_counts.get(level, 0) + 1
+    return jsonify({
+        'pictures': [summarize_picture_entry(entry) for entry in entries],
+        'total': len(entries),
+        'levels': level_counts,
+        'imported_lessons': len(imported_lessons),
+        'total_lessons': total_lessons,
+        'headers_loaded': total_lessons > 0,
+    }), 200
+
+
+@router.route('/describing-pictures/<path:picture_id>', methods=['GET'])
+def get_describing_picture(picture_id):
+    entry = next((item for item in load_describing_pictures() if item.get('id') == picture_id), None)
+    if not entry:
+        return jsonify({
+            'error': {
+                'code': 'DESCRIBING_PICTURE_NOT_FOUND',
+                'message': 'Describing picture entry was not found.',
+                'picture_id': picture_id,
+            }
+        }), 404
+    return jsonify({'picture': entry}), 200
+
+
+@router.route('/describing-pictures/headers', methods=['PUT'])
+@admin_required
+def put_describing_pictures_headers():
+    payload = request.get_json(silent=True) or {}
+    raw = payload.get('raw') or payload
+    normalized = normalize_describing_pictures_headers(raw)
+    total_lessons = sum(len(course.get('lessonIds') or []) for course in normalized['courses'])
+    if not total_lessons:
+        return jsonify({
+            'error': {
+                'code': 'DESCRIBING_PICTURES_HEADERS_EMPTY',
+                'message': 'No lessons found in the pasted JSON. Paste the full lesson_headers/by_course response.',
+            }
+        }), 400
+    DESCRIBING_PICTURES_HEADERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with DESCRIBING_PICTURES_HEADERS_FILE.open('w', encoding='utf-8') as file:
+        json.dump(normalized, file, ensure_ascii=False, indent=2)
+        file.write('\n')
+    return jsonify({
+        'courses': [
+            {'courseName': course['courseName'], 'level': course['level'], 'lessons': len(course['lessonIds'])}
+            for course in normalized['courses']
+        ],
+        'total_lessons': total_lessons,
+    }), 200
+
+
+@router.route('/describing-pictures/sync', methods=['POST'])
+@admin_required
+def sync_describing_pictures():
+    trace_id = g.get('trace_id', 'unknown')
+    payload = request.get_json(silent=True) or {}
+    limit = max(1, min(int(payload.get('limit', 8) or 8), 20))
+
+    headers = load_describing_pictures_headers()
+    if not headers.get('courses'):
+        return jsonify({
+            'error': {
+                'code': 'DESCRIBING_PICTURES_HEADERS_MISSING',
+                'message': 'Lesson list has not been uploaded yet. Paste the course JSON first.',
+            }
+        }), 409
+
+    entries = load_describing_pictures()
+    imported_lessons = {entry.get('lessonId') for entry in entries}
+    processed = 0
+    new_pictures = 0
+    errors = []
+
+    for course in headers['courses']:
+        level = course.get('level') or 'Intermediate'
+        for lesson_id in course.get('lessonIds') or []:
+            if processed >= limit:
+                break
+            if lesson_id in imported_lessons:
+                continue
+            try:
+                detail = fetch_json('{0}/lessons/{1}/current'.format(ENGOO_API_BASE, lesson_id))
+                lesson_entries = parse_describing_pictures_lesson(detail, lesson_id, level)
+                entries.extend(lesson_entries)
+                new_pictures += len(lesson_entries)
+                imported_lessons.add(lesson_id)
+                processed += 1
+            except Exception as exc:
+                errors.append({'lesson_id': lesson_id, 'error': str(exc)})
+                processed += 1
+        if processed >= limit:
+            break
+
+    entries.sort(key=lambda item: (item.get('level') or '', item.get('lessonTitle') or '', item.get('order') or 0))
+    save_describing_pictures(entries)
+
+    total_lessons = sum(len(course.get('lessonIds') or []) for course in headers['courses'])
+    return jsonify({
+        'processed_lessons': processed,
+        'new_pictures': new_pictures,
+        'imported_lessons': len(imported_lessons),
+        'total_lessons': total_lessons,
+        'total_pictures': len(entries),
+        'done': len(imported_lessons) >= total_lessons,
+        'errors': errors,
+        'trace_id': trace_id,
+    }), 200
+
+
+@router.route('/describing-pictures/<path:picture_id>/strategy', methods=['GET'])
+@token_required
+def get_describing_picture_strategy(picture_id):
+    """라니서버(RAG)로 사진별 말하기 전략 생성 (영/한/중 단계)."""
+    from ..phrasal_verbs.service import get_phrasal_verbs_service
+
+    entry = next((item for item in load_describing_pictures() if item.get('id') == picture_id), None)
+    if not entry:
+        return jsonify({
+            'error': {
+                'code': 'DESCRIBING_PICTURE_NOT_FOUND',
+                'message': 'Describing picture entry was not found.',
+                'picture_id': picture_id,
+            }
+        }), 404
+
+    vocab_lines = [
+        '{0} ({1}): {2}'.format(item.get('word', ''), item.get('partOfSpeech', ''), item.get('definition', ''))
+        for item in (entry.get('vocabulary') or [])[:12]
+    ]
+    service = get_phrasal_verbs_service()
+    result = service.get_picture_strategy(
+        topic=entry.get('exerciseTitle') or entry.get('lessonTitle') or '',
+        prompt=entry.get('prompt') or '',
+        vocabulary_lines=vocab_lines,
+    )
+    return jsonify({
+        'picture_id': picture_id,
+        'steps': result.get('steps') or [],
+        'source': result.get('source', 'unknown'),
+        'model': result.get('model', ''),
+        'cached': bool(result.get('cached')),
+    }), 200
+
+
+@router.route('/describing-pictures/<path:picture_id>/model-answer', methods=['GET'])
+@token_required
+def get_describing_picture_model_answer(picture_id):
+    from ..phrasal_verbs.service import get_phrasal_verbs_service
+
+    template = request.args.get('template') or 'overview'
+    if template not in DESCRIBING_PICTURES_TEMPLATES:
+        template = 'overview'
+    target_lang = request.args.get('lang') or 'ko'
+
+    entry = next((item for item in load_describing_pictures() if item.get('id') == picture_id), None)
+    if not entry:
+        return jsonify({
+            'error': {
+                'code': 'DESCRIBING_PICTURE_NOT_FOUND',
+                'message': 'Describing picture entry was not found.',
+                'picture_id': picture_id,
+            }
+        }), 404
+
+    vocab_lines = [
+        '{0} ({1}): {2}'.format(item.get('word', ''), item.get('partOfSpeech', ''), item.get('definition', ''))
+        for item in (entry.get('vocabulary') or [])[:12]
+    ]
+    service = get_phrasal_verbs_service()
+    result = service.get_picture_model_answer(
+        topic=entry.get('exerciseTitle') or entry.get('lessonTitle') or '',
+        prompt=entry.get('prompt') or '',
+        alt_text=entry.get('altText') or '',
+        vocabulary_lines=vocab_lines,
+        template_id=template,
+        template_description=DESCRIBING_PICTURES_TEMPLATES[template],
+        target_lang=target_lang,
+    )
+    return jsonify({
+        'picture_id': picture_id,
+        'template': template,
+        'sentences': result.get('sentences') or [],
+        'source': result.get('source', 'unknown'),
+        'model': result.get('model', ''),
+        'cached': bool(result.get('cached')),
+    }), 200

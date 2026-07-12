@@ -60,6 +60,7 @@ function Header() {
         { path: '/study-lab?tab=pte-core-words', label: 'PTE Vocabulary', name: 'studyPteWords', studyTab: 'pte-core-words' },
         { path: '/study-lab?tab=phrasal-verbs', label: 'Phrasal Verbs', name: 'studyPhrasalVerbs', studyTab: 'phrasal-verbs' },
         { path: '/study-lab?tab=news-reading', label: 'News Reading', name: 'studyNews', studyTab: 'news-reading' },
+        { path: '/study-lab?tab=describing-pictures', label: 'Describing Pictures', name: 'studyDescribingPictures', studyTab: 'describing-pictures' },
       ],
     },
     {

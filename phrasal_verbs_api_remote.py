@@ -10,6 +10,7 @@ import json
 import time
 import hashlib
 import logging
+import random
 import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
@@ -595,7 +596,541 @@ async def summarize_text(req: dict):
     return result
 
 
+# ── News Study Points ───────────────────────────────────
+def _build_news_study_prompt(title: str, text: str, target_lang: str) -> str:
+    lang_names = {"ko": "Korean", "zh": "Chinese", "en": "English", "ja": "Japanese"}
+    tgt_name = lang_names.get(target_lang, "Korean")
+
+    return f"""/no_think
+You are an English teacher preparing study notes for an intermediate ESL learner who just read this news article.
+
+Article title: "{title}"
+
+Article text:
+\"\"\"
+{text}
+\"\"\"
+
+From THIS article only, pick the 5-8 most valuable language points worth studying. Prioritize:
+1. Phrasal verbs and idioms actually used in the article
+2. Useful collocations or fixed expressions
+3. Important sentence patterns or grammar structures (e.g. "It's almost as if ...", "up to six times more likely than ...")
+
+Return ONLY a valid JSON array. Each element must have exactly these keys:
+- "type": one of "phrasal_verb", "idiom", "collocation", "pattern"
+- "text": the expression or pattern exactly as it appears (or the pattern skeleton)
+- "meaning": short English explanation of what it means / how it is used
+- "meaning_translated": the meaning translated to {tgt_name}
+- "example": the sentence from the article that uses it (shortened is fine)
+- "example_translated": that example translated to {tgt_name}
+
+IMPORTANT: Return ONLY the JSON array, no markdown, no explanation."""
+
+
+NEWS_STUDY_VALID_TYPES = {"phrasal_verb", "idiom", "collocation", "pattern"}
+
+
+async def _call_ollama_news_study(title: str, text: str, target_lang: str) -> List[Dict]:
+    """Ollama로 뉴스 기사 학습 포인트 생성"""
+    prompt = _build_news_study_prompt(title, text, target_lang)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a JSON-only responder. Never use thinking tags. Output raw JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.3,
+            "num_predict": 4096,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            if not raw_response and thinking:
+                raw_response = thinking
+            logger.info(f"News study RAW (len={len(raw_response)}): {raw_response[:500]}")
+
+            items = _extract_json_array(raw_response)
+            if not items and thinking and thinking != raw_response:
+                items = _extract_json_array(thinking)
+            valid = []
+            for item in items:
+                if isinstance(item, dict) and item.get("text") and item.get("meaning"):
+                    item_type = item.get("type", "pattern")
+                    valid.append({
+                        "type": item_type if item_type in NEWS_STUDY_VALID_TYPES else "pattern",
+                        "text": item.get("text", ""),
+                        "meaning": item.get("meaning", ""),
+                        "meaning_translated": item.get("meaning_translated", ""),
+                        "example": item.get("example", ""),
+                        "example_translated": item.get("example_translated", ""),
+                    })
+            return valid[:8]
+
+    except Exception as e:
+        logger.error(f"News study points error: {e}")
+        return []
+
+
+@app.post("/api/news-study-points")
+async def get_news_study_points(req: dict):
+    """뉴스 기사 핵심 표현/구문 학습 포인트 생성 API"""
+    title = req.get("title", "").strip()
+    text = req.get("text", "").strip()
+    target_lang = req.get("target_lang", "ko")
+
+    if not text or len(text) < 50:
+        raise HTTPException(status_code=400, detail="text is required (min 50 chars)")
+
+    start_time = time.time()
+
+    cache_key = hashlib.md5(f"newsstudy:{title}:{text[:800]}:{target_lang}".encode()).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    items = await _call_ollama_news_study(title, text, target_lang)
+
+    result = {
+        "title": title,
+        "items": items,
+        "source": "ollama",
+        "model": OLLAMA_MODEL,
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if items:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
+# ── News Listening Quiz (CELPIP style) ──────────────────
+def _build_news_quiz_prompt(title: str, text: str, target_lang: str, count: int) -> str:
+    lang_names = {"ko": "Korean", "zh": "Chinese", "en": "English", "ja": "Japanese"}
+    tgt_name = lang_names.get(target_lang, "Korean")
+
+    return f"""/no_think
+You are a CELPIP listening test writer. The following news article will be read aloud to a test taker. Write {count} listening-comprehension questions in authentic CELPIP style, based ONLY on what the article actually says.
+
+Article title: "{title}"
+
+Article text:
+\"\"\"
+{text}
+\"\"\"
+
+Question style rules (CELPIP listening):
+1. Mix question types: main idea, specific detail, inference, purpose, and paraphrase ("What does the speaker mean by ...").
+2. Each question has exactly 4 answer options; only ONE is correct.
+3. Wrong options must be plausible distractors that mention things from the article but are incorrect (wrong number, wrong cause, overstatement, not mentioned).
+4. Do NOT ask about spelling or vocabulary definitions. Ask what a listener would need to understand.
+5. Questions must be answerable from the article alone.
+
+Return ONLY a valid JSON array with exactly {count} elements. Each element must have exactly these keys:
+- "question": the question in English
+- "options": array of exactly 4 English answer options
+- "answer_index": integer 0-3, the index of the correct option
+- "explanation": short English explanation of why the answer is correct and why the distractors are wrong
+- "explanation_translated": the explanation translated to {tgt_name}
+
+IMPORTANT: Return ONLY the JSON array, no markdown, no explanation."""
+
+
+async def _call_ollama_news_quiz(title: str, text: str, target_lang: str, count: int) -> List[Dict]:
+    """Ollama로 CELPIP 스타일 듣기 문제 생성"""
+    prompt = _build_news_quiz_prompt(title, text, target_lang, count)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a JSON-only responder. Never use thinking tags. Output raw JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.4,
+            "num_predict": 6144,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            if not raw_response and thinking:
+                raw_response = thinking
+            logger.info(f"News quiz RAW (len={len(raw_response)}): {raw_response[:500]}")
+
+            items = _extract_json_array(raw_response)
+            if not items and thinking and thinking != raw_response:
+                items = _extract_json_array(thinking)
+            valid = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                options = item.get("options")
+                answer_index = item.get("answer_index")
+                if (
+                    item.get("question")
+                    and isinstance(options, list)
+                    and len(options) == 4
+                    and isinstance(answer_index, int)
+                    and 0 <= answer_index <= 3
+                ):
+                    # Shuffle options to avoid LLM position bias (answers clustering on one letter)
+                    options = [str(opt) for opt in options]
+                    correct_option = options[answer_index]
+                    random.shuffle(options)
+                    valid.append({
+                        "question": item.get("question", ""),
+                        "options": options,
+                        "answer_index": options.index(correct_option),
+                        "explanation": item.get("explanation", ""),
+                        "explanation_translated": item.get("explanation_translated", ""),
+                    })
+            return valid[:count]
+
+    except Exception as e:
+        logger.error(f"News quiz error: {e}")
+        return []
+
+
+@app.post("/api/news-quiz")
+async def get_news_quiz(req: dict):
+    """뉴스 기사 기반 CELPIP 스타일 듣기 문제 생성 API"""
+    title = req.get("title", "").strip()
+    text = req.get("text", "").strip()
+    target_lang = req.get("target_lang", "ko")
+    count = max(3, min(int(req.get("count", 5) or 5), 8))
+
+    if not text or len(text) < 50:
+        raise HTTPException(status_code=400, detail="text is required (min 50 chars)")
+
+    start_time = time.time()
+
+    cache_key = hashlib.md5(f"newsquiz:{title}:{text[:800]}:{target_lang}:{count}".encode()).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    questions = await _call_ollama_news_quiz(title, text, target_lang, count)
+
+    result = {
+        "title": title,
+        "questions": questions,
+        "source": "ollama",
+        "model": OLLAMA_MODEL,
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if questions:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8100)
 
+
+
+# ── Picture Description Model Answer ────────────────────
+def _build_picture_answer_prompt(topic: str, prompt: str, alt_text: str,
+                                 vocabulary: List[str], template_description: str,
+                                 target_lang: str) -> str:
+    lang_names = {"ko": "Korean", "zh": "Chinese", "en": "English", "ja": "Japanese"}
+    tgt_name = lang_names.get(target_lang, "Korean")
+    vocab_block = "\n".join(f"- {line}" for line in vocabulary) if vocabulary else "- (no vocabulary list)"
+    alt_line = f'Image description hint: "{alt_text}"\n' if alt_text else ""
+
+    return f"""/no_think
+You are an English speaking coach. A student is practicing describing a photo out loud (like the CELPIP or OPIc speaking test).
+
+Photo topic: "{topic}"
+Task instruction: "{prompt}"
+{alt_line}Helpful vocabulary from the lesson (the photo shows a scene related to these words):
+{vocab_block}
+
+Write a natural spoken-style MODEL ANSWER describing this photo. Requirements:
+1. Follow this description structure: {template_description}
+2. 6 to 9 sentences, CEFR B1-B2 spoken English (natural, not bookish).
+3. Use at least 4 of the vocabulary words above naturally.
+4. Since you cannot see the actual photo, describe the most typical scene for this topic and vocabulary. Stay plausible and generic enough to fit such a photo.
+5. Start with an overview sentence, end with an impression or speculation sentence.
+
+Return ONLY a valid JSON array. Each element must have exactly these keys:
+- "en": one sentence of the model answer in English
+- "translated": that sentence translated to {tgt_name}
+
+IMPORTANT: Return ONLY the JSON array, no markdown, no explanation."""
+
+
+async def _call_ollama_picture_answer(topic: str, prompt: str, alt_text: str,
+                                      vocabulary: List[str], template_description: str,
+                                      target_lang: str) -> List[Dict]:
+    """Ollama로 사진 묘사 모범답안 생성"""
+    user_prompt = _build_picture_answer_prompt(topic, prompt, alt_text, vocabulary, template_description, target_lang)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a JSON-only responder. Never use thinking tags. Output raw JSON only."},
+            {"role": "user", "content": user_prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.5,
+            "num_predict": 4096,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            if not raw_response and thinking:
+                raw_response = thinking
+            logger.info(f"Picture answer RAW (len={len(raw_response)}): {raw_response[:500]}")
+
+            items = _extract_json_array(raw_response)
+            if not items and thinking and thinking != raw_response:
+                items = _extract_json_array(thinking)
+            valid = []
+            for item in items:
+                if isinstance(item, dict) and item.get("en"):
+                    valid.append({
+                        "en": str(item.get("en", "")),
+                        "translated": str(item.get("translated", "")),
+                    })
+            return valid[:10]
+
+    except Exception as e:
+        logger.error(f"Picture model answer error: {e}")
+        return []
+
+
+@app.post("/api/picture-model-answer")
+async def get_picture_model_answer(req: dict):
+    """사진 묘사 모범답안 생성 API"""
+    topic = req.get("topic", "").strip()
+    prompt = req.get("prompt", "").strip()
+    alt_text = req.get("alt_text", "").strip()
+    vocabulary = req.get("vocabulary") or []
+    template_id = req.get("template_id", "overview")
+    template_description = req.get("template_description", "General scene description.")
+    target_lang = req.get("target_lang", "ko")
+
+    if not topic and not vocabulary:
+        raise HTTPException(status_code=400, detail="topic or vocabulary is required")
+
+    start_time = time.time()
+
+    cache_key = hashlib.md5(
+        f"picanswer:{topic}:{template_id}:{target_lang}:{'|'.join(map(str, vocabulary))}".encode()
+    ).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    sentences = await _call_ollama_picture_answer(topic, prompt, alt_text, vocabulary, template_description, target_lang)
+
+    result = {
+        "topic": topic,
+        "template_id": template_id,
+        "sentences": sentences,
+        "source": "ollama",
+        "model": OLLAMA_MODEL,
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if sentences:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
+# ── Picture Description Strategy ────────────────────────
+def _build_picture_strategy_prompt(topic: str, prompt: str, vocabulary: List[str]) -> str:
+    vocab_block = "\n".join(f"- {line}" for line in vocabulary) if vocabulary else "- (no vocabulary list)"
+
+    return f"""/no_think
+You are an English speaking coach. A student must describe a photo out loud (like the CELPIP or OPIc speaking test).
+
+Photo topic: "{topic}"
+Task instruction: "{prompt}"
+Lesson vocabulary (the photo shows a scene related to these words):
+{vocab_block}
+
+Create a SHORT step-by-step speaking strategy for describing THIS specific photo: what to mention first, what to describe next, which of the vocabulary words fit each step, and how to wrap up with a guess or impression. Keep it practical and specific to this topic, not generic advice.
+
+Return ONLY a valid JSON array of 4-6 steps in speaking order. Each element must have exactly these keys:
+- "en": the step in English (one short sentence, may mention specific vocabulary words)
+- "ko": the same step in natural Korean
+- "zh": the same step in Simplified Chinese
+
+IMPORTANT: Return ONLY the JSON array, no markdown, no explanation."""
+
+
+async def _call_ollama_picture_strategy(topic: str, prompt: str, vocabulary: List[str]) -> List[Dict]:
+    """Ollama로 사진 묘사 전략 생성"""
+    user_prompt = _build_picture_strategy_prompt(topic, prompt, vocabulary)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a JSON-only responder. Never use thinking tags. Output raw JSON only."},
+            {"role": "user", "content": user_prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.4,
+            "num_predict": 3072,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            if not raw_response and thinking:
+                raw_response = thinking
+            logger.info(f"Picture strategy RAW (len={len(raw_response)}): {raw_response[:500]}")
+
+            items = _extract_json_array(raw_response)
+            if not items and thinking and thinking != raw_response:
+                items = _extract_json_array(thinking)
+            valid = []
+            for item in items:
+                if isinstance(item, dict) and item.get("en"):
+                    valid.append({
+                        "en": str(item.get("en", "")),
+                        "ko": str(item.get("ko", "")),
+                        "zh": str(item.get("zh", "")),
+                    })
+            return valid[:6]
+
+    except Exception as e:
+        logger.error(f"Picture strategy error: {e}")
+        return []
+
+
+@app.post("/api/picture-strategy")
+async def get_picture_strategy(req: dict):
+    """사진 묘사 전략 생성 API"""
+    topic = req.get("topic", "").strip()
+    prompt = req.get("prompt", "").strip()
+    vocabulary = req.get("vocabulary") or []
+
+    if not topic and not vocabulary:
+        raise HTTPException(status_code=400, detail="topic or vocabulary is required")
+
+    start_time = time.time()
+
+    cache_key = hashlib.md5(
+        f"picstrategy:{topic}:{'|'.join(map(str, vocabulary))}".encode()
+    ).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    steps = await _call_ollama_picture_strategy(topic, prompt, vocabulary)
+
+    result = {
+        "topic": topic,
+        "steps": steps,
+        "source": "ollama",
+        "model": OLLAMA_MODEL,
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if steps:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
+# ── Whisper STT Proxy ───────────────────────────────────
+# Proxies STT requests to the local whisper-stt container (host network, port 8200)
+# so that external clients can access Whisper through the same ngrok tunnel.
+
+from starlette.requests import Request
+
+WHISPER_URL = os.environ.get("WHISPER_URL", "http://192.168.1.150:8200")
+WHISPER_TIMEOUT = 120  # seconds (large-v3 can be slow on long audio)
+
+
+@app.get("/api/stt/health")
+async def stt_health_proxy():
+    """Proxy Whisper STT health check"""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{WHISPER_URL}/api/stt/health")
+            return resp.json()
+    except Exception as e:
+        logger.error(f"Whisper health proxy error: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/stt/transcribe")
+async def stt_transcribe_proxy(request: Request):
+    """Proxy Whisper STT transcription - forwards multipart form data"""
+    try:
+        body = await request.body()
+        content_type = request.headers.get("content-type", "")
+
+        async with httpx.AsyncClient(timeout=WHISPER_TIMEOUT) as client:
+            resp = await client.post(
+                f"{WHISPER_URL}/api/stt/transcribe",
+                content=body,
+                headers={"content-type": content_type},
+            )
+            return resp.json()
+    except httpx.TimeoutException:
+        logger.warning("Whisper transcribe proxy timeout")
+        raise HTTPException(status_code=504, detail="Whisper server timeout")
+    except Exception as e:
+        logger.error(f"Whisper transcribe proxy error: {e}")
+        raise HTTPException(status_code=502, detail=str(e))

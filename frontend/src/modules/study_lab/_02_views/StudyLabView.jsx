@@ -171,6 +171,7 @@ const STUDY_TABS = [
   { id: 'pte-core-words', label: 'PTE Vocabulary', icon: 'school' },
   { id: 'phrasal-verbs', label: 'Phrasal Verbs', icon: 'conversion_path' },
   { id: 'news-reading', label: 'News Reading', icon: 'newspaper' },
+  { id: 'describing-pictures', label: 'Describing Pictures', icon: 'image' },
 ]
 
 const SPEED_OPTIONS = [0.5, 0.6, 0.75, 0.85, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8]
@@ -192,6 +193,7 @@ const NEWS_SECTION_FALLBACKS = [
 const NEWS_DIFFICULTIES = ['Level 4', 'Level 5', 'Level 6', 'Level 7', 'Level 8', 'Level 9', 'Level 10']
 const WORD_MEANING_CACHE = new Map()
 const NEWS_TRANSLATION_CACHE = new Map()
+const NEWS_AI_INSIGHT_CACHE = new Map()
 const NEWS_SECTION_PREVIEW_LIMIT = 4
 const DEFAULT_NEWS_SYNC_STATE = {
   progress: 0,
@@ -610,6 +612,102 @@ function splitArticleIntoSentenceEntries(article) {
 
 function cleanWord(word = '') {
   return word.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, '').toLowerCase()
+}
+
+const IRREGULAR_VERB_FORMS = {
+  be: ['was/were', 'been'], become: ['became', 'become'], begin: ['began', 'begun'],
+  break: ['broke', 'broken'], bring: ['brought', 'brought'], build: ['built', 'built'],
+  buy: ['bought', 'bought'], catch: ['caught', 'caught'], choose: ['chose', 'chosen'],
+  come: ['came', 'come'], cost: ['cost', 'cost'], cut: ['cut', 'cut'],
+  do: ['did', 'done'], draw: ['drew', 'drawn'], drink: ['drank', 'drunk'],
+  drive: ['drove', 'driven'], eat: ['ate', 'eaten'], fall: ['fell', 'fallen'],
+  feel: ['felt', 'felt'], fight: ['fought', 'fought'], find: ['found', 'found'],
+  fly: ['flew', 'flown'], forget: ['forgot', 'forgotten'], get: ['got', 'gotten'],
+  give: ['gave', 'given'], go: ['went', 'gone'], grow: ['grew', 'grown'],
+  have: ['had', 'had'], hear: ['heard', 'heard'], hide: ['hid', 'hidden'],
+  hit: ['hit', 'hit'], hold: ['held', 'held'], keep: ['kept', 'kept'],
+  know: ['knew', 'known'], lead: ['led', 'led'], leave: ['left', 'left'],
+  lend: ['lent', 'lent'], let: ['let', 'let'], lose: ['lost', 'lost'],
+  make: ['made', 'made'], mean: ['meant', 'meant'], meet: ['met', 'met'],
+  pay: ['paid', 'paid'], put: ['put', 'put'], read: ['read', 'read'],
+  ride: ['rode', 'ridden'], rise: ['rose', 'risen'], run: ['ran', 'run'],
+  say: ['said', 'said'], see: ['saw', 'seen'], sell: ['sold', 'sold'],
+  send: ['sent', 'sent'], set: ['set', 'set'], show: ['showed', 'shown'],
+  sing: ['sang', 'sung'], sit: ['sat', 'sat'], sleep: ['slept', 'slept'],
+  speak: ['spoke', 'spoken'], spend: ['spent', 'spent'], stand: ['stood', 'stood'],
+  steal: ['stole', 'stolen'], swim: ['swam', 'swum'], take: ['took', 'taken'],
+  teach: ['taught', 'taught'], tell: ['told', 'told'], think: ['thought', 'thought'],
+  throw: ['threw', 'thrown'], understand: ['understood', 'understood'],
+  wake: ['woke', 'woken'], wear: ['wore', 'worn'], win: ['won', 'won'],
+  write: ['wrote', 'written'],
+}
+
+const IRREGULAR_BASE_LOOKUP = (() => {
+  const lookup = new Map()
+  Object.entries(IRREGULAR_VERB_FORMS).forEach(([base, [past, participle]]) => {
+    lookup.set(base, base)
+    ;`${past}/${participle}`.split('/').forEach((form) => {
+      if (!lookup.has(form)) lookup.set(form, base)
+    })
+  })
+  return lookup
+})()
+
+const REGULAR_E_VERB_STEMS = new Set([
+  'lov', 'liv', 'mov', 'us', 'creat', 'danc', 'hop', 'chang', 'clos', 'continu',
+  'decid', 'describ', 'produc', 'provid', 'receiv', 'reduc', 'releas', 'requir',
+  'shar', 'sav', 'serv', 'solv', 'notic', 'manag', 'measur', 'increas', 'decreas',
+  'improv', 'includ', 'involv', 'arriv', 'achiev', 'believ', 'compar', 'complet',
+  'celebrat', 'invit', 'excit', 'imagin', 'prepar', 'realiz', 'recogniz', 'remov',
+  'replac', 'retir', 'settl', 'struggl', 'suppos', 'surviv', 'translat', 'updat',
+  'vot', 'welcom', 'stor', 'scor', 'plac', 'fac', 'judg', 'damag', 'encourag',
+  'experienc', 'forc', 'balanc', 'handl', 'doubl', 'rescu', 'argu', 'issu', 'valu',
+  'stat', 'rat', 'dat', 'hat', 'nam', 'caus', 'sav', 'smil', 'rais', 'declin',
+])
+
+function deriveRegularVerbBase(word) {
+  if (!word.endsWith('ed') || word.length < 4) return ''
+  if (word.endsWith('ied') && word.length > 4) return `${word.slice(0, -3)}y`
+  const stem = word.slice(0, -2)
+  if (REGULAR_E_VERB_STEMS.has(stem)) return `${stem}e`
+  const last = stem[stem.length - 1]
+  const prev = stem[stem.length - 2]
+  if (last === prev && !'aeioulsfz'.includes(last) && stem !== 'add') return stem.slice(0, -1)
+  if ('vui'.includes(last)) return `${stem}e`
+  return stem
+}
+
+function buildRegularPastForm(base) {
+  if (base.endsWith('e')) return `${base}d`
+  if (/[^aeiou]y$/.test(base)) return `${base.slice(0, -1)}ied`
+  if (/^[^aeiou]*[aeiou][^aeiouwxy]$/.test(base) && base.length <= 4) return `${base}${base[base.length - 1]}ed`
+  return `${base}ed`
+}
+
+function getVerbForms(word, detail) {
+  const normalized = cleanWord(word)
+  if (!normalized) return null
+  const isDictionaryVerb = (detail?.meanings || []).some((item) => item.partOfSpeech === 'verb')
+
+  const irregularBase = IRREGULAR_BASE_LOOKUP.get(normalized)
+  if (irregularBase) {
+    const [past, participle] = IRREGULAR_VERB_FORMS[irregularBase]
+    return { base: irregularBase, past, participle, matchedForm: normalized }
+  }
+
+  if (normalized.endsWith('ed')) {
+    const base = deriveRegularVerbBase(normalized)
+    if (base && (isDictionaryVerb || base.length >= 3)) {
+      return { base, past: normalized, participle: normalized, matchedForm: normalized }
+    }
+  }
+
+  if (isDictionaryVerb) {
+    const past = buildRegularPastForm(normalized)
+    return { base: normalized, past, participle: past, matchedForm: normalized }
+  }
+
+  return null
 }
 
 function getOrdinaryVerbLookupWord(value = '') {
@@ -2220,6 +2318,36 @@ function SentenceListeningPanel() {
   )
 }
 
+function AiInsightProgress({ label, indeterminate = false }) {
+  const [progress, setProgress] = useState(4)
+
+  useEffect(() => {
+    if (indeterminate) return undefined
+    const timer = window.setInterval(() => {
+      setProgress((current) => {
+        const remaining = 94 - current
+        if (remaining <= 0) return current
+        return current + Math.max(0.25, remaining * 0.05)
+      })
+    }, 420)
+    return () => window.clearInterval(timer)
+  }, [indeterminate])
+
+  const boundedProgress = Math.min(progress, 94)
+
+  return (
+    <div className="study-news-ai-progress" role="status" aria-live="polite">
+      <div className={`study-news-ai-progress__track ${indeterminate ? 'study-news-ai-progress__track--indeterminate' : ''}`}>
+        <i style={indeterminate ? undefined : { width: `${boundedProgress}%` }} />
+      </div>
+      <div className="study-news-ai-progress__meta">
+        <span>{label}</span>
+        {!indeterminate ? <strong>{Math.round(boundedProgress)}%</strong> : null}
+      </div>
+    </div>
+  )
+}
+
 function NewsWordPopup({ word, initialLang = 'en', sourceArticle = null, onClose }) {
   const tokens = useAuthStore((state) => state.tokens)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -2291,6 +2419,7 @@ function NewsWordPopup({ word, initialLang = 'en', sourceArticle = null, onClose
 
   if (!normalizedWord) return null
 
+  const verbForms = getVerbForms(normalizedWord, detail)
   const usPhonetic = getAccentPhonetic(detail, 'us')
   const ukPhonetic = getAccentPhonetic(detail, 'uk')
   const fallbackPhonetic = detail?.phonetic || usPhonetic.text || ukPhonetic.text || ''
@@ -2390,6 +2519,16 @@ function NewsWordPopup({ word, initialLang = 'en', sourceArticle = null, onClose
             UK
           </button>
         </div>
+        {verbForms ? (
+          <div className="study-word-verb-forms" aria-label="Verb forms">
+            <span className="study-word-verb-forms__label">Verb forms</span>
+            <div className="study-word-verb-forms__row">
+              <span><em>Present</em><strong>{verbForms.base}</strong></span>
+              <span><em>Past</em><strong>{verbForms.past}</strong></span>
+              <span><em>Past participle</em><strong>{verbForms.participle}</strong></span>
+            </div>
+          </div>
+        ) : null}
         <div className="study-chip-group study-word-lang-group">
           {[
             ['en', 'English'],
@@ -3532,6 +3671,13 @@ function NewsReadingPanel({ resetToken = 0 }) {
   const [isArticleSpeechPlaying, setIsArticleSpeechPlaying] = useState(false)
   const [isArticleSpeechPaused, setIsArticleSpeechPaused] = useState(false)
   const [wordPopup, setWordPopup] = useState(null)
+  const [studyGuideItems, setStudyGuideItems] = useState([])
+  const [studyGuideStatus, setStudyGuideStatus] = useState('idle')
+  const [newsQuizQuestions, setNewsQuizQuestions] = useState([])
+  const [newsQuizStatus, setNewsQuizStatus] = useState('idle')
+  const [quizSelections, setQuizSelections] = useState({})
+  const [showQuizAnswers, setShowQuizAnswers] = useState(false)
+  const [insightRetryCount, setInsightRetryCount] = useState(0)
   const [syncProgress, setSyncProgress] = useState(initialSyncState.progress)
   const [syncStatus, setSyncStatus] = useState(initialSyncState.status)
   const [isSyncing, setIsSyncing] = useState(initialSyncState.isSyncing)
@@ -3542,6 +3688,7 @@ function NewsReadingPanel({ resetToken = 0 }) {
   const [visibleSectionArticleCount, setVisibleSectionArticleCount] = useState(NEWS_SECTION_BATCH_SIZE)
   const speechRunRef = useRef(0)
   const newsSectionLoadMoreRef = useRef(null)
+  const newsDetailScrollRef = useRef(null)
 
   const newsSections = useMemo(() => {
     const sections = [...new Set(newsArticles.map((article) => article.section).filter(Boolean))]
@@ -3768,6 +3915,74 @@ function NewsReadingPanel({ resetToken = 0 }) {
   }, [articleDetails, canOpenNewsDetail, selectedArticleId, selectedArticleSummary])
 
   useEffect(() => {
+    setQuizSelections({})
+    setShowQuizAnswers(false)
+    if (!selectedArticleId || !canOpenNewsDetail || !tokens?.access_token) {
+      setStudyGuideItems([])
+      setNewsQuizQuestions([])
+      setStudyGuideStatus('idle')
+      setNewsQuizStatus('idle')
+      return undefined
+    }
+
+    const insightLang = newsTranslationLang === 'en' ? 'ko' : newsTranslationLang
+    const cacheKey = `${selectedArticleId}:${insightLang}`
+    const cached = NEWS_AI_INSIGHT_CACHE.get(cacheKey)
+    if (cached) {
+      setStudyGuideItems(cached.items)
+      setStudyGuideStatus(cached.items.length ? 'ready' : 'error')
+      setNewsQuizQuestions(cached.questions)
+      setNewsQuizStatus(cached.questions.length ? 'ready' : 'error')
+      return undefined
+    }
+
+    let cancelled = false
+    const authHeaders = { headers: { Authorization: `Bearer ${tokens.access_token}` } }
+    const encodedId = encodeURIComponent(selectedArticleId)
+
+    async function loadInsights() {
+      setStudyGuideItems([])
+      setNewsQuizQuestions([])
+      setStudyGuideStatus('loading')
+      setNewsQuizStatus('waiting')
+
+      let items = []
+      try {
+        const response = await apiGet(`/api/study-lab/engoo-news/${encodedId}/study-guide`, { lang: insightLang }, authHeaders)
+        if (cancelled) return
+        items = response.data?.items || []
+        setStudyGuideItems(items)
+        setStudyGuideStatus(items.length ? 'ready' : 'error')
+      } catch {
+        if (cancelled) return
+        setStudyGuideStatus('error')
+      }
+
+      let questions = []
+      setNewsQuizStatus('loading')
+      try {
+        const response = await apiGet(`/api/study-lab/engoo-news/${encodedId}/quiz`, { lang: insightLang, count: 5 }, authHeaders)
+        if (cancelled) return
+        questions = response.data?.questions || []
+        setNewsQuizQuestions(questions)
+        setNewsQuizStatus(questions.length ? 'ready' : 'error')
+      } catch {
+        if (cancelled) return
+        setNewsQuizStatus('error')
+      }
+
+      if (items.length || questions.length) {
+        NEWS_AI_INSIGHT_CACHE.set(cacheKey, { items, questions })
+      }
+    }
+
+    loadInsights()
+    return () => {
+      cancelled = true
+    }
+  }, [canOpenNewsDetail, insightRetryCount, newsTranslationLang, selectedArticleId, tokens?.access_token])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(getAccountStorageKey(NEWS_FAVORITES_STORAGE_KEY, accountKey), JSON.stringify(favoriteNewsIds))
   }, [accountKey, favoriteNewsIds])
@@ -3906,6 +4121,23 @@ function NewsReadingPanel({ resetToken = 0 }) {
       },
     })
   }
+
+  useEffect(() => {
+    const followIndex = speakingSentenceIndex ?? (isArticleSpeechPlaying ? activeSentenceIndex : null)
+    if (followIndex == null) return
+    const container = newsDetailScrollRef.current
+    if (!container) return
+    const target = container.querySelector(`[data-sentence-index="${followIndex}"]`)
+    if (!target) return
+    const containerRect = container.getBoundingClientRect()
+    const stickyHeaderHeight = container.querySelector('header')?.getBoundingClientRect().height || 0
+    const targetRect = target.getBoundingClientRect()
+    const visibleTop = containerRect.top + stickyHeaderHeight
+    const isOutOfView = targetRect.top < visibleTop || targetRect.bottom > containerRect.bottom
+    if (!isOutOfView) return
+    const centerOffset = targetRect.top - visibleTop - (containerRect.bottom - visibleTop - targetRect.height) / 2
+    container.scrollTo({ top: container.scrollTop + centerOffset, behavior: 'smooth' })
+  }, [activeSentenceIndex, isArticleSpeechPlaying, speakingSentenceIndex])
 
   const readAdjacentSentence = (direction) => {
     if (!canOpenNewsDetail) return
@@ -4221,7 +4453,7 @@ function NewsReadingPanel({ resetToken = 0 }) {
 
       {selectedArticle && typeof document !== 'undefined' ? createPortal((
         <div className={`study-news-modal ${isArticleModalFullscreen ? 'study-news-modal--fullscreen' : ''}`} role="dialog" aria-modal="true">
-          <article className="study-news-detail">
+          <article className="study-news-detail" ref={newsDetailScrollRef}>
             <header>
               <div>
                 <span>{selectedArticle.section} · {selectedArticle.difficulty} · {selectedArticle.source}</span>
@@ -4378,6 +4610,7 @@ function NewsReadingPanel({ resetToken = 0 }) {
                         <span key={entry?.id || `${paragraphIndex}-${sentenceIndex}`} className="study-news-sentence-unit">
                           <span
                             className={`study-news-sentence-fragment ${entryIndex === activeSentenceIndex ? 'study-news-sentence--active' : ''} ${entryIndex === speakingSentenceIndex ? 'study-news-sentence--speaking' : ''}`}
+                            data-sentence-index={entryIndex}
                             onClick={() => setActiveSentenceIndex(entryIndex)}
                           >
                             {renderInteractiveText(sentence)}
@@ -4408,12 +4641,1076 @@ function NewsReadingPanel({ resetToken = 0 }) {
                 {selectedArticle.discussion.map((topic) => <p key={topic}>{topic}</p>)}
               </div>
             ) : null}
+
+            {canOpenNewsDetail ? (
+              <section className="study-news-ai-box study-news-ai-box--guide" aria-label="Key expressions from this article">
+                <header className="study-news-ai-box__header">
+                  <h3>
+                    <span className="material-symbols-outlined">school</span>
+                    Key expressions &amp; patterns
+                  </h3>
+                  <span className="study-news-ai-badge" title="Generated by the Lannie home server (Ollama qwen)">
+                    <span className="material-symbols-outlined">smart_toy</span>
+                    Analyzed by Lannie Server
+                  </span>
+                </header>
+                {studyGuideStatus === 'loading' ? (
+                  <AiInsightProgress label="Lannie server is reading this article..." />
+                ) : null}
+                {studyGuideStatus === 'error' ? (
+                  <p className="study-news-ai-status study-news-ai-status--error">
+                    Could not get study points from the Lannie server.
+                    <button type="button" onClick={() => setInsightRetryCount((current) => current + 1)}>Retry</button>
+                  </p>
+                ) : null}
+                {studyGuideStatus === 'ready' ? (
+                  <ul className="study-news-ai-guide-list">
+                    {studyGuideItems.map((item, index) => (
+                      <li key={`${item.text}-${index}`}>
+                        <div className="study-news-ai-guide-head">
+                          <span className={`study-news-ai-type study-news-ai-type--${item.type}`}>
+                            {{ phrasal_verb: 'Phrasal verb', idiom: 'Idiom', collocation: 'Collocation', pattern: 'Pattern' }[item.type] || 'Pattern'}
+                          </span>
+                          <strong>{item.text}</strong>
+                        </div>
+                        <p className="study-news-ai-guide-meaning">
+                          {item.meaning}
+                          {item.meaning_translated ? <span> — {item.meaning_translated}</span> : null}
+                        </p>
+                        {item.example ? (
+                          <p className="study-news-ai-guide-example">
+                            “{item.example}”
+                            {item.example_translated ? <span> {item.example_translated}</span> : null}
+                          </p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ) : null}
+
+            {canOpenNewsDetail ? (
+              <section className="study-news-ai-box study-news-ai-box--quiz" aria-label="CELPIP style listening questions">
+                <header className="study-news-ai-box__header">
+                  <h3>
+                    <span className="material-symbols-outlined">quiz</span>
+                    CELPIP-style listening questions
+                  </h3>
+                  <span className="study-news-ai-badge" title="Generated by the Lannie home server (Ollama qwen)">
+                    <span className="material-symbols-outlined">smart_toy</span>
+                    Analyzed by Lannie Server
+                  </span>
+                </header>
+                {newsQuizStatus === 'waiting' ? (
+                  <AiInsightProgress label="Waiting for the study points to finish first..." indeterminate />
+                ) : null}
+                {newsQuizStatus === 'loading' ? (
+                  <AiInsightProgress label="Lannie server is writing questions..." />
+                ) : null}
+                {newsQuizStatus === 'error' ? (
+                  <p className="study-news-ai-status study-news-ai-status--error">
+                    Could not get quiz questions from the Lannie server.
+                    <button type="button" onClick={() => setInsightRetryCount((current) => current + 1)}>Retry</button>
+                  </p>
+                ) : null}
+                {newsQuizStatus === 'ready' ? (
+                  <>
+                    <ol className="study-news-ai-quiz-list">
+                      {newsQuizQuestions.map((question, questionIndex) => (
+                        <li key={`quiz-${questionIndex}`}>
+                          <p className="study-news-ai-quiz-question">{question.question}</p>
+                          <div className="study-news-ai-quiz-options">
+                            {question.options.map((option, optionIndex) => {
+                              const isSelected = quizSelections[questionIndex] === optionIndex
+                              const isCorrect = optionIndex === question.answer_index
+                              const revealClass = showQuizAnswers
+                                ? (isCorrect ? ' study-news-ai-quiz-option--correct' : (isSelected ? ' study-news-ai-quiz-option--wrong' : ''))
+                                : ''
+                              return (
+                                <button
+                                  key={`quiz-${questionIndex}-${optionIndex}`}
+                                  type="button"
+                                  className={`study-news-ai-quiz-option${isSelected ? ' study-news-ai-quiz-option--selected' : ''}${revealClass}`}
+                                  onClick={() => setQuizSelections((current) => ({ ...current, [questionIndex]: optionIndex }))}
+                                >
+                                  <span className="study-news-ai-quiz-letter">{'ABCD'[optionIndex]}</span>
+                                  {option}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                    <button
+                      type="button"
+                      className="study-news-ai-answers-toggle"
+                      onClick={() => setShowQuizAnswers((current) => !current)}
+                    >
+                      <span className="material-symbols-outlined">{showQuizAnswers ? 'visibility_off' : 'visibility'}</span>
+                      {showQuizAnswers ? 'Hide answers & explanations' : 'Show answers & explanations'}
+                    </button>
+                    {showQuizAnswers ? (
+                      <div className="study-news-ai-answers">
+                        <h4>Answers &amp; explanations</h4>
+                        {newsQuizQuestions.map((question, questionIndex) => (
+                          <div key={`answer-${questionIndex}`} className="study-news-ai-answer-item">
+                            <strong>Q{questionIndex + 1}. Answer: {'ABCD'[question.answer_index]}</strong>
+                            <p>{question.explanation}</p>
+                            {question.explanation_translated ? <p className="study-news-ai-answer-translated">{question.explanation_translated}</p> : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </section>
+            ) : null}
           </article>
         </div>
       ), document.body) : null}
 
       {wordPopup && typeof document !== 'undefined' ? createPortal((
         <NewsWordPopup word={wordPopup} initialLang={newsTranslationLang} sourceArticle={selectedArticle} onClose={() => setWordPopup(null)} />
+      ), document.body) : null}
+    </section>
+  )
+}
+
+const DP_LEVEL_LABELS = { Intermediate: '중급', Advanced: '상급' }
+const DP_MODEL_ANSWER_CACHE = new Map()
+const DP_STRATEGY_CACHE = new Map()
+const DP_FAVORITES_STORAGE_KEY = 'unilingo.studyLab.dpFavorites'
+const DP_COMPLETED_STORAGE_KEY = 'unilingo.studyLab.dpCompleted'
+const DP_WORD_FAVORITES_STORAGE_KEY = 'unilingo.studyLab.dpWordFavorites'
+const DP_PAGE_SIZE_OPTIONS = [12, 20, 40, 60]
+const DP_LANG_OPTIONS = [
+  { id: 'en', label: 'US' },
+  { id: 'ko', label: 'KR' },
+  { id: 'zh', label: 'CN' },
+]
+
+const DP_TEMPLATES = [
+  {
+    id: 'overview',
+    label: 'General scene',
+    ko: '전체 묘사',
+    lines: [
+      { parts: ['This picture shows ', { hint: '장소나 상황 (예: a doctor\'s office, a busy street)' }, '.'] },
+      { parts: ['In the ', { hint: '위치: center / foreground / background' }, ' of the picture, I can see ', { hint: '가장 눈에 띄는 사람이나 사물' }, '.'] },
+      { parts: [{ hint: '주인공: The man / The woman / They' }, ' is ', { hint: '동작 (~ing)' }, '.'] },
+      { parts: ['In the background, there ', { hint: 'is / are' }, ' ', { hint: '배경에 보이는 것' }, '.'] },
+      { parts: ['It looks like ', { hint: '전체 상황 추측 (문장으로)' }, '.'] },
+      { parts: ['Overall, the atmosphere seems ', { hint: '분위기 형용사: calm / busy / cheerful / tense' }, '.'] },
+    ],
+  },
+  {
+    id: 'people',
+    label: 'People focus',
+    ko: '인물 중심',
+    lines: [
+      { parts: ['There ', { hint: 'is / are' }, ' ', { hint: '인원: two people / a man and a woman' }, ' in this picture.'] },
+      { parts: ['The person on the ', { hint: 'left / right' }, ' is wearing ', { hint: '옷차림' }, '.'] },
+      { parts: [{ hint: 'He / She / They' }, ' seem(s) to be ', { hint: '동작이나 상태 (~ing)' }, '.'] },
+      { parts: ['Judging from ', { hint: 'their expressions / their body language' }, ', they look ', { hint: '감정 형용사: happy / worried / focused' }, '.'] },
+      { parts: ['They are probably ', { hint: '관계 추측: colleagues / family / a doctor and a patient' }, '.'] },
+      { parts: ['I think ', { hint: '인물에 대한 마무리 의견 (문장으로)' }, '.'] },
+    ],
+  },
+  {
+    id: 'place',
+    label: 'Place & objects',
+    ko: '장소/사물',
+    lines: [
+      { parts: ['This picture was probably taken ', { hint: '장소: at a hospital / in a park / at home' }, '.'] },
+      { parts: ['I can see ', { hint: '사물 1' }, ' and ', { hint: '사물 2' }, ' in the picture.'] },
+      { parts: ['On the ', { hint: 'left / right' }, ' side, there is ', { hint: '그쪽에 보이는 것' }, '.'] },
+      { parts: ['The ', { hint: '사물' }, ' is used for ', { hint: '용도 (~ing)' }, '.'] },
+      { parts: ['This place looks ', { hint: '형용사: clean / crowded / modern' }, ' because ', { hint: '그렇게 보이는 이유' }, '.'] },
+    ],
+  },
+  {
+    id: 'story',
+    label: 'Story & guess',
+    ko: '추측/스토리',
+    lines: [
+      { parts: ['In this picture, ', { hint: '지금 일어나고 있는 일 (문장으로)' }, '.'] },
+      { parts: ['Before this moment, ', { hint: '직전 상황 추측: they probably ~' }, '.'] },
+      { parts: ['I guess this because ', { hint: '추측의 근거' }, '.'] },
+      { parts: ['After this, ', { hint: '다음 상황 추측: they might ~' }, '.'] },
+      { parts: ['If I were in this picture, I would ', { hint: '나라면 어떻게 할지' }, '.'] },
+    ],
+  },
+]
+
+function DescribingPicturesPanel() {
+  const user = useAuthStore((state) => state.user)
+  const isAdmin = useAuthStore((state) => state.isAdmin)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const tokens = useAuthStore((state) => state.tokens)
+  const canSync = isAdmin || user?.user_level === 'admin' || user?.userLevel === 'admin'
+  const approvalStatus = user?.approvalStatus || user?.approval_status
+  const isApprovedUser = user?.is_approved === true || approvalStatus === 'approved'
+  const canOpenDetail = Boolean(isAuthenticated && (canSync || isApprovedUser))
+  const accountKey = user?.id || user?.email || 'guest'
+
+  const [pictures, setPictures] = useState([])
+  const [favoriteIds, setFavoriteIds] = useState(() => readJsonStorage(DP_FAVORITES_STORAGE_KEY, accountKey, []))
+  const [completedIds, setCompletedIds] = useState(() => readJsonStorage(DP_COMPLETED_STORAGE_KEY, accountKey, []))
+  const [wordFavorites, setWordFavorites] = useState(() => readJsonStorage(DP_WORD_FAVORITES_STORAGE_KEY, accountKey, []))
+  const [readFilter, setReadFilter] = useState('all')
+  const [listMeta, setListMeta] = useState({ total: 0, levels: {}, imported_lessons: 0, total_lessons: 0, headers_loaded: false })
+  const [listStatus, setListStatus] = useState('loading')
+  const [levelFilter, setLevelFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [selectedId, setSelectedId] = useState(null)
+  const [isDpModalFullscreen, setIsDpModalFullscreen] = useState(false)
+  const [isImageCompact, setIsImageCompact] = useState(false)
+  const [detail, setDetail] = useState(null)
+  const [detailStatus, setDetailStatus] = useState('idle')
+  const [wordPopup, setWordPopup] = useState(null)
+  const [dpLang, setDpLang] = useState('ko')
+  const [showStrategy, setShowStrategy] = useState(true)
+  const [showPractice, setShowPractice] = useState(true)
+  const [showVocab, setShowVocab] = useState(true)
+  const [strategySteps, setStrategySteps] = useState([])
+  const [strategyStatus, setStrategyStatus] = useState('idle')
+  const [strategyRetryCount, setStrategyRetryCount] = useState(0)
+  const [templateId, setTemplateId] = useState('overview')
+  const [templateAnswers, setTemplateAnswers] = useState({})
+  const [visibleHints, setVisibleHints] = useState({})
+  const [modelSentences, setModelSentences] = useState([])
+  const [modelStatus, setModelStatus] = useState('idle')
+  const [headersJson, setHeadersJson] = useState('')
+  const [importStatus, setImportStatus] = useState('')
+  const [isImporting, setIsImporting] = useState(false)
+  const importCancelRef = useRef(false)
+
+  const loadPictureList = async () => {
+    setListStatus('loading')
+    try {
+      const response = await apiGet('/api/study-lab/describing-pictures')
+      setPictures(response.data?.pictures || [])
+      setListMeta({
+        total: response.data?.total || 0,
+        levels: response.data?.levels || {},
+        imported_lessons: response.data?.imported_lessons || 0,
+        total_lessons: response.data?.total_lessons || 0,
+        headers_loaded: Boolean(response.data?.headers_loaded),
+      })
+      setListStatus('ready')
+    } catch {
+      setListStatus('error')
+    }
+  }
+
+  useEffect(() => {
+    loadPictureList()
+  }, [])
+
+  useEffect(() => {
+    setFavoriteIds(readJsonStorage(DP_FAVORITES_STORAGE_KEY, accountKey, []))
+    setCompletedIds(readJsonStorage(DP_COMPLETED_STORAGE_KEY, accountKey, []))
+    setWordFavorites(readJsonStorage(DP_WORD_FAVORITES_STORAGE_KEY, accountKey, []))
+  }, [accountKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(getAccountStorageKey(DP_FAVORITES_STORAGE_KEY, accountKey), JSON.stringify(favoriteIds))
+  }, [accountKey, favoriteIds])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(getAccountStorageKey(DP_COMPLETED_STORAGE_KEY, accountKey), JSON.stringify(completedIds))
+  }, [accountKey, completedIds])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(getAccountStorageKey(DP_WORD_FAVORITES_STORAGE_KEY, accountKey), JSON.stringify(wordFavorites))
+  }, [accountKey, wordFavorites])
+
+  const toggleFavoritePicture = (pictureId) => {
+    setFavoriteIds((current) => (
+      current.includes(pictureId) ? current.filter((id) => id !== pictureId) : [...current, pictureId]
+    ))
+  }
+
+  const toggleCompletedPicture = (pictureId) => {
+    setCompletedIds((current) => (
+      current.includes(pictureId) ? current.filter((id) => id !== pictureId) : [...current, pictureId]
+    ))
+  }
+
+  const toggleWordFavorite = (item) => {
+    const word = item.word
+    const isAdding = !wordFavorites.includes(word)
+    setWordFavorites((current) => (
+      isAdding ? [...current, word] : current.filter((entry) => entry !== word)
+    ))
+    if (isAdding && isAuthenticated && tokens?.access_token) {
+      apiPost('/api/admin/dictionary-logs', {
+        search_word: word,
+        source_lang: 'en',
+        target_lang: dpLang === 'en' ? 'ko' : dpLang,
+        search_source: 'describing_pictures',
+        result_summary: item.definition || '',
+        search_results: {
+          phonetic: item.pronunciation || '',
+          definition: item.definition || '',
+          localizedTerm: (dpLang === 'zh' ? item.zh : item.ko) || '',
+          source: 'describing_pictures',
+          articleTitle: detail?.exerciseTitle || '',
+          articleId: detail?.id || '',
+        },
+      }, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      }).catch(() => {})
+    }
+  }
+
+  const filteredPictures = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase()
+    return pictures
+      .filter((item) => levelFilter === 'all' || item.level === levelFilter)
+      .filter((item) => {
+        if (readFilter === 'favorites') return favoriteIds.includes(item.id)
+        if (readFilter === 'completed') return completedIds.includes(item.id)
+        if (readFilter === 'unread') return !completedIds.includes(item.id)
+        return true
+      })
+      .filter((item) => {
+        if (!normalizedSearch) return true
+        return [item.exerciseTitle, item.lessonTitle, item.level]
+          .some((value) => String(value || '').toLowerCase().includes(normalizedSearch))
+      })
+  }, [completedIds, favoriteIds, levelFilter, pictures, readFilter, search])
+  const totalPages = Math.max(1, Math.ceil(filteredPictures.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const visiblePictures = filteredPictures.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const pageNumbers = useMemo(() => {
+    const windowSize = 2
+    const numbers = new Set([1, totalPages])
+    for (let i = currentPage - windowSize; i <= currentPage + windowSize; i += 1) {
+      if (i >= 1 && i <= totalPages) numbers.add(i)
+    }
+    return [...numbers].sort((a, b) => a - b)
+  }, [currentPage, totalPages])
+
+  const goToPage = (nextPage) => {
+    setPage(Math.max(1, Math.min(nextPage, totalPages)))
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    setPage(1)
+  }, [levelFilter, readFilter, search, pageSize])
+
+  useEffect(() => {
+    setTemplateAnswers({})
+    setVisibleHints({})
+    setModelSentences([])
+    setModelStatus('idle')
+    if (!selectedId) {
+      setDetail(null)
+      setDetailStatus('idle')
+      return undefined
+    }
+    let cancelled = false
+    setDetailStatus('loading')
+    async function loadDetail() {
+      try {
+        const response = await apiGet(`/api/study-lab/describing-pictures/${encodeURIComponent(selectedId)}`)
+        if (cancelled) return
+        setDetail(response.data?.picture || null)
+        setDetailStatus('ready')
+      } catch {
+        if (cancelled) return
+        setDetailStatus('error')
+      }
+    }
+    loadDetail()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedId])
+
+  const modelAnswerLang = dpLang === 'en' ? 'ko' : dpLang
+
+  useEffect(() => {
+    setModelSentences([])
+    setModelStatus('idle')
+  }, [modelAnswerLang, templateId])
+
+  useEffect(() => {
+    setStrategySteps([])
+    setStrategyStatus('idle')
+    if (!selectedId || !canOpenDetail || !tokens?.access_token || detailStatus !== 'ready') return undefined
+    if (DP_STRATEGY_CACHE.has(selectedId)) {
+      setStrategySteps(DP_STRATEGY_CACHE.get(selectedId))
+      setStrategyStatus('ready')
+      return undefined
+    }
+    let cancelled = false
+    setStrategyStatus('loading')
+    async function loadStrategy() {
+      try {
+        const response = await apiGet(
+          `/api/study-lab/describing-pictures/${encodeURIComponent(selectedId)}/strategy`,
+          {},
+          { headers: { Authorization: `Bearer ${tokens.access_token}` } },
+        )
+        if (cancelled) return
+        const steps = response.data?.steps || []
+        if (steps.length) {
+          DP_STRATEGY_CACHE.set(selectedId, steps)
+          setStrategySteps(steps)
+          setStrategyStatus('ready')
+        } else {
+          setStrategyStatus('error')
+        }
+      } catch {
+        if (cancelled) return
+        setStrategyStatus('error')
+      }
+    }
+    loadStrategy()
+    return () => {
+      cancelled = true
+    }
+  }, [canOpenDetail, detailStatus, selectedId, strategyRetryCount, tokens?.access_token])
+
+  const retryStrategy = () => {
+    if (selectedId) DP_STRATEGY_CACHE.delete(selectedId)
+    setStrategyRetryCount((current) => current + 1)
+  }
+
+  const activeTemplate = DP_TEMPLATES.find((template) => template.id === templateId) || DP_TEMPLATES[0]
+
+  const blankKey = (lineIndex, partIndex) => `${templateId}-${lineIndex}-${partIndex}`
+
+  const buildLineText = (line, lineIndex) => {
+    return line.parts.map((part, partIndex) => {
+      if (typeof part === 'string') return part
+      return templateAnswers[blankKey(lineIndex, partIndex)] || '...'
+    }).join('')
+  }
+
+  const fetchModelAnswer = async () => {
+    if (!selectedId || !tokens?.access_token) return
+    const cacheKey = `${selectedId}:${templateId}:${modelAnswerLang}`
+    if (DP_MODEL_ANSWER_CACHE.has(cacheKey)) {
+      setModelSentences(DP_MODEL_ANSWER_CACHE.get(cacheKey))
+      setModelStatus('ready')
+      return
+    }
+    setModelStatus('loading')
+    try {
+      const response = await apiGet(
+        `/api/study-lab/describing-pictures/${encodeURIComponent(selectedId)}/model-answer`,
+        { template: templateId, lang: modelAnswerLang },
+        { headers: { Authorization: `Bearer ${tokens.access_token}` } },
+      )
+      const sentences = response.data?.sentences || []
+      if (sentences.length) {
+        DP_MODEL_ANSWER_CACHE.set(cacheKey, sentences)
+        setModelSentences(sentences)
+        setModelStatus('ready')
+      } else {
+        setModelStatus('error')
+      }
+    } catch {
+      setModelStatus('error')
+    }
+  }
+
+  const saveHeadersJson = async () => {
+    if (!headersJson.trim() || !tokens?.access_token) return
+    setImportStatus('Saving lesson list...')
+    try {
+      const raw = JSON.parse(headersJson)
+      const response = await apiPut('/api/study-lab/describing-pictures/headers', { raw }, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      })
+      const courses = response.data?.courses || []
+      setImportStatus(`Lesson list saved: ${courses.map((course) => `${course.level} ${course.lessons}`).join(', ')} lessons.`)
+      setHeadersJson('')
+      loadPictureList()
+    } catch (error) {
+      setImportStatus(error?.data?.error?.message || 'Could not parse the pasted JSON. Paste the full response.')
+    }
+  }
+
+  const runImport = async () => {
+    if (isImporting || !tokens?.access_token) return
+    importCancelRef.current = false
+    setIsImporting(true)
+    try {
+      for (let round = 0; round < 60; round += 1) {
+        if (importCancelRef.current) break
+        const response = await apiPost('/api/study-lab/describing-pictures/sync', { limit: 8 }, {
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
+        })
+        const data = response.data || {}
+        setImportStatus(`Imported ${data.imported_lessons || 0} / ${data.total_lessons || 0} lessons (${data.total_pictures || 0} pictures).`)
+        setListMeta((current) => ({
+          ...current,
+          imported_lessons: data.imported_lessons || current.imported_lessons,
+          total_lessons: data.total_lessons || current.total_lessons,
+        }))
+        if (data.done) {
+          setImportStatus(`Import complete: ${data.total_pictures || 0} pictures from ${data.imported_lessons || 0} lessons.`)
+          break
+        }
+      }
+    } catch (error) {
+      setImportStatus(error?.data?.error?.message || 'Import failed. Try again to continue where it stopped.')
+    } finally {
+      setIsImporting(false)
+      loadPictureList()
+    }
+  }
+
+  const importPercent = listMeta.total_lessons
+    ? Math.round((listMeta.imported_lessons / listMeta.total_lessons) * 100)
+    : 0
+
+  return (
+    <section className="study-panel study-dp-panel" aria-label="Engoo describing pictures practice">
+      <header className="study-dp-hero">
+        <div>
+          <h2>Describing Pictures</h2>
+          <p>
+            Engoo picture-description materials. Study the vocabulary, listen to it, then practice
+            speaking with guided templates and a Lannie-server model answer.
+          </p>
+        </div>
+        <div className="study-dp-hero-stats">
+          <span><strong>{listMeta.levels?.Intermediate || 0}</strong> Intermediate</span>
+          <span><strong>{listMeta.levels?.Advanced || 0}</strong> Advanced</span>
+          <span><strong>{listMeta.total}</strong> Pictures</span>
+        </div>
+      </header>
+
+      <div className="study-dp-toolbar">
+        <div className="study-chip-group">
+          {['all', 'Intermediate', 'Advanced'].map((level) => (
+            <button
+              key={level}
+              type="button"
+              className={`study-filter-chip ${levelFilter === level ? 'study-filter-chip--active' : ''}`}
+              onClick={() => setLevelFilter(level)}
+            >
+              {level === 'all' ? 'All levels' : level}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`study-filter-chip ${readFilter === 'favorites' ? 'study-filter-chip--active' : ''}`}
+            onClick={() => setReadFilter((current) => (current === 'favorites' ? 'all' : 'favorites'))}
+            title="Show favorite pictures"
+          >
+            ★ Favorites ({favoriteIds.length})
+          </button>
+          <button
+            type="button"
+            className={`study-filter-chip ${readFilter === 'completed' ? 'study-filter-chip--active' : ''}`}
+            onClick={() => setReadFilter((current) => (current === 'completed' ? 'all' : 'completed'))}
+            title="Show completed pictures"
+          >
+            ✓ Completed ({completedIds.length})
+          </button>
+          <button
+            type="button"
+            className={`study-filter-chip ${readFilter === 'unread' ? 'study-filter-chip--active' : ''}`}
+            onClick={() => setReadFilter((current) => (current === 'unread' ? 'all' : 'unread'))}
+            title="Show pictures not completed yet"
+          >
+            Unread
+          </button>
+        </div>
+        <div className="study-dp-toolbar-right">
+          <input
+            type="search"
+            value={search}
+            placeholder="Search picture titles"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <label className="study-dp-page-size">
+            Per page
+            <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
+              {DP_PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      {listStatus === 'loading' ? (
+        <div className="study-news-state study-news-state--loading" role="status">
+          <div className="study-news-loading-bar" aria-hidden="true"><i /></div>
+          <span className="study-news-loading-sr">Loading pictures</span>
+        </div>
+      ) : null}
+      {listStatus === 'error' ? (
+        <div className="study-news-state study-news-state--error">
+          Could not load the picture list.
+          <button type="button" onClick={loadPictureList}>Retry</button>
+        </div>
+      ) : null}
+      {listStatus === 'ready' && !pictures.length ? (
+        <div className="study-news-state">
+          No pictures imported yet. {canSync ? 'Use the admin import box below to fetch all Engoo describing-pictures lessons.' : 'Please wait until the admin imports the materials.'}
+        </div>
+      ) : null}
+
+      <div className="study-dp-grid">
+        {visiblePictures.map((picture) => (
+          <button
+            key={picture.id}
+            type="button"
+            className="study-dp-card"
+            onClick={() => setSelectedId(picture.id)}
+          >
+            <span className="study-dp-card-thumb">
+              {picture.imageUrl ? <img src={picture.imageUrl} alt={picture.exerciseTitle} loading="lazy" /> : null}
+              <span className={`study-dp-level study-dp-level--${(picture.level || '').toLowerCase()}`}>
+                {picture.level}
+              </span>
+              <span className="study-dp-card-badges">
+                {favoriteIds.includes(picture.id) ? <span className="study-dp-card-badge study-dp-card-badge--fav">★</span> : null}
+                {completedIds.includes(picture.id) ? <span className="study-dp-card-badge study-dp-card-badge--done">✓</span> : null}
+              </span>
+            </span>
+            <span className="study-dp-card-body">
+              <strong>{picture.exerciseTitle}</strong>
+              <span>{picture.lessonTitle} · {picture.vocabCount} words</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      {totalPages > 1 ? (
+        <nav className="study-dp-pagination" aria-label="Picture pages">
+          <button
+            type="button"
+            className="study-dp-page-btn"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            aria-label="Previous page"
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          {pageNumbers.map((pageNumber, index) => (
+            <span key={pageNumber} className="study-dp-page-slot">
+              {index > 0 && pageNumber - pageNumbers[index - 1] > 1 ? <span className="study-dp-page-ellipsis">…</span> : null}
+              <button
+                type="button"
+                className={`study-dp-page-btn ${pageNumber === currentPage ? 'study-dp-page-btn--active' : ''}`}
+                onClick={() => goToPage(pageNumber)}
+                aria-current={pageNumber === currentPage ? 'page' : undefined}
+              >
+                {pageNumber}
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            className="study-dp-page-btn"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            aria-label="Next page"
+          >
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
+          <span className="study-dp-page-info">{filteredPictures.length} pictures</span>
+        </nav>
+      ) : null}
+
+      {canSync ? (
+        <section className="study-news-admin" aria-label="Admin describing pictures import">
+          <div>
+            <strong>Admin data import</strong>
+            <span>
+              {listMeta.headers_loaded
+                ? `Lesson list loaded: ${listMeta.imported_lessons} / ${listMeta.total_lessons} lessons imported.`
+                : 'Step 1: paste the Engoo course JSON (lesson_headers/by_course response) below and save. Step 2: run the import.'}
+            </span>
+          </div>
+          {!listMeta.headers_loaded ? (
+            <>
+              <textarea
+                className="study-dp-headers-input"
+                value={headersJson}
+                placeholder='Paste the JSON from https://api.engoo.com/api/lesson_headers/by_course?category=3ff1eb88-c3a7-11e8-9fa3-43bec8c3f8db&type=Published&count=300 (opened in your logged-in Engoo browser tab)'
+                onChange={(event) => setHeadersJson(event.target.value)}
+              />
+              <button type="button" onClick={saveHeadersJson} disabled={!headersJson.trim()}>
+                <span className="material-symbols-outlined">save</span>
+                Save lesson list
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={isImporting ? () => { importCancelRef.current = true } : runImport}>
+              <span className="material-symbols-outlined">{isImporting ? 'stop_circle' : 'cloud_download'}</span>
+              {isImporting ? 'Stop import' : (listMeta.imported_lessons > 0 && listMeta.imported_lessons < listMeta.total_lessons ? 'Continue import' : 'Import all pictures')}
+            </button>
+          )}
+          <div className="study-progress-line">
+            <span>{importPercent}%</span>
+            <div><i style={{ width: `${importPercent}%` }} /></div>
+          </div>
+          {importStatus ? <p>{importStatus}</p> : null}
+        </section>
+      ) : null}
+
+      {selectedId && typeof document !== 'undefined' ? createPortal((
+        <div className={`study-news-modal ${isDpModalFullscreen ? 'study-news-modal--fullscreen' : ''}`} role="dialog" aria-modal="true">
+          <article className="study-news-detail study-dp-detail">
+            <header>
+              <div>
+                <span>
+                  {DP_LEVEL_LABELS[detail?.level] || detail?.level || ''} ({detail?.level || '...'}) · {detail?.lessonTitle || ''} · Engoo Describing Pictures
+                </span>
+                <h2 className="study-news-title">{detail?.exerciseTitle || 'Loading...'}</h2>
+              </div>
+              <div className="study-news-modal-actions">
+                <button
+                  type="button"
+                  className={`study-news-icon-btn ${favoriteIds.includes(selectedId) ? 'study-news-icon-btn--active' : ''}`}
+                  onClick={() => toggleFavoritePicture(selectedId)}
+                  title={favoriteIds.includes(selectedId) ? 'Remove favorite' : 'Favorite this picture'}
+                  aria-label={favoriteIds.includes(selectedId) ? 'Remove favorite' : 'Favorite this picture'}
+                >
+                  <span className="material-symbols-outlined">{favoriteIds.includes(selectedId) ? 'star' : 'star_outline'}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`study-news-complete-btn ${completedIds.includes(selectedId) ? 'study-news-complete-btn--active' : ''}`}
+                  onClick={() => toggleCompletedPicture(selectedId)}
+                  title={completedIds.includes(selectedId) ? 'Mark as not done' : 'Mark as completed'}
+                  aria-label={completedIds.includes(selectedId) ? 'Mark as not done' : 'Mark as completed'}
+                >
+                  <span className="material-symbols-outlined">{completedIds.includes(selectedId) ? 'task_alt' : 'check_circle'}</span>
+                </button>
+                <button
+                  type="button"
+                  className="study-news-icon-btn"
+                  onClick={() => setIsDpModalFullscreen((current) => !current)}
+                  title="Toggle fullscreen"
+                  aria-label="Toggle fullscreen"
+                >
+                  <span className="material-symbols-outlined">{isDpModalFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
+                </button>
+                <button type="button" className="study-news-icon-btn" onClick={() => { setSelectedId(null); setIsDpModalFullscreen(false) }} title="Close" aria-label="Close">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            </header>
+
+            {detailStatus === 'loading' ? (
+              <div className="study-news-loading-bar" aria-hidden="true"><i /></div>
+            ) : null}
+            {detailStatus === 'error' ? (
+              <p className="study-news-ai-status study-news-ai-status--error">Could not load this picture.</p>
+            ) : null}
+
+            {detail ? (
+              <>
+                <figure className={`study-news-detail-image study-dp-detail-image ${isImageCompact ? 'study-dp-detail-image--compact' : ''}`}>
+                  <img src={detail.imageUrl} alt={detail.exerciseTitle} />
+                  <button
+                    type="button"
+                    className="study-dp-image-resize-btn"
+                    onClick={() => setIsImageCompact((current) => !current)}
+                    title={isImageCompact ? 'Show full size' : 'Shrink image'}
+                    aria-label={isImageCompact ? 'Show full size' : 'Shrink image'}
+                  >
+                    <span className="material-symbols-outlined">{isImageCompact ? 'zoom_in' : 'zoom_out'}</span>
+                  </button>
+                  {detail.imageAttribution ? <figcaption>{detail.imageAttribution}</figcaption> : null}
+                </figure>
+
+                {detail.prompt ? <p className="study-dp-prompt">{detail.prompt}</p> : null}
+
+                {!canOpenDetail ? (
+                  <p className="study-news-locked-body">Vocabulary and speaking practice unlock after login and admin approval.</p>
+                ) : (
+                  <>
+                    <div className="study-dp-lang-row">
+                      <span className="study-dp-lang-label">Translation</span>
+                      <div className="study-chip-group">
+                        {DP_LANG_OPTIONS.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            className={`study-filter-chip ${dpLang === option.id ? 'study-filter-chip--active' : ''}`}
+                            onClick={() => setDpLang(option.id)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <section className="study-dp-strategy" aria-label="How to describe this picture">
+                      <header className="study-dp-section-head">
+                        <h3>
+                          <span className="material-symbols-outlined">route</span>
+                          How to describe this picture
+                        </h3>
+                        <div className="study-dp-section-tools">
+                          <span className="study-news-ai-badge" title="Generated by the Lannie home server (Ollama qwen)">
+                            <span className="material-symbols-outlined">smart_toy</span>
+                            Analyzed by Lannie Server
+                          </span>
+                          <button
+                            type="button"
+                            className="study-dp-collapse-btn"
+                            onClick={() => setShowStrategy((current) => !current)}
+                            aria-label={showStrategy ? 'Hide strategy' : 'Show strategy'}
+                            title={showStrategy ? 'Hide strategy' : 'Show strategy'}
+                          >
+                            <span className="material-symbols-outlined">{showStrategy ? 'expand_less' : 'expand_more'}</span>
+                          </button>
+                        </div>
+                      </header>
+                      {showStrategy ? (
+                        <>
+                          {strategyStatus === 'loading' ? (
+                            <AiInsightProgress label="Lannie server is planning a speaking flow for this picture..." />
+                          ) : null}
+                          {strategyStatus === 'error' ? (
+                            <p className="study-news-ai-status study-news-ai-status--error">
+                              Could not get the speaking strategy.
+                              <button type="button" onClick={retryStrategy}>Retry</button>
+                            </p>
+                          ) : null}
+                          {strategyStatus === 'ready' ? (
+                            <ol className="study-dp-strategy-steps">
+                              {strategySteps.map((step, stepIndex) => (
+                                <li key={`${selectedId}-step-${stepIndex}`}>
+                                  <strong>
+                                    {dpLang === 'ko' ? (step.ko || step.en) : dpLang === 'zh' ? (step.zh || step.en) : step.en}
+                                  </strong>
+                                  {dpLang !== 'en' && step.en ? <em>{step.en}</em> : null}
+                                </li>
+                              ))}
+                            </ol>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </section>
+
+                    <section className="study-dp-practice" aria-label="Speaking template practice">
+                      <header className="study-dp-section-head">
+                        <h3>
+                          <span className="material-symbols-outlined">record_voice_over</span>
+                          Speaking template practice
+                        </h3>
+                        <button
+                          type="button"
+                          className="study-dp-collapse-btn"
+                          onClick={() => setShowPractice((current) => !current)}
+                          aria-label={showPractice ? 'Hide practice' : 'Show practice'}
+                          title={showPractice ? 'Hide practice' : 'Show practice'}
+                        >
+                          <span className="material-symbols-outlined">{showPractice ? 'expand_less' : 'expand_more'}</span>
+                        </button>
+                      </header>
+                      {showPractice ? (
+                      <>
+                      <div className="study-chip-group">
+                        {DP_TEMPLATES.map((template) => (
+                          <button
+                            key={template.id}
+                            type="button"
+                            className={`study-filter-chip ${templateId === template.id ? 'study-filter-chip--active' : ''}`}
+                            onClick={() => setTemplateId(template.id)}
+                          >
+                            {template.ko} · {template.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="study-dp-practice-help">
+                        Fill the blanks about THIS picture (use the vocabulary above), press ? for a hint,
+                        then read each sentence out loud. The play button reads your completed sentence.
+                      </p>
+                      <ol className="study-dp-template-lines">
+                        {activeTemplate.lines.map((line, lineIndex) => (
+                          <li key={`${activeTemplate.id}-${lineIndex}`}>
+                            <div className="study-dp-template-line">
+                              <button
+                                type="button"
+                                className="study-dp-line-play"
+                                onClick={() => playSpeech(buildLineText(line, lineIndex))}
+                                title="Listen to this sentence"
+                                aria-label="Listen to this sentence"
+                              >
+                                <span className="material-symbols-outlined">play_circle</span>
+                              </button>
+                              <span className="study-dp-line-text">
+                                {line.parts.map((part, partIndex) => {
+                                  if (typeof part === 'string') return <span key={partIndex}>{part}</span>
+                                  const key = blankKey(lineIndex, partIndex)
+                                  return (
+                                    <span key={partIndex} className="study-dp-blank">
+                                      <input
+                                        type="text"
+                                        value={templateAnswers[key] || ''}
+                                        placeholder="______"
+                                        onChange={(event) => setTemplateAnswers((current) => ({ ...current, [key]: event.target.value }))}
+                                      />
+                                      <button
+                                        type="button"
+                                        className="study-dp-hint-btn"
+                                        onClick={() => setVisibleHints((current) => ({ ...current, [key]: !current[key] }))}
+                                        title="Show hint"
+                                        aria-label="Show hint"
+                                      >
+                                        ?
+                                      </button>
+                                      {visibleHints[key] ? <em className="study-dp-hint">{part.hint}</em> : null}
+                                    </span>
+                                  )
+                                })}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+
+                      <div className="study-dp-model">
+                        <div className="study-dp-model-head">
+                          <h4>
+                            <span className="material-symbols-outlined">smart_toy</span>
+                            Model answer — {activeTemplate.ko}
+                          </h4>
+                          <span className="study-news-ai-badge" title="Generated by the Lannie home server (Ollama qwen)">
+                            <span className="material-symbols-outlined">smart_toy</span>
+                            Analyzed by Lannie Server
+                          </span>
+                        </div>
+                        {modelStatus === 'idle' ? (
+                          <button type="button" className="study-news-ai-answers-toggle" onClick={fetchModelAnswer} disabled={!tokens?.access_token}>
+                            <span className="material-symbols-outlined">auto_awesome</span>
+                            Get a model answer from the Lannie server
+                          </button>
+                        ) : null}
+                        {modelStatus === 'loading' ? (
+                          <AiInsightProgress label="Lannie server is writing a model answer..." />
+                        ) : null}
+                        {modelStatus === 'error' ? (
+                          <p className="study-news-ai-status study-news-ai-status--error">
+                            Could not get a model answer.
+                            <button type="button" onClick={fetchModelAnswer}>Retry</button>
+                          </p>
+                        ) : null}
+                        {modelStatus === 'ready' ? (
+                          <ol className="study-dp-model-sentences">
+                            {modelSentences.map((sentence, index) => (
+                              <li key={`${selectedId}-model-${index}`}>
+                                <button type="button" onClick={() => playSpeech(sentence.en)} title="Listen" aria-label="Listen">
+                                  <span className="material-symbols-outlined">play_circle</span>
+                                </button>
+                                <span>
+                                  {sentence.en}
+                                  {sentence.translated ? <em>{sentence.translated}</em> : null}
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        ) : null}
+                      </div>
+                      </>
+                      ) : null}
+                    </section>
+
+                    {(detail.vocabulary || []).length ? (
+                      <section className="study-dp-vocab" aria-label="Helpful vocabulary">
+                        <header className="study-dp-section-head">
+                          <h3>
+                            <span className="material-symbols-outlined">translate</span>
+                            Helpful vocabulary
+                          </h3>
+                          <button
+                            type="button"
+                            className="study-dp-collapse-btn"
+                            onClick={() => setShowVocab((current) => !current)}
+                            aria-label={showVocab ? 'Hide vocabulary' : 'Show vocabulary'}
+                            title={showVocab ? 'Hide vocabulary' : 'Show vocabulary'}
+                          >
+                            <span className="material-symbols-outlined">{showVocab ? 'expand_less' : 'expand_more'}</span>
+                          </button>
+                        </header>
+                        {showVocab ? (
+                          <div className="study-dp-vocab-grid">
+                            {(detail.vocabulary || []).map((item) => {
+                              const localizedWord = dpLang === 'ko' ? item.ko : dpLang === 'zh' ? item.zh : ''
+                              return (
+                                <div key={`${detail.id}-${item.word}`} className="study-dp-vocab-card">
+                                  <div className="study-dp-vocab-head">
+                                    <button type="button" className="study-dp-vocab-word" onClick={() => setWordPopup(item.word)} title="Open dictionary popup">
+                                      {item.word}
+                                    </button>
+                                    <span className="study-dp-vocab-tools">
+                                      <button
+                                        type="button"
+                                        className={`study-dp-vocab-fav ${wordFavorites.includes(item.word) ? 'study-dp-vocab-fav--active' : ''}`}
+                                        onClick={() => toggleWordFavorite(item)}
+                                        title={wordFavorites.includes(item.word) ? 'Remove from favorite words' : 'Add to favorite words'}
+                                        aria-label={wordFavorites.includes(item.word) ? 'Remove from favorite words' : 'Add to favorite words'}
+                                      >
+                                        <span className="material-symbols-outlined">{wordFavorites.includes(item.word) ? 'star' : 'star_outline'}</span>
+                                      </button>
+                                      <button type="button" className="study-dp-vocab-sound" onClick={() => playSpeech(item.word)} title="Listen" aria-label={`Listen to ${item.word}`}>
+                                        <span className="material-symbols-outlined">volume_up</span>
+                                      </button>
+                                    </span>
+                                  </div>
+                                  <span className="study-dp-vocab-meta">
+                                    {item.partOfSpeech}{item.pronunciation ? ` · /${item.pronunciation}/` : ''}
+                                  </span>
+                                  {localizedWord ? <strong className="study-dp-vocab-ko">{localizedWord}</strong> : null}
+                                  {item.definition ? <p>{item.definition}</p> : null}
+                                  {(item.examples || []).slice(0, 1).map((example) => {
+                                    const localizedExample = dpLang === 'ko' ? example.ko : dpLang === 'zh' ? example.zh : ''
+                                    return (
+                                      <button
+                                        key={example.text}
+                                        type="button"
+                                        className="study-dp-vocab-example"
+                                        onClick={() => playSpeech(example.text)}
+                                        title="Listen to the example"
+                                      >
+                                        <span className="material-symbols-outlined">play_circle</span>
+                                        <span>
+                                          {example.text}
+                                          {localizedExample ? <em>{localizedExample}</em> : null}
+                                        </span>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : null}
+                      </section>
+                    ) : null}
+                  </>
+                )}
+              </>
+            ) : null}
+          </article>
+        </div>
+      ), document.body) : null}
+
+      {wordPopup && typeof document !== 'undefined' ? createPortal((
+        <NewsWordPopup word={wordPopup} initialLang="ko" onClose={() => setWordPopup(null)} />
       ), document.body) : null}
     </section>
   )
@@ -4470,6 +5767,8 @@ export function StudyLabView() {
             <NewsReadingPanel resetToken={newsReadingResetToken} />
           ) : activeTab === 'phrasal-verbs' ? (
             <PhrasalVerbsPanel />
+          ) : activeTab === 'describing-pictures' ? (
+            <DescribingPicturesPanel />
           ) : (
             <section className="study-placeholder">
               <span className="material-symbols-outlined">construction</span>
