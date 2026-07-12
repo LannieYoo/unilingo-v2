@@ -103,3 +103,4 @@ gunicorn==23.0.0
 # hpack==4.1.0            # Not used - h2 dependency
 # hyperframe==6.1.0       # Not used - h2 dependency
 # pydantic-settings==2.11.0  # Not used - no import in code
+pillow

@@ -901,6 +901,7 @@ def parse_describing_pictures_lesson(detail, lesson_id, level):
         entry_id = 'dp-{0}-{1}'.format(lesson_id, index)
         section_slug = 'describing-pictures-{0}'.format(level.lower())
         local_image = download_article_image(section_slug, entry_id, image_url)
+        ensure_picture_thumbnail(local_image)
         entries.append({
             'id': entry_id,
             'lessonId': lesson_id,
@@ -918,6 +919,53 @@ def parse_describing_pictures_lesson(detail, lesson_id, level):
     return entries
 
 
+ENGOO_IMAGE_WEB_PREFIX = '/api/study-lab/engoo-news-images/'
+PICTURE_THUMB_MAX_WIDTH = 420
+PICTURE_THUMB_QUALITY = 78
+
+
+def build_picture_thumbnail_paths(image_web_path):
+    """Map an engoo image web path to its thumbnail file path and web path."""
+    if not image_web_path or not str(image_web_path).startswith(ENGOO_IMAGE_WEB_PREFIX):
+        return None, ''
+    relative = str(image_web_path)[len(ENGOO_IMAGE_WEB_PREFIX):]
+    directory, _, filename = relative.rpartition('/')
+    if not directory or not filename:
+        return None, ''
+    thumb_relative = f"{directory}/thumbs/{re.sub(r'[.][a-z0-9]+$', '.jpg', filename)}"
+    return ENGOO_NEWS_IMAGE_DIR / thumb_relative, ENGOO_IMAGE_WEB_PREFIX + thumb_relative
+
+
+def ensure_picture_thumbnail(image_web_path):
+    """Create a lightweight list thumbnail for a locally stored picture. Returns thumb web path or ''."""
+    thumb_file, thumb_web = build_picture_thumbnail_paths(image_web_path)
+    if thumb_file is None:
+        return ''
+    if thumb_file.exists() and thumb_file.stat().st_size > 0:
+        return thumb_web
+    source_file = ENGOO_NEWS_IMAGE_DIR / str(image_web_path)[len(ENGOO_IMAGE_WEB_PREFIX):]
+    if not source_file.exists():
+        return ''
+    try:
+        from PIL import Image
+
+        with Image.open(source_file) as image:
+            image = image.convert('RGB')
+            image.thumbnail((PICTURE_THUMB_MAX_WIDTH, PICTURE_THUMB_MAX_WIDTH * 2))
+            thumb_file.parent.mkdir(parents=True, exist_ok=True)
+            image.save(thumb_file, 'JPEG', quality=PICTURE_THUMB_QUALITY, optimize=True)
+        return thumb_web
+    except Exception:
+        return ''
+
+
+def existing_picture_thumbnail(image_web_path):
+    thumb_file, thumb_web = build_picture_thumbnail_paths(image_web_path)
+    if thumb_file is not None and thumb_file.exists() and thumb_file.stat().st_size > 0:
+        return thumb_web
+    return ''
+
+
 def summarize_picture_entry(entry):
     return {
         'id': entry.get('id'),
@@ -927,6 +975,7 @@ def summarize_picture_entry(entry):
         'level': entry.get('level'),
         'order': entry.get('order'),
         'imageUrl': entry.get('imageUrl'),
+        'thumbUrl': existing_picture_thumbnail(entry.get('imageUrl')),
         'vocabCount': len(entry.get('vocabulary') or []),
     }
 

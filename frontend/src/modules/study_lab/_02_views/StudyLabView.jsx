@@ -5277,7 +5277,7 @@ function DescribingPicturesPanel() {
             onClick={() => setSelectedId(picture.id)}
           >
             <span className="study-dp-card-thumb">
-              {picture.imageUrl ? <img src={picture.imageUrl} alt={picture.exerciseTitle} loading="lazy" /> : null}
+              {picture.thumbUrl || picture.imageUrl ? <img src={picture.thumbUrl || picture.imageUrl} alt={picture.exerciseTitle} loading="lazy" /> : null}
               <span className={`study-dp-level study-dp-level--${(picture.level || '').toLowerCase()}`}>
                 {picture.level}
               </span>
