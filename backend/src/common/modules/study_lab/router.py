@@ -40,9 +40,17 @@ _DB_SYNC_CACHE = {
 }
 VALID_USER_STATE_KEYS = {'phrasalVerbFavorites', 'celpipVocabularyFavorites', 'pteVocabularyFavorites'}
 
-# When set (e.g. on Render where the image files are not served), article/picture
+# When enabled (e.g. on Render where the image files are not deployed), article/picture
 # payloads swap local image paths for the original Engoo asset URLs.
-USE_REMOTE_ENGOO_IMAGES = str(os.getenv('USE_REMOTE_ENGOO_IMAGES', '')).lower() in ('1', 'true', 'yes')
+# USE_REMOTE_ENGOO_IMAGES overrides explicitly; otherwise auto-detect Render via its
+# built-in RENDER env var.
+_REMOTE_IMAGES_ENV = str(os.getenv('USE_REMOTE_ENGOO_IMAGES', '')).lower()
+if _REMOTE_IMAGES_ENV in ('1', 'true', 'yes'):
+    USE_REMOTE_ENGOO_IMAGES = True
+elif _REMOTE_IMAGES_ENV in ('0', 'false', 'no'):
+    USE_REMOTE_ENGOO_IMAGES = False
+else:
+    USE_REMOTE_ENGOO_IMAGES = bool(os.getenv('RENDER'))
 _REMOTE_IMAGE_MAP_CACHE = {
     'mtime': None,
     'map': {},

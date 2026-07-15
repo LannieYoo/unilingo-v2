@@ -4243,7 +4243,6 @@
   .study-player,
   .study-sentence-inline-player,
   .study-review-card div,
-  .study-news-filters,
   .study-news-feature-grid,
   .study-news-section-grid,
   .study-news-grid--wide,
@@ -4257,6 +4256,16 @@
   .study-phrasal-grid,
   .study-phrasal-detail__explain {
     grid-template-columns: 1fr;
+  }
+
+  /* compact news filters: search full width, difficulty+status and from+to paired */
+  .study-news-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .study-news-filters label:first-child,
+  .study-news-filters .study-news-reset-btn {
+    grid-column: 1 / -1;
   }
 
   .study-phrasal-hero__aside {
