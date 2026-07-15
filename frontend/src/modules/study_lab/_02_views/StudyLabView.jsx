@@ -4247,28 +4247,30 @@ function NewsReadingPanel({ resetToken = 0 }) {
         <div className="study-news-latest">
           <strong>{newsLoadStatus === 'loading' ? 'Loading...' : latestDate || 'Not synced'}</strong>
           <span>{newsMeta.total ? `${newsMeta.total.toLocaleString()} saved articles` : 'latest saved data'}</span>
-          <button
-            type="button"
-            className={`study-news-favorite-summary ${readFilter === 'favorites' ? 'study-news-favorite-summary--active' : ''}`}
-            onClick={() => openNewsReadFilterView('favorites')}
-            disabled={favoriteNewsCount === 0}
-            aria-label={`Show favorite news articles (${favoriteNewsCount})`}
-            title={`Show favorite articles (${favoriteNewsCount})`}
-          >
-            <span className="material-symbols-outlined">star</span>
-            <strong>{favoriteNewsCount}</strong>
-          </button>
-          <button
-            type="button"
-            className={`study-news-favorite-summary study-news-favorite-summary--done ${readFilter === 'completed' ? 'study-news-favorite-summary--active' : ''}`}
-            onClick={() => openNewsReadFilterView('completed')}
-            disabled={completedNewsIds.length === 0}
-            aria-label={`Show completed news articles (${completedNewsIds.length})`}
-            title={`Show completed articles (${completedNewsIds.length})`}
-          >
-            <span className="material-symbols-outlined">task_alt</span>
-            <strong>{completedNewsIds.length}</strong>
-          </button>
+          <div className="study-news-summary-row">
+            <button
+              type="button"
+              className={`study-news-favorite-summary ${readFilter === 'favorites' ? 'study-news-favorite-summary--active' : ''}`}
+              onClick={() => openNewsReadFilterView('favorites')}
+              disabled={favoriteNewsCount === 0}
+              aria-label={`Show favorite news articles (${favoriteNewsCount})`}
+              title={`Show favorite articles (${favoriteNewsCount})`}
+            >
+              <span className="material-symbols-outlined">star</span>
+              <strong>{favoriteNewsCount}</strong>
+            </button>
+            <button
+              type="button"
+              className={`study-news-favorite-summary study-news-favorite-summary--done ${readFilter === 'completed' ? 'study-news-favorite-summary--active' : ''}`}
+              onClick={() => openNewsReadFilterView('completed')}
+              disabled={completedNewsIds.length === 0}
+              aria-label={`Show completed news articles (${completedNewsIds.length})`}
+              title={`Show completed articles (${completedNewsIds.length})`}
+            >
+              <span className="material-symbols-outlined">task_alt</span>
+              <strong>{completedNewsIds.length}</strong>
+            </button>
+          </div>
         </div>
       </div>
 

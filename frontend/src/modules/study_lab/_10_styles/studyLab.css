@@ -1635,8 +1635,14 @@
 
 .study-news-feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.9rem;
+}
+
+.study-news-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .study-news-feature-card {
