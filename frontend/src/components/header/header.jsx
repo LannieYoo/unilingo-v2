@@ -329,7 +329,7 @@ function Header() {
 
       {displaySubtabGroup.items.length > 1 && (
         <div
-          className="border-t border-border-light/70 bg-transparent dark:border-border-dark/70"
+          className="hidden lg:block border-t border-border-light/70 bg-transparent dark:border-border-dark/70"
           onMouseEnter={() => handleGroupHoverEnter(displaySubtabGroup.id)}
           onMouseLeave={handleGroupHoverLeave}
         >
