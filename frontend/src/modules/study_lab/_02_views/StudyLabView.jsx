@@ -3689,6 +3689,7 @@ function NewsReadingPanel({ resetToken = 0 }) {
   const speechRunRef = useRef(0)
   const newsSectionLoadMoreRef = useRef(null)
   const newsDetailScrollRef = useRef(null)
+  const newsModalHeaderRef = useRef(null)
 
   const newsSections = useMemo(() => {
     const sections = [...new Set(newsArticles.map((article) => article.section).filter(Boolean))]
@@ -4123,6 +4124,20 @@ function NewsReadingPanel({ resetToken = 0 }) {
   }
 
   useEffect(() => {
+    if (!selectedArticleId || typeof ResizeObserver === 'undefined') return undefined
+    const headerElement = newsModalHeaderRef.current
+    const container = newsDetailScrollRef.current
+    if (!headerElement || !container) return undefined
+    const updateStickyOffset = () => {
+      container.style.setProperty('--news-header-height', `${headerElement.offsetHeight}px`)
+    }
+    updateStickyOffset()
+    const observer = new ResizeObserver(updateStickyOffset)
+    observer.observe(headerElement)
+    return () => observer.disconnect()
+  }, [selectedArticleId])
+
+  useEffect(() => {
     const followIndex = speakingSentenceIndex ?? (isArticleSpeechPlaying ? activeSentenceIndex : null)
     if (followIndex == null) return
     const container = newsDetailScrollRef.current
@@ -4454,7 +4469,7 @@ function NewsReadingPanel({ resetToken = 0 }) {
       {selectedArticle && typeof document !== 'undefined' ? createPortal((
         <div className={`study-news-modal ${isArticleModalFullscreen ? 'study-news-modal--fullscreen' : ''}`} role="dialog" aria-modal="true">
           <article className="study-news-detail" ref={newsDetailScrollRef}>
-            <header>
+            <header ref={newsModalHeaderRef}>
               <div>
                 <span>{selectedArticle.section} · {selectedArticle.difficulty} · {selectedArticle.source}</span>
                 <h2 className="study-news-title">{renderInteractiveText(selectedArticle.title, { variant: 'title' })}</h2>

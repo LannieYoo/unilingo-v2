@@ -5699,3 +5699,20 @@
   color: #ca8a04;
   background: rgba(250, 204, 21, 0.15);
 }
+
+/* ── News modal: keep playback controls visible while scrolling ── */
+.study-news-modal .study-news-toolbar {
+  position: sticky;
+  top: calc(var(--news-header-height, 64px) - 1rem);
+  z-index: 7;
+  margin: 0 -0.5rem;
+  padding: 0.5rem;
+  border-radius: 0 0 14px 14px;
+  background: #fff;
+  box-shadow: 0 8px 14px -10px rgba(15, 23, 42, 0.35);
+}
+
+.dark .study-news-modal .study-news-toolbar {
+  background: #0f172a;
+  box-shadow: 0 8px 14px -10px rgba(0, 0, 0, 0.7);
+}
