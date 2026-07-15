@@ -5716,3 +5716,7 @@
   background: #0f172a;
   box-shadow: 0 8px 14px -10px rgba(0, 0, 0, 0.7);
 }
+
+.study-news-favorite-summary--done .material-symbols-outlined {
+  color: #16a34a;
+}

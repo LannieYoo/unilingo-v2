@@ -3709,10 +3709,10 @@ function NewsReadingPanel({ resetToken = 0 }) {
     setSyncFinishedAt(state.finishedAt)
   }
 
-  const openFavoriteNewsView = () => {
+  const openNewsReadFilterView = (filter) => {
     setNewsSearch('')
     setDifficulty('all')
-    setReadFilter('favorites')
+    setReadFilter((current) => (current === filter ? 'all' : filter))
     setDateFrom('')
     setDateTo('')
     setActiveSection(null)
@@ -4250,14 +4250,24 @@ function NewsReadingPanel({ resetToken = 0 }) {
           <button
             type="button"
             className={`study-news-favorite-summary ${readFilter === 'favorites' ? 'study-news-favorite-summary--active' : ''}`}
-            onClick={openFavoriteNewsView}
+            onClick={() => openNewsReadFilterView('favorites')}
             disabled={favoriteNewsCount === 0}
             aria-label={`Show favorite news articles (${favoriteNewsCount})`}
-            title={`Show favorite news articles (${favoriteNewsCount})`}
+            title={`Show favorite articles (${favoriteNewsCount})`}
           >
             <span className="material-symbols-outlined">star</span>
             <strong>{favoriteNewsCount}</strong>
-            <span>favorites</span>
+          </button>
+          <button
+            type="button"
+            className={`study-news-favorite-summary study-news-favorite-summary--done ${readFilter === 'completed' ? 'study-news-favorite-summary--active' : ''}`}
+            onClick={() => openNewsReadFilterView('completed')}
+            disabled={completedNewsIds.length === 0}
+            aria-label={`Show completed news articles (${completedNewsIds.length})`}
+            title={`Show completed articles (${completedNewsIds.length})`}
+          >
+            <span className="material-symbols-outlined">task_alt</span>
+            <strong>{completedNewsIds.length}</strong>
           </button>
         </div>
       </div>
