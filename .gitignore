@@ -86,6 +86,9 @@ logs/*.log
 # Large media (exceeds GitHub 100MB limit - keep local only)
 docs/*.mp4
 
+# Engoo images (large, local-only; deployed site uses remote Engoo URLs via USE_REMOTE_ENGOO_IMAGES)
+backend/src/common/modules/study_lab/data/engoo_images/
+
 # Crawl scratch data and browser profiles (regenerable, may contain secrets)
 frontend/crawl/
 frontend/crawl/.browser-profile/

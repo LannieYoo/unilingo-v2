@@ -75,6 +75,10 @@ function Home() {
   // --- Latest news ---
   const [articles, setArticles] = useState([])
   const [newsState, setNewsState] = useState('loading') // loading | ready | empty | error
+
+  // --- Describing pictures ---
+  const [dpPictures, setDpPictures] = useState([])
+  const [dpState, setDpState] = useState('loading') // loading | ready | empty | error
   const [activeArticle, setActiveArticle] = useState(null)
   const [articleDetail, setArticleDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -157,6 +161,40 @@ function Home() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadDescribingPictures() {
+      try {
+        const response = await apiGet('/api/study-lab/describing-pictures')
+        if (cancelled) return
+        const list = Array.isArray(response.data?.pictures) ? response.data.pictures : []
+        if (!list.length) {
+          setDpState('empty')
+          return
+        }
+        setDpPictures(list)
+        setDpState('ready')
+      } catch {
+        if (!cancelled) setDpState('error')
+      }
+    }
+    loadDescribingPictures()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // random pick, refreshed on every visit
+  const featuredPictures = useMemo(() => {
+    if (!dpPictures.length) return []
+    const shuffled = [...dpPictures]
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled.slice(0, 6)
+  }, [dpPictures])
 
   // one most-recent article per section, filled up to 6 with the next most recent
   const featuredNews = useMemo(() => {
@@ -407,6 +445,58 @@ function Home() {
             <span className="material-symbols-outlined">newspaper</span>
             <p>{newsState === 'empty' ? 'No news articles yet — check back soon.' : 'Could not load news right now.'}</p>
             <button type="button" className="home-btn home-btn--ghost" onClick={openNews}>Go to News Reading</button>
+          </div>
+        )}
+      </section>
+
+      {/* Describing pictures */}
+      <section className="home-section">
+        <div className="home-section__head">
+          <div>
+            <h2>Describing pictures</h2>
+            <p>Engoo speaking practice — describe a random photo with vocabulary and templates.</p>
+          </div>
+          <button
+            type="button"
+            className="home-btn home-btn--ghost home-section__cta"
+            onClick={() => navigate('/study-lab?tab=describing-pictures')}
+          >
+            View all pictures
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+        {dpState === 'loading' ? (
+          <div className="home-news-grid">
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="home-news-card home-news-card--skeleton" />)}
+          </div>
+        ) : dpState === 'ready' ? (
+          <div className="home-news-grid">
+            {featuredPictures.map((picture) => (
+              <button
+                type="button"
+                key={picture.id}
+                className="home-news-card"
+                onClick={() => navigate(`/study-lab?tab=describing-pictures&picture=${encodeURIComponent(picture.id)}`)}
+              >
+                <div className="home-news-thumb">
+                  {(picture.thumbUrl || picture.imageUrl)
+                    ? <img src={picture.thumbUrl || picture.imageUrl} alt={picture.exerciseTitle} loading="lazy" />
+                    : <span className="home-news-thumb__fallback">Engoo</span>}
+                  {picture.level ? <span className="home-news-level">{picture.level}</span> : null}
+                </div>
+                <div className="home-news-body">
+                  {picture.lessonTitle ? <span className="home-news-section">{picture.lessonTitle}</span> : null}
+                  <strong className="home-news-title">{picture.exerciseTitle}</strong>
+                  <span className="home-news-date">{picture.vocabCount ? `${picture.vocabCount} words` : 'Speaking practice'}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="home-news-empty">
+            <span className="material-symbols-outlined">image</span>
+            <p>{dpState === 'empty' ? 'No pictures imported yet — check back soon.' : 'Could not load pictures right now.'}</p>
+            <button type="button" className="home-btn home-btn--ghost" onClick={() => navigate('/study-lab?tab=describing-pictures')}>Go to Describing Pictures</button>
           </div>
         )}
       </section>

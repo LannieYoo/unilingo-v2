@@ -4845,6 +4845,7 @@ const DP_TEMPLATES = [
 ]
 
 function DescribingPicturesPanel() {
+  const location = useLocation()
   const user = useAuthStore((state) => state.user)
   const isAdmin = useAuthStore((state) => state.isAdmin)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -4910,6 +4911,11 @@ function DescribingPicturesPanel() {
   useEffect(() => {
     loadPictureList()
   }, [])
+
+  useEffect(() => {
+    const pictureParam = new URLSearchParams(location.search).get('picture')
+    if (pictureParam) setSelectedId(pictureParam)
+  }, [location.search])
 
   useEffect(() => {
     setFavoriteIds(readJsonStorage(DP_FAVORITES_STORAGE_KEY, accountKey, []))

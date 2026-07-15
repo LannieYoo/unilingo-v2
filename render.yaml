@@ -58,6 +58,8 @@ services:
         sync: false
       - key: RAG_SERVER_URL
         value: https://slighted-scoured-nanny.ngrok-free.dev
+      - key: USE_REMOTE_ENGOO_IMAGES
+        value: "1"
       - key: PYTHON_VERSION
         value: "3.11.6"
       - key: PYTHONPATH

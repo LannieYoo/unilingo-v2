@@ -40,6 +40,14 @@ _DB_SYNC_CACHE = {
 }
 VALID_USER_STATE_KEYS = {'phrasalVerbFavorites', 'celpipVocabularyFavorites', 'pteVocabularyFavorites'}
 
+# When set (e.g. on Render where the image files are not served), article/picture
+# payloads swap local image paths for the original Engoo asset URLs.
+USE_REMOTE_ENGOO_IMAGES = str(os.getenv('USE_REMOTE_ENGOO_IMAGES', '')).lower() in ('1', 'true', 'yes')
+_REMOTE_IMAGE_MAP_CACHE = {
+    'mtime': None,
+    'map': {},
+}
+
 DESCRIBING_PICTURES_DATA_FILE = ENGOO_NEWS_DATA_FILE.parent / 'describingPicturesData.json'
 DESCRIBING_PICTURES_HEADERS_FILE = ENGOO_NEWS_DATA_FILE.parent / 'describingPicturesHeaders.json'
 DESCRIBING_PICTURES_TEMPLATES = {
@@ -237,6 +245,32 @@ def normalize_phrasal_favorite_ids(value):
     return favorite_ids[:1000]
 
 
+def get_news_remote_image_map():
+    """Lazy id -> remoteImageUrl map from the news JSON (covers DB-served articles)."""
+    if not ENGOO_NEWS_DATA_FILE.exists():
+        return {}
+    mtime = ENGOO_NEWS_DATA_FILE.stat().st_mtime
+    if _REMOTE_IMAGE_MAP_CACHE['mtime'] != mtime:
+        _REMOTE_IMAGE_MAP_CACHE['map'] = {
+            article.get('id'): article.get('remoteImageUrl')
+            for article in load_saved_engoo_news()
+            if article.get('id') and article.get('remoteImageUrl')
+        }
+        _REMOTE_IMAGE_MAP_CACHE['mtime'] = mtime
+    return _REMOTE_IMAGE_MAP_CACHE['map']
+
+
+def apply_remote_news_image(article):
+    """In remote-image mode, swap the local image path for the original Engoo URL."""
+    if not USE_REMOTE_ENGOO_IMAGES or not isinstance(article, dict):
+        return article
+    remote = article.get('remoteImageUrl') or get_news_remote_image_map().get(article.get('id'))
+    if remote:
+        article = dict(article)
+        article['imageUrl'] = remote
+    return article
+
+
 def seed_db_from_json_if_empty(db):
     articles = load_saved_engoo_news()
     if not articles:
@@ -367,6 +401,7 @@ def normalize_header(header, section_name):
         'source': 'Engoo Daily News',
         'sourceUrl': 'https://engoo.com/app/daily-news',
         'imageUrl': image.get('url') or '',
+        'remoteImageUrl': image.get('url') or '',
         'imageAttribution': clean_text(image.get('attribution', '')),
         'excerpt': text_of(header.get('introduction_text')),
     }
@@ -401,7 +436,7 @@ def get_engoo_news():
                 include_body=include_body,
             )
             return jsonify({
-                'articles': articles,
+                'articles': [apply_remote_news_image(article) for article in articles],
                 'total': total,
                 'latest_date': get_latest_date(db),
                 'sections': get_sections(db),
@@ -418,6 +453,7 @@ def get_engoo_news():
         elif offset:
             articles = articles[offset:]
         payload_articles = articles if include_body else [summarize_article(article) for article in articles]
+        payload_articles = [apply_remote_news_image(article) for article in payload_articles]
         return jsonify({
             'articles': payload_articles,
             'total': total,
@@ -539,7 +575,7 @@ def get_engoo_news_article(article_id):
                 'article_id': article_id,
             }
         }), 404
-    return jsonify({'article': article}), 200
+    return jsonify({'article': apply_remote_news_image(article)}), 200
 
 
 def load_article_for_llm(article_id):
@@ -911,6 +947,7 @@ def parse_describing_pictures_lesson(detail, lesson_id, level):
             'order': index,
             'prompt': prompt,
             'imageUrl': local_image,
+            'remoteImageUrl': image_url,
             'imageAttribution': image_attribution,
             'altText': alt_text,
             'vocabulary': vocabulary,
@@ -966,8 +1003,21 @@ def existing_picture_thumbnail(image_web_path):
     return ''
 
 
+def apply_remote_picture_image(entry):
+    """In remote-image mode, swap local picture paths for the original Engoo URLs."""
+    if not USE_REMOTE_ENGOO_IMAGES or not isinstance(entry, dict):
+        return entry
+    remote = entry.get('remoteImageUrl')
+    if remote:
+        entry = dict(entry)
+        entry['imageUrl'] = remote
+        if 'thumbUrl' in entry:
+            entry['thumbUrl'] = ''
+    return entry
+
+
 def summarize_picture_entry(entry):
-    return {
+    return apply_remote_picture_image({
         'id': entry.get('id'),
         'lessonId': entry.get('lessonId'),
         'lessonTitle': entry.get('lessonTitle'),
@@ -975,9 +1025,10 @@ def summarize_picture_entry(entry):
         'level': entry.get('level'),
         'order': entry.get('order'),
         'imageUrl': entry.get('imageUrl'),
+        'remoteImageUrl': entry.get('remoteImageUrl'),
         'thumbUrl': existing_picture_thumbnail(entry.get('imageUrl')),
         'vocabCount': len(entry.get('vocabulary') or []),
-    }
+    })
 
 
 @router.route('/describing-pictures', methods=['GET'])
@@ -1011,7 +1062,7 @@ def get_describing_picture(picture_id):
                 'picture_id': picture_id,
             }
         }), 404
-    return jsonify({'picture': entry}), 200
+    return jsonify({'picture': apply_remote_picture_image(entry)}), 200
 
 
 @router.route('/describing-pictures/headers', methods=['PUT'])
