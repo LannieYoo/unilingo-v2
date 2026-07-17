@@ -4569,7 +4569,7 @@ function NewsReadingPanel({ resetToken = 0 }) {
                   title={showNewsWordHints ? 'Hide word hints' : 'Show word hints'}
                 >
                   <span className="material-symbols-outlined">{showNewsWordHints ? 'format_ink_highlighter_off' : 'ink_highlighter'}</span>
-                  {showNewsWordHints ? 'Hints on' : 'Hints off'}
+                  <span className="study-news-word-toggle__label">{showNewsWordHints ? 'Hints on' : 'Hints off'}</span>
                 </button>
                 <label className="study-news-speed-control" aria-label="Article reading speed">
                   <span>Speed</span>

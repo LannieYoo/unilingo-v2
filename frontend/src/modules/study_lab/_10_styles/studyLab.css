@@ -5735,3 +5735,47 @@
 .study-news-favorite-summary--done .material-symbols-outlined {
   color: #16a34a;
 }
+
+/* ── News toolbar: single compact row on mobile ─────── */
+@media (max-width: 640px) {
+  .study-news-toolbar__side {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+  }
+
+  .study-news-language-row {
+    flex: none;
+    gap: 0.15rem;
+  }
+
+  .study-news-language-row .study-filter-chip {
+    padding: 0.3rem 0.5rem;
+  }
+
+  .study-news-word-toggle {
+    flex: none;
+    gap: 0;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .study-news-word-toggle__label {
+    display: none;
+  }
+
+  .study-news-speed-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .study-news-speed-control > span {
+    display: none;
+  }
+
+  .study-news-speed-control select {
+    width: 100%;
+    min-width: 64px;
+  }
+}
