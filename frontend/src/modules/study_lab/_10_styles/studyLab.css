@@ -1633,15 +1633,15 @@
   font-size: 18px;
 }
 
-/* fixed fractional columns: rows always fill 100% width (3 preview cards
-   per section) and 1-2 search results keep the same track size, left-aligned */
+/* fixed fractional columns: 4 preview cards fill the row on desktop, then
+   drop straight to 2x2 (skipping 3 columns) so no card wraps alone */
 .study-news-feature-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.9rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .study-news-feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

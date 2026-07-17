@@ -195,7 +195,7 @@ const WORD_MEANING_CACHE = new Map()
 const NEWS_TRANSLATION_CACHE = new Map()
 const NEWS_AI_INSIGHT_CACHE = new Map()
 let NEWS_AUTO_SYNC_TRIGGERED = false
-const NEWS_SECTION_PREVIEW_LIMIT = 3
+const NEWS_SECTION_PREVIEW_LIMIT = 4
 const DEFAULT_NEWS_SYNC_STATE = {
   progress: 0,
   status: 'Idle',
