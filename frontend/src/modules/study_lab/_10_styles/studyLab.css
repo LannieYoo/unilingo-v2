@@ -4986,10 +4986,17 @@
   font-weight: 750;
 }
 
+/* same scheme as news previews: 4 across on desktop, straight to 2 below */
 .study-dp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.8rem;
+}
+
+@media (max-width: 1200px) {
+  .study-dp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .study-dp-card {
@@ -5436,10 +5443,6 @@
 }
 
 @media (max-width: 640px) {
-  .study-dp-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  }
-
   .study-dp-blank input {
     width: 110px;
   }
