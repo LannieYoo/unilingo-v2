@@ -194,7 +194,8 @@ const NEWS_DIFFICULTIES = ['Level 4', 'Level 5', 'Level 6', 'Level 7', 'Level 8'
 const WORD_MEANING_CACHE = new Map()
 const NEWS_TRANSLATION_CACHE = new Map()
 const NEWS_AI_INSIGHT_CACHE = new Map()
-const NEWS_SECTION_PREVIEW_LIMIT = 4
+let NEWS_AUTO_SYNC_TRIGGERED = false
+const NEWS_SECTION_PREVIEW_LIMIT = 3
 const DEFAULT_NEWS_SYNC_STATE = {
   progress: 0,
   status: 'Idle',
@@ -3827,6 +3828,15 @@ function NewsReadingPanel({ resetToken = 0 }) {
       JSON.stringify({ showWordHints: showNewsWordHints }),
     )
   }, [accountKey, showNewsWordHints])
+
+  // Admins: automatically fetch articles newer than the saved library once per session
+  useEffect(() => {
+    if (NEWS_AUTO_SYNC_TRIGGERED) return
+    if (!canSyncNews || !tokens?.access_token || isSyncing) return
+    if (newsLoadStatus !== 'ready') return
+    NEWS_AUTO_SYNC_TRIGGERED = true
+    runAdminSync()
+  }, [canSyncNews, isSyncing, newsLoadStatus, tokens?.access_token])
 
   useEffect(() => {
     setVisibleSectionArticleCount(NEWS_SECTION_BATCH_SIZE)
