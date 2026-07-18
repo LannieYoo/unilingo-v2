@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 # RAG 서버 URL
 RAG_SERVER_URL = os.getenv("RAG_SERVER_URL", "http://192.168.1.150:8100")
 RAG_TIMEOUT = 120  # seconds (LLM 응답이 20-30초 소요)
+RAG_API_KEY = os.getenv("RAG_API_KEY", "").strip()
+
+
+def _rag_headers():
+    return {"X-API-Key": RAG_API_KEY} if RAG_API_KEY else {}
 
 # In-memory cache (TTL: 24 hours)
 _cache: Dict[str, Dict[str, Any]] = {}
@@ -46,6 +51,7 @@ class PhrasalVerbsService:
                 url,
                 params={"word": word, "target_lang": target_lang},
                 timeout=RAG_TIMEOUT,
+                headers=_rag_headers(),
             )
 
             if resp.status_code == 200:
@@ -83,7 +89,7 @@ class PhrasalVerbsService:
 
         try:
             url = f"{RAG_SERVER_URL}/api/context-suggestions"
-            resp = requests.get(url, params={"word": word}, timeout=RAG_TIMEOUT)
+            resp = requests.get(url, params={"word": word}, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 data = resp.json()
@@ -114,7 +120,7 @@ class PhrasalVerbsService:
                 "translated": translated,
                 "source_lang": source_lang,
                 "target_lang": target_lang,
-            }, timeout=RAG_TIMEOUT)
+            }, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 return resp.json()
@@ -149,7 +155,7 @@ class PhrasalVerbsService:
             resp = requests.post(url, json={
                 "text": text,
                 "target_lang": target_lang,
-            }, timeout=RAG_TIMEOUT)
+            }, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 data = resp.json()
@@ -190,7 +196,7 @@ class PhrasalVerbsService:
                 "title": title,
                 "text": text,
                 "target_lang": target_lang,
-            }, timeout=RAG_TIMEOUT)
+            }, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 data = resp.json()
@@ -231,7 +237,7 @@ class PhrasalVerbsService:
                 "text": text,
                 "target_lang": target_lang,
                 "count": count,
-            }, timeout=RAG_TIMEOUT)
+            }, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 data = resp.json()
@@ -276,7 +282,7 @@ class PhrasalVerbsService:
                 "template_id": template_id,
                 "template_description": template_description,
                 "target_lang": target_lang,
-            }, timeout=RAG_TIMEOUT)
+            }, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 data = resp.json()
@@ -315,7 +321,7 @@ class PhrasalVerbsService:
                 "topic": topic,
                 "prompt": prompt,
                 "vocabulary": vocabulary_lines,
-            }, timeout=RAG_TIMEOUT)
+            }, timeout=RAG_TIMEOUT, headers=_rag_headers())
 
             if resp.status_code == 200:
                 data = resp.json()

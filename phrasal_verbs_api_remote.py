@@ -43,6 +43,29 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3.6")  # 설치된 Qwen 모�
 OLLAMA_TIMEOUT = 180  # seconds (첫 로딩 시 모델이 크면 오래 걸림)
 CACHE_TTL = 86400 * 7  # 7 days
 
+# API key auth: when keys are configured, /api/* requires the X-API-Key header.
+# RAG_API_KEYS is a comma-separated list so each consumer (UniLingo, friends)
+# gets a unique revocable key; RAG_API_KEY is also accepted for compatibility.
+# /health stays open for monitoring; /api/stt/* stays open because the browser
+# calls Whisper directly (a key shipped in frontend JS would be public anyway).
+RAG_API_KEYS = {
+    key.strip()
+    for key in (os.environ.get("RAG_API_KEYS", "") + "," + os.environ.get("RAG_API_KEY", "")).split(",")
+    if key.strip()
+}
+API_KEY_EXEMPT_PREFIXES = ("/health", "/api/stt/")
+
+
+@app.middleware("http")
+async def require_api_key(request, call_next):
+    if RAG_API_KEYS:
+        path = request.url.path
+        if path.startswith("/api/") and not any(path.startswith(p) for p in API_KEY_EXEMPT_PREFIXES):
+            if request.headers.get("x-api-key", "") not in RAG_API_KEYS:
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
+    return await call_next(request)
+
 # ── In-memory cache ─────────────────────────────────────
 _cache: Dict[str, Dict[str, Any]] = {}
 
@@ -978,6 +1001,102 @@ async def get_picture_model_answer(req: dict):
     }
 
     if sentences:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
+# ── Direct Translation ──────────────────────────────────
+TRANSLATE_LANG_NAMES = {
+    "ko": "Korean", "en": "English", "zh": "Simplified Chinese", "ja": "Japanese",
+    "es": "Spanish", "fr": "French", "de": "German", "vi": "Vietnamese",
+}
+
+
+async def _call_ollama_translate(text: str, source_lang: str, target_lang: str) -> str:
+    """Ollama로 직접 번역"""
+    src_name = TRANSLATE_LANG_NAMES.get(source_lang, source_lang) if source_lang else "the source language (auto-detect)"
+    tgt_name = TRANSLATE_LANG_NAMES.get(target_lang, target_lang)
+
+    prompt = f"""/no_think
+Translate the following text from {src_name} to {tgt_name}.
+Output ONLY the translation itself - no explanation, no quotes, no markdown.
+
+Text:
+\"\"\"
+{text}
+\"\"\""""
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": f"You are a professional translator. Respond with ONLY the {tgt_name} translation, nothing else."},
+            {"role": "user", "content": prompt}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.2,
+            "num_predict": 4096,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            raw_response = msg.get("content", "")
+            thinking = msg.get("thinking", "")
+            if not raw_response and thinking:
+                raw_response = thinking
+            raw_response = re.sub(r'<think>.*?</think>', '', raw_response, flags=re.DOTALL).strip()
+            # strip wrapping quotes the model sometimes adds
+            if len(raw_response) > 1 and raw_response[0] in '"“' and raw_response[-1] in '"”':
+                raw_response = raw_response[1:-1].strip()
+            return raw_response
+
+    except Exception as e:
+        logger.error(f"Translate error: {e}")
+        return ""
+
+
+@app.post("/api/translate")
+async def translate_text(req: dict):
+    """직접 번역 API (Ollama qwen 기반, 외부 번역 키 불필요)"""
+    text = (req.get("text") or "").strip()
+    source_lang = (req.get("source_lang") or "").strip()
+    target_lang = (req.get("target_lang") or "en").strip()
+
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+    if len(text) > 8000:
+        raise HTTPException(status_code=400, detail="text too long (max 8000 chars)")
+
+    start_time = time.time()
+
+    cache_key = hashlib.md5(f"tr:{source_lang}:{target_lang}:{text[:2000]}".encode()).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < CACHE_TTL:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    translated = await _call_ollama_translate(text, source_lang, target_lang)
+
+    result = {
+        "translated_text": translated,
+        "source_lang": source_lang or "auto",
+        "target_lang": target_lang,
+        "source": "ollama",
+        "model": OLLAMA_MODEL,
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if translated:
         _cache[cache_key] = {"data": result, "ts": time.time()}
 
     return result

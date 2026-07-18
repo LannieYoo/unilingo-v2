@@ -60,6 +60,8 @@ services:
         value: https://slighted-scoured-nanny.ngrok-free.dev
       - key: USE_REMOTE_ENGOO_IMAGES
         value: "1"
+      - key: RAG_API_KEY
+        sync: false  # Dashboard에서 수동 설정 (라니서버 X-API-Key)
       - key: PYTHON_VERSION
         value: "3.11.6"
       - key: PYTHONPATH
