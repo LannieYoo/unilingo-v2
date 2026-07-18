@@ -31,6 +31,8 @@ const PRE_ROLL_FRAMES = 2            // ~0.5s of audio kept before speech onset 
 // Production: ngrok tunnel to Lannie Server (set VITE_WHISPER_SERVER_URL)
 // Development: direct access to Lannie Server
 const SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
+const RAG_API_KEY = import.meta.env.VITE_RAG_API_KEY || ''
+const STT_HEADERS = RAG_API_KEY ? { 'X-API-Key': RAG_API_KEY } : undefined
 
 export function useServerSpeechInput({ language = 'en-US', onResult, continuous = false }) {
   const [isListening, setIsListening] = useState(false)
@@ -140,6 +142,7 @@ export function useServerSpeechInput({ language = 'en-US', onResult, continuous 
         method: 'POST',
         body: formData,
         mode: 'cors',
+        headers: STT_HEADERS,
       })
 
       if (!response.ok) {

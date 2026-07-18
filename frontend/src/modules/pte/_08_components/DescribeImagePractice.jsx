@@ -10,6 +10,7 @@ import { buildModelAnswerVariants } from '../_07_utils/modelAnswerVariants'
 import PteGrammarNoteChip from './PteGrammarNoteChip'
 
 const WHISPER_SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
+const STT_HEADERS = import.meta.env.VITE_RAG_API_KEY ? { 'X-API-Key': import.meta.env.VITE_RAG_API_KEY } : undefined
 
 const LANG_OPTIONS = [
   { code: 'en', label: 'US EN' },
@@ -728,6 +729,7 @@ export default function DescribeImagePractice({
     const response = await fetch(`${WHISPER_SERVER_URL}/api/stt/transcribe`, {
       method: 'POST',
       body: formData,
+      headers: STT_HEADERS,
     })
     if (!response.ok) {
       throw new Error(`Server transcription failed (${response.status})`)

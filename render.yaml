@@ -20,6 +20,8 @@ services:
         sync: false  # Dashboard에서 수동 설정
       - key: VITE_WHISPER_SERVER_URL
         value: https://slighted-scoured-nanny.ngrok-free.dev
+      - key: VITE_RAG_API_KEY
+        sync: false  # Dashboard에서 수동 설정 (라니서버 X-API-Key, STT용)
 
   # 백엔드 웹 서비스 (Flask)
   - type: web

@@ -43,17 +43,16 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3.6")  # 설치된 Qwen 모�
 OLLAMA_TIMEOUT = 180  # seconds (첫 로딩 시 모델이 크면 오래 걸림)
 CACHE_TTL = 86400 * 7  # 7 days
 
-# API key auth: when keys are configured, /api/* requires the X-API-Key header.
-# RAG_API_KEYS is a comma-separated list so each consumer (UniLingo, friends)
-# gets a unique revocable key; RAG_API_KEY is also accepted for compatibility.
-# /health stays open for monitoring; /api/stt/* stays open because the browser
-# calls Whisper directly (a key shipped in frontend JS would be public anyway).
+# API key auth: when keys are configured, /api/* (including /api/stt/*) requires
+# the X-API-Key header. RAG_API_KEYS is a comma-separated list so each consumer
+# (UniLingo, friends) gets a unique revocable key; RAG_API_KEY also accepted.
+# Only /health stays open for monitoring.
 RAG_API_KEYS = {
     key.strip()
     for key in (os.environ.get("RAG_API_KEYS", "") + "," + os.environ.get("RAG_API_KEY", "")).split(",")
     if key.strip()
 }
-API_KEY_EXEMPT_PREFIXES = ("/health", "/api/stt/")
+API_KEY_EXEMPT_PREFIXES = ("/health",)
 
 
 @app.middleware("http")

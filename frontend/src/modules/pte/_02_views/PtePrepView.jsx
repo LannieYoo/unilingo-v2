@@ -33,6 +33,7 @@ import '../_10_styles/pte.css'
 
 /* Whisper server URL — uses ngrok proxy in production */
 const WHISPER_SERVER_URL = import.meta.env.VITE_WHISPER_SERVER_URL || 'http://192.168.1.150:8200'
+const STT_HEADERS = import.meta.env.VITE_RAG_API_KEY ? { 'X-API-Key': import.meta.env.VITE_RAG_API_KEY } : undefined
 const PTE_ACTIVE_TAB_STORAGE_KEY = 'unilingo.pte.activeTab'
 const PTE_FORCE_DEFAULT_TAB_STORAGE_KEY = 'unilingo.pte.forceDefaultTab'
 
@@ -3429,6 +3430,7 @@ function ReadAloudPractice({
         method: 'POST',
         body: formData,
         mode: 'cors',
+        headers: STT_HEADERS,
       })
 
       if (!response.ok) throw new Error(`Server returned ${response.status}`)
