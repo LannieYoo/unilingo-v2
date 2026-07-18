@@ -1005,6 +1005,112 @@ async def get_picture_model_answer(req: dict):
     return result
 
 
+# ── General Chat (optionally web-augmented via searxng) ─
+SEARXNG_URL = os.environ.get("SEARXNG_URL", "http://searxng:8080")
+
+
+async def _searxng_search(query: str, count: int = 5) -> List[Dict]:
+    """로컬 searxng 메타 검색 (제목/URL/요약 스니펫)"""
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.get(f"{SEARXNG_URL}/search", params={"q": query, "format": "json"})
+            resp.raise_for_status()
+            results = resp.json().get("results", [])[:count]
+            return [
+                {
+                    "title": item.get("title", ""),
+                    "url": item.get("url", ""),
+                    "snippet": (item.get("content") or "")[:400],
+                }
+                for item in results
+            ]
+    except Exception as e:
+        logger.error(f"searxng error: {e}")
+        return []
+
+
+@app.post("/api/chat")
+async def general_chat(req: dict):
+    """범용 qwen 챗 API. web_search=true면 searxng 결과를 컨텍스트로 제공 (회사 조사 등)."""
+    prompt = (req.get("prompt") or "").strip()
+    web_search = bool(req.get("web_search"))
+    search_query = (req.get("search_query") or "").strip()
+    system = (req.get("system") or "You are a helpful, concise assistant.").strip()[:500]
+
+    if not prompt:
+        raise HTTPException(status_code=400, detail="prompt is required")
+    if len(prompt) > 6000:
+        raise HTTPException(status_code=400, detail="prompt too long (max 6000 chars)")
+
+    start_time = time.time()
+
+    cache_key = hashlib.md5(f"chat:{web_search}:{search_query}:{system}:{prompt[:2000]}".encode()).hexdigest()
+    entry = _cache.get(cache_key)
+    if entry and time.time() - entry["ts"] < 3600:
+        result = entry["data"].copy()
+        result["cached"] = True
+        result["processing_time"] = time.time() - start_time
+        return result
+
+    search_results = []
+    user_content = prompt
+    if web_search:
+        search_results = await _searxng_search(search_query or prompt[:200])
+        if search_results:
+            context_lines = "\n\n".join(
+                f"[{i+1}] {r['title']}\n{r['url']}\n{r['snippet']}"
+                for i, r in enumerate(search_results)
+            )
+            user_content = (
+                "Use the following fresh web search results to answer the question. "
+                "Prefer facts from the results over your own memory; if the results "
+                "don't cover something, say so.\n\n"
+                f"=== Web search results ===\n{context_lines}\n\n"
+                f"=== Question ===\n{prompt}"
+            )
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": system + " Never use thinking tags."},
+            {"role": "user", "content": "/no_think\n" + user_content}
+        ],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.4,
+            "num_predict": 4096,
+        }
+    }
+
+    answer = ""
+    try:
+        async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            msg = data.get("message", {})
+            answer = msg.get("content", "") or msg.get("thinking", "")
+            answer = re.sub(r'<think>.*?</think>', '', answer, flags=re.DOTALL).strip()
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+
+    result = {
+        "answer": answer,
+        "web_search_used": bool(search_results),
+        "sources": [{"title": r["title"], "url": r["url"]} for r in search_results],
+        "source": "ollama",
+        "model": OLLAMA_MODEL,
+        "cached": False,
+        "processing_time": time.time() - start_time,
+    }
+
+    if answer:
+        _cache[cache_key] = {"data": result, "ts": time.time()}
+
+    return result
+
+
 # ── Direct Translation ──────────────────────────────────
 TRANSLATE_LANG_NAMES = {
     "ko": "Korean", "en": "English", "zh": "Simplified Chinese", "ja": "Japanese",
