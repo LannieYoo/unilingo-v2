@@ -28,13 +28,13 @@ const RETRY_DELAY_MS = 1000
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
- * 언어 코드 정규화 (en-us, en-in -> en)
+ * 언어 코드 정규화 (en-US, ko-KR, zh-CN 등 지역 코드 제거)
  */
 const normalizeLanguageCode = (lang) => {
   if (!lang) return lang
-  // en-us, en-in 등을 en으로 변환
-  if (lang.startsWith('en-')) return 'en'
-  return lang
+  const base = String(lang).toLowerCase().split(/[-_]/)[0]
+  // Cantonese (SenseVoice) is closest to Chinese for translation purposes
+  return base === 'yue' ? 'zh' : base
 }
 
 /**
